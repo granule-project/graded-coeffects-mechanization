@@ -2,37 +2,63 @@ module GrCore where
 
 open import Data.Product
 open import Data.Sum
+open import Data.Nat
+open import Relation.Binary.PropositionalEquality
 
 data Semiring : Set where
 
+postulate
+  1r : Semiring
+  0r : Semiring
+  _+R_ : Semiring -> Semiring -> Semiring
+  _*R_ : Semiring -> Semiring -> Semiring
+  leftUnit : {r : Semiring} -> 1r *R r ≡ r
+
+
 data Type : Set where
-  FunTy : Type -> Type -> Type
+  FunTy : (A : Type) -> (r : Semiring) -> (B : Type) -> Type -- A r -> B
   Unit  : Type
   Box   : (r : Semiring) -> Type -> Type
 
 data Assumption : Type -> Set where
-  Lin : (A : Type)                    -> Assumption A
+--  Lin : (A : Type)                    -> Assumption A
   Grad : (A : Type) -> (r : Semiring) -> Assumption A
 
 data Context : Set where
   Empty   : Context
   Ext     : {A : Type} -> Context -> Assumption A -> Context
 
+-- Make contexts a module
+postulate
+  -- TODO
+  _++_ : Context -> Context -> Context
+   -- _++_ = {!!}
+
+  -- TODO: pointwise
+  _·_ : Semiring -> Context -> Context
+  -- _·_ = {!!}
+
+  absorptionContext : {Γ Γ' : Context} -> (0r · Γ) ++ Γ' ≡ Γ'
+  leftUnitContext : {Γ : Context} -> 1r · Γ ≡ Γ
+
 
 
 data Member : Type -> Context -> Set where
-  Here  : (Γ : Context) (A : Type) (Hyp : Assumption A) -> Member A (Ext Γ Hyp)
-  There : (Γ : Context) (A : Type) (Hyp : Assumption A) -> (mem : Member A Γ) -> Member A (Ext Γ Hyp)
+  Here  : (Γ : Context) (A : Type)  (allZero : Σ Context (\Γ' -> Γ ≡ 0r · Γ')) -> Member A (Ext Γ (Grad A 1r))
+  There : (Γ : Context) (A B : Type) -> (mem : Member A Γ) -> Member A (Ext Γ (Grad B 0r))
 
 data Term : Set where
-  Var : Term
+  Var : ℕ -> Term
   App : Term -> Term -> Term
   Abs : Term -> Term
 
+
+toIndex : {A : Type} {Γ : Context} -> Member A Γ -> ℕ
+toIndex (Here Γ _ _)      = 0
+toIndex (There Γ _ _ c) = 1 + toIndex c
+
 -------------------------------------------------
 -- Typing
-
-
 data _⊢_∶_ : Context -> Term -> Type -> Set where
 
 --  (x : A) ∈ Γ
@@ -41,45 +67,52 @@ data _⊢_∶_ : Context -> Term -> Type -> Set where
 
   var : { A : Type }
         { Γ : Context }
-        (mem : Member A Γ)
+        (mem : Member A Γ)  --- contains the hard work of doing 0*G', x : 1 A
       -> -------------------
-         Γ ⊢ Var ∶ A
+         Γ ⊢ Var (toIndex mem) ∶ A
 
 
-  app : { Γ : Context }
+  app : { Γ1 Γ2 : Context }
+        { r : Semiring }
         { A B : Type}
         { t1 t2 : Term }
 
-     ->   Γ ⊢ t1 ∶ FunTy A B
-     ->   Γ ⊢ t2 ∶ A
-     -> ----------------------
-          Γ ⊢ App t1 t2 ∶ B
+     ->   Γ1 ⊢ t1 ∶ FunTy A r B
+     ->   Γ2 ⊢ t2 ∶ A
+     -> -----------------------------
+          (Γ1 ++ (r · Γ2)) ⊢ App t1 t2 ∶ B
 
 
   abs : { Γ : Context }
+        { r : Semiring}
         { A B : Type }
         { t : Term }
 
-      ->   Ext Γ (Lin A) ⊢ t ∶ B
+      ->  Ext Γ (Grad A r) ⊢ t ∶ B
       -> ------------------------
-          Γ ⊢ Abs t ∶ FunTy A B
+          Γ ⊢ Abs t ∶ FunTy A r B
 
 -- Value predicate
 data Value : Term -> Set where
-  varValue : Value Var
+  varValue : {n : ℕ} -> Value (Var n)
   absValue : {t : Term} -> Value t -> Value (Abs t)
   appValue : {t1 t2 : Term} -> Value t1 -> Value t2 -> Value (App t1 t2)
 
 -- substitution
-subst : {Γ : Context} {A B : Type} {t1 t2 : Term}
-      -> Ext Γ (Lin A) ⊢ t1 ∶ B
-      -> Γ ⊢ t2 ∶ A
-      -> ∃ (\t -> Γ ⊢ t ∶ B)
-subst {Γ'} {A} {.A} {.Var} {t2} (var (Here Γ' A .(Lin A))) deriv2 = (t2 , deriv2)
+substitution : {Γ1 Γ2 : Context} {r : Semiring} {A B : Type} {t1 t2 : Term}
+      -> Ext Γ1 (Grad A r) ⊢ t1 ∶ B
+      -> Γ2 ⊢ t2 ∶ A
+      -> ∃ (\t -> (Γ1 ++ (r · Γ2)) ⊢ t ∶ B)
 
-subst {Γ} {A} {B} {t1} {t2} (var (There _ A' .(Lin _) mem)) deriv2 = {!!}
-subst {Γ} {A} {B} {t1} {t2} (app deriv1 deriv3) deriv2 = {!!}
-subst {Γ} {A} {B} {t1} {t2} (abs deriv1) deriv2 = {!!}
+substitution {Γ1} {Γ2} {.1r} {A} {.A} {Var .0} {t2} (var (Here .Γ1 .A (Γ1' , allZeroesPrf))) substitee
+  rewrite allZeroesPrf | absorptionContext {Γ1'} {1r · Γ2} | leftUnitContext {Γ2} =
+    t2 , substitee
+
+substitution {Γ1} {Γ2} {.0r} {A} {B} {Var .(suc (toIndex mem))} {t2} (var (There .Γ1 .B .A mem)) substitee = {!!}
+
+
+substitution {Γ1} {Γ2} {r} {A} {B} {App t1 t3} {t2} receiver substitee = {!!}
+substitution {Γ1} {Γ2} {r} {A} {.(FunTy _ _ _)} {Abs t1} {t2} (abs receiver) substitee = {!!}
 
 
 
@@ -88,7 +121,7 @@ redux : {Γ : Context} {A : Type} {t : Term}
       -> Γ ⊢ t ∶ A
       -> (Value t) ⊎ ∃ (\t' -> Γ ⊢ t' ∶ A)
 
-redux {Γ} {A} {.Var} (var mem) = inj₁ varValue
+redux {Γ} {A} {Var _} (var mem) = inj₁ varValue
 
 redux {Γ} {A} {.(App (Abs _) _)} (app (abs deriv) deriv₁) = {!!}
 
@@ -100,6 +133,6 @@ redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₂ (t2' , deriv
 
 redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₂ (t1' , deriv1') = inj₂ (App t1' t2 , app deriv1' deriv2)
 
-redux {Γ} {.(FunTy _ _)} {(Abs t)} (abs deriv) with redux deriv
+redux {Γ} {.(FunTy _ _ _)} {(Abs t)} (abs deriv) with redux deriv
 ... | inj₁ v = inj₁ (absValue v)
 ... | inj₂ (t' , deriv') = inj₂ (Abs t' , abs deriv')
