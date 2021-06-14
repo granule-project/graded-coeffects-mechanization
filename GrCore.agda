@@ -26,6 +26,8 @@ data Type : Set where
   --------------------------------------------------
   -- Prod  : Type -> Type -> Type
   -- Sum   : Type -> Type -> Type
+  BoolTy : Type
+
 
 data Assumption : Set where
 --  Lin : (A : Type)                    -> Assumption A
@@ -39,15 +41,15 @@ _,,_ : Context -> Context -> Context
 G1 ,, Empty = G1
 G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
 
+_·_ : Semiring -> Context -> Context
+r · Empty = Empty
+r · Ext g (Grad A s) = Ext (r · g) (Grad A (r *R s))
+
 -- Make contexts a module
 postulate
   -- TODO
   _++_ : Context -> Context -> Context
    -- _++_ = {!!}
-
-  -- TODO: pointwise
-  _·_ : Semiring -> Context -> Context
-  -- _·_ = {!!}
 
   absorptionContext : {Γ Γ' : Context} -> (0r · Γ) ++ Γ' ≡ Γ'
   leftUnitContext : {Γ : Context} -> 1r · Γ ≡ Γ
@@ -62,6 +64,10 @@ data Term : Set where
   Abs : ℕ -> Term -> Term
   unit : Term
   Promote : Term -> Term
+  -- handling bools (TODO: generalise to sums)
+  vtrue : Term
+  vfalse : Term
+  If : Term -> Term -> Term -> Term
 
 subs : Term -> ℕ -> Term -> Term
 subs t x (Var y) with x ≟ y
@@ -73,6 +79,9 @@ subs t x (Abs y t1) with x ≟ y
 ... | no ¬p = Abs y (subs t x t1)
 subs t x (Promote t1) = Promote (subs t x t1)
 subs t x unit = unit
+subs t x ValTrue = ValTrue
+subs t x ValFalse = ValFalse
+subs t x (If t1 t2 t3) = If (subs t x t1) (subs t x t2) (subs t x t3)
 
 -------------------------------------------------
 -- Typing
@@ -122,9 +131,27 @@ data _⊢_∶_ : Context -> Term -> Type -> Set where
 
 
   unitConstr : { Γ : Context }
-
       -> --------------------------------
           (0r · Γ) ⊢ unit ∶ Unit
+
+  trueConstr : { Γ : Context }
+      -> --------------------------------
+           (0r · Γ) ⊢ vtrue ∶ BoolTy
+
+  falseConstr : { Γ : Context }
+      -> --------------------------------
+           (0r · Γ) ⊢ vfalse ∶ BoolTy
+
+  if : { Γ1 Γ2 : Context }
+       { B : Type }
+       { t1 t2 t3 : Term }
+
+    -> Γ1 ⊢ t1 ∶ BoolTy
+    -> Γ2 ⊢ t2 ∶ B
+    -> Γ2 ⊢ t3 ∶ B
+   ----------------------------------
+    -> (Γ1 ++ Γ2) ⊢ If t1 t2 t3 ∶ B
+
 
 -- Value predicate
 data Value : Term -> Set where
@@ -169,6 +196,7 @@ redux {Γ} {.(FunTy _ _ _)} {(Abs n t)} (abs pos deriv) with redux deriv
 ... | inj₂ (t' , deriv') = inj₂ (Abs n t' , abs pos deriv')
 
 redux {Γ} {A} {unit} _ = inj₁ unitValue
+redux {Γ} {A} {t} t1 = {!!}
 
 multiRedux : Term -> Term
 multiRedux = {!!}
