@@ -10,20 +10,44 @@ open import Data.Product
 open import Data.Bool
 open import Data.List
 open import Data.Nat
+open import Function
 
 -- Based on Vineet and Deepak's paper model but without
 -- heaps (as we don't have references) and without step indexing
 -- (as we aren't considering recursion here).
 
 -- Unary interpretation of types
-[_]u : Type -> Term -> Set
-[ Unit ]u unit = ⊤
-[ FunTy A r B ]u (Abs x e) =
+{-
+[_]v : Type -> Term -> Set
+[ Unit ]v unit = ⊤
+[ FunTy A r B ]v (Abs x e) =
      forall (v : Term)
-  -> [ A ]u v
-  -> [ B ]u (subs v x e)
-[ Box r A ]u tm = [ A ]u tm
-[ _ ]u _ = ⊥
+  -> [ A ]v v
+  -> [ B ]v (subs v x e)
+[ Box r A ]v tm = [ A ]v tm
+[ _ ]v _ = ⊥
+-}
+
+data [_]v : Type -> Term -> Set where
+  unitInterpV : [ Unit ]v unit
+  funInterpV  : {A B : Type} {r : Semiring}
+             -> {x : ℕ}
+             -> (e v : Term)
+             -> [ A ]v v -> [ B ]v (subs v x e) -> [ FunTy A r B ]v (Abs x e)
+
+  boxInterpV  : {A : Type} {r : Semiring}
+             -> (e : Term)
+             -> [ A ]v e -> [ Box r A ]v e
+
+  boolInterpTrue  : [ BoolTy ]v vtrue
+  boolInterpFalse : [ BoolTy ]v vfalse
+
+
+[_]e : Type -> Semiring -> Term -> Set
+[ τ ]e r t =
+  forall (v : Term)
+  -> multiRedux t ≡ v
+  -> [ τ ]v v
 
 -- Relational interpretation of types
 
@@ -39,7 +63,7 @@ mutual
   ⟦ Unit ⟧v adv w unit unit = ⊤
 
   ⟦ FunTy A r B ⟧v adv {W} {_≤_} w (Abs x e1) (Abs y e2) =
-    forall (w' : W)
+    (forall (w' : W)
     -> w ≤ w'
     -> forall (v1 : Term) (v2 : Term)
 
@@ -48,14 +72,26 @@ mutual
    -- But we have graded arrows here
 
     -> ⟦ Box r A ⟧v adv {W} {_≤_} w' (Promote v1) (Promote v2)
-    -> ⟦ B ⟧e adv {W} {_≤_} w' (subs v1 x e1) (subs v2 y e2)
+    -> ⟦ B ⟧e adv {W} {_≤_} w' (subs v1 x e1) (subs v2 y e2))
+
+   × (forall (vc : Term)
+      -> [ A ]v vc -> [ B ]e {!!} (subs vc x e1))
+
+   × (forall (vc : Term)
+      -> [ A ]v vc -> [ B ]e {!!} (subs vc y e2))
+
 
   --
 
   -- TODO:
   ⟦ Box r A ⟧v adv {W} {_≤_} w (Promote v1) (Promote v2) with pre r adv
-  ... | false = ([ A ]u v1) × ([ A ]u v2)
+  ... | false = ([ A ]v v1) × ([ A ]v v2)
   ... | true  = ⟦ A ⟧v adv {W} {_≤_} w v1 v2
+
+  ⟦ BoolTy ⟧v adv w vtrue vtrue = ⊤
+
+  ⟦ BoolTy ⟧v adv w vfalse vfalse = ⊤
+
 
   ⟦ _ ⟧v adv w _ _ = ⊥
 
@@ -64,11 +100,20 @@ mutual
        forall (v1 v2 : Term)
     -> multiRedux e1 ≡ v1
     -> multiRedux e2 ≡ v2
-    -> Σ W (\w' -> w ≤ w' -> ⟦ tau ⟧v adv {W} {_≤_} w' v1 v2)
+    -> Σ W (\w' -> w ≤ w' × (⟦ tau ⟧v adv {W} {_≤_} w' v1 v2))
 
 --------------
 -- Contexts
 
+-- unary
+[_]Γ : Context -> {W : Set} -> {≤ : W -> W -> Set}
+      -> W -> List Term -> Set
+[ Empty            ]Γ {W} {_≤_} w _ = ⊤
+[ Ext _ _          ]Γ {W} {_≤_} w [] = ⊥
+[ Ext g (Grad A r) ]Γ {W} {_≤_} w (v ∷ vs) =
+  ([ A ]v v) × ([ g ]Γ {W} {_≤_} w vs)
+
+-- binary
 ⟦_⟧Γ : Context -> (Adv : Semiring) -> {W : Set} -> {≤ : W -> W -> Set}
   -> W ->  List Term -> List Term -> Set
 ⟦ Empty ⟧Γ adv {W} {_≤_} _ _ _ = ⊤
@@ -93,6 +138,20 @@ multisubst [] t' = t'
 multisubst ts t' = multisubst' 0 ts t'
 
 -------------------------------
+-- Unary fundamental theorem
+
+utheorem : {W : Set}
+        -> {≤ : W -> W -> Set}
+        -> {adv : Semiring}
+        -> {γ : List Term}
+        -> {Γ : Context} {e : Term} {τ : Type}
+        -> Γ ⊢ e ∶ τ
+        -> {w : W}
+        -> [ Γ ]Γ {W} {≤} w γ
+        -> [ τ ]e {!!} e
+utheorem = {!!}
+
+-------------------------------
 -- Binary fundamental theorem
 
 theorem :  {W : Set}
@@ -107,6 +166,33 @@ theorem :  {W : Set}
         -> ⟦ τ ⟧e adv {W} {≤} w (multisubst γ1 e) (multisubst γ2 e)
 theorem = {!!}
 
+lem : {W : Set} {_≤_ : W -> W -> Set} {w : W} {adv : Semiring}
+      {A : Type} {v1 v2 : Term}
+   -> Value v1
+   -> Value v2
+   -> ⟦ A ⟧e adv {W} {_≤_} w v1 v2
+   -> Σ W (\w' -> (w ≤ w') × ⟦ A ⟧v adv {W} {_≤_} w' v1 v2)
+lem {W} {≤} {w} {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
+  let (w' , (rel , ev)) = mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
+  in w' , (rel , ev)
+
+ulem : {W : Set} {≤ : W -> W -> Set} {w : W} {adv : Semiring}
+     -> {A : Type}
+     -> {l : Semiring}
+     -> {v1 v2 : Term}
+     -> [ A ]v v1
+     -> [ A ]v v2
+     -> ⟦ A ⟧v l {W} {≤} w v1 v2
+ulem {W} {≤} {w} {adv} {FunTy A r A₁} {l} {v1} {v2} val1 val2 = {!v1 v2 val1 val2!}
+ulem {W} {≤} {w} {adv} {Unit} {l} {.unit} {.unit} unitInterpV unitInterpV = tt
+ulem {W} {≤} {w} {adv} {Box r A} {l} {v1} {v2} val1 val2 = {!!}
+ulem {W} {≤} {w} {adv} {BoolTy} {l} {v1} {v2} val1 val2 = {!v1 val1 v2 val2!}
+
+
+boolToSet : Bool -> Set
+boolToSet true = ⊤
+boolToSet false = ⊥
+
 -------------------------------
 -- Non-interference
 
@@ -118,13 +204,24 @@ nonInterf : {A : Type} {li l : Semiring} {e : Term}
         -> (v1 v2 : Term)
         -> Empty ⊢ v1 ∶ A
         -> Empty ⊢ v2 ∶ A
+        -> Value v1
+        -> Value v2
 
         -> multiRedux (subs v1 0 e) ≡ multiRedux (subs v2 0 e)
 
-nonInterf {A} {li} {l} {e} rel typing v1 v2 v1typing v2typing =
-  let  ev1 = theorem {⊤} {\tt -> \tt -> ⊤} {Empty} {Promote v1} {Box li A}
-                  (pr v1typing) {tt} {[]} {[]} li tt
+nonInterf {A} {li} {l} {e} rel typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
+  let  ord = \x -> \y -> boolToSet (pre x y)
 
-       x = theorem {⊤} {\tt -> \tt -> ⊤} {Ext Empty (Grad A li)} {e}
-              {Box l BoolTy} typing {tt} {v1 ∷ []} {v2 ∷ []} l ({!!} , tt)
+       ev1 = theorem {Semiring} {ord} {Empty} {Promote v1} {Box li A}
+                  (pr v1typing) {li} {[]} {[]} l tt
+
+       uth1 = utheorem {Semiring} {ord} {{!!}} {[]} {Empty} {v1} {A} v1typing {{!!}} tt
+       uth2 = utheorem {Semiring} {ord} {{!!}} {[]} {Empty} {v2} {A} v2typing {{!!}} tt
+
+
+       (l' , (rel , ev1')) = lem {Semiring} {ord} {li} {l} {Box li A}
+             {Promote v1} {Promote v1} (promoteValue isvalv1) (promoteValue isvalv1) ev1
+
+       x = theorem {Semiring} {ord} {Ext Empty (Grad A li)} {e}
+              {Box l BoolTy} typing {l} {v1 ∷ []} {v2 ∷ []} l ({!!} , tt)
   in {!!}

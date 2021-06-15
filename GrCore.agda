@@ -1,3 +1,4 @@
+
 {-# OPTIONS --allow-unsolved-metas #-}
 
 module GrCore where
@@ -79,8 +80,8 @@ subs t x (Abs y t1) with x ≟ y
 ... | no ¬p = Abs y (subs t x t1)
 subs t x (Promote t1) = Promote (subs t x t1)
 subs t x unit = unit
-subs t x ValTrue = ValTrue
-subs t x ValFalse = ValFalse
+subs t x vtrue = vtrue
+subs t x vfalse = vfalse
 subs t x (If t1 t2 t3) = If (subs t x t1) (subs t x t2) (subs t x t3)
 
 -------------------------------------------------
@@ -159,6 +160,7 @@ data Value : Term -> Set where
   varValue : {n : ℕ} -> Value (Var n)
   absValue : {n : ℕ} -> {t : Term} -> Value t -> Value (Abs n t)
   appValue : {t1 t2 : Term} -> Value t1 -> Value t2 -> Value (App t1 t2)
+  promoteValue : {t : Term} -> Value t -> Value (Promote t)
 
 -- substitution
 substitution : {Γ Γ1 Γ2 Γ3 : Context} {r : Semiring} {A B : Type} {t1 t2 : Term}
@@ -200,3 +202,6 @@ redux {Γ} {A} {t} t1 = {!!}
 
 multiRedux : Term -> Term
 multiRedux = {!!}
+
+valuesDontReduce : {t : Term} -> Value t -> multiRedux t ≡ t
+valuesDontReduce {t} v = {!!}
