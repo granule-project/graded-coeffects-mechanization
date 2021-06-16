@@ -10,15 +10,36 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open import Data.Bool hiding (_≟_)
 
+-- Sec
 data Semiring : Set where
+  Hi : Semiring
+  Lo  : Semiring
 
-postulate
-  1r : Semiring
-  0r : Semiring
-  _+R_ : Semiring -> Semiring -> Semiring
-  _*R_ : Semiring -> Semiring -> Semiring
-  leftUnit : {r : Semiring} -> 1r *R r ≡ r
-  pre : Semiring -> Semiring -> Bool
+1r : Semiring
+1r = Lo
+
+0r : Semiring
+0r = Hi
+
+_+R_ : Semiring -> Semiring -> Semiring
+Lo +R _  = Lo
+_ +R Lo  = Lo
+Hi +R Hi = Hi
+
+_*R_ : Semiring -> Semiring -> Semiring
+Hi *R _ = Hi
+_ *R Hi = Hi
+Lo *R Lo = Lo
+
+leftUnit : {r : Semiring} -> 1r *R r ≡ r
+leftUnit {Hi} = refl
+leftUnit {Lo} = refl
+
+pre : Semiring -> Semiring -> Bool
+pre Lo Hi = true
+pre Lo Lo = true
+pre Hi Hi = true
+pre Hi Lo = false
 
 data Type : Set where
   FunTy : (A : Type) -> (r : Semiring) -> (B : Type) -> Type -- A r -> B

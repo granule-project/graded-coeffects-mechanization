@@ -37,7 +37,7 @@ data [_]v : Type -> Term -> Set where
 
   boxInterpV  : {A : Type} {r : Semiring}
              -> (e : Term)
-             -> [ A ]v e -> [ Box r A ]v e
+             -> [ A ]v e -> [ Box r A ]v (Promote e)
 
   boolInterpTrue  : [ BoolTy ]v vtrue
   boolInterpFalse : [ BoolTy ]v vfalse
@@ -116,8 +116,9 @@ mutual
 -- binary
 ⟦_⟧Γ : Context -> (Adv : Semiring) -> {W : Set} -> {≤ : W -> W -> Set}
   -> W ->  List Term -> List Term -> Set
-⟦ Empty ⟧Γ adv {W} {_≤_} _ _ _ = ⊤
+⟦ Empty ⟧Γ adv {W} {_≤_} _ _ _    = ⊤
 ⟦ Ext _ _ ⟧Γ adv {W} {_≤_} _ [] _ = ⊥
+⟦ Ext _ _ ⟧Γ adv {W} {_≤_} _ _ [] = ⊥
 ⟦ Ext g (Grad A r) ⟧Γ adv {W} {_≤_} w (v1 ∷ vs1) (v2 ∷ vs2) =
    -- model like they have come from a box
    -- actually maybe? this isn't need and just
@@ -148,7 +149,7 @@ utheorem : {W : Set}
         -> Γ ⊢ e ∶ τ
         -> {w : W}
         -> [ Γ ]Γ {W} {≤} w γ
-        -> [ τ ]e {!!} e
+        -> [ τ ]e adv e
 utheorem = {!!}
 
 -------------------------------
@@ -176,17 +177,21 @@ lem {W} {≤} {w} {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
   let (w' , (rel , ev)) = mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
   in w' , (rel , ev)
 
-ulem : {W : Set} {≤ : W -> W -> Set} {w : W} {adv : Semiring}
+ulem : {W : Set} {≤ : W -> W -> Set} {w : W}
      -> {A : Type}
      -> {l : Semiring}
      -> {v1 v2 : Term}
      -> [ A ]v v1
      -> [ A ]v v2
-     -> ⟦ A ⟧v l {W} {≤} w v1 v2
-ulem {W} {≤} {w} {adv} {FunTy A r A₁} {l} {v1} {v2} val1 val2 = {!v1 v2 val1 val2!}
-ulem {W} {≤} {w} {adv} {Unit} {l} {.unit} {.unit} unitInterpV unitInterpV = tt
-ulem {W} {≤} {w} {adv} {Box r A} {l} {v1} {v2} val1 val2 = {!!}
-ulem {W} {≤} {w} {adv} {BoolTy} {l} {v1} {v2} val1 val2 = {!v1 val1 v2 val2!}
+     -> ⟦ Box Hi A ⟧v l {W} {≤} w (Promote v1) (Promote v2)
+ulem {W} {≤} {w} {FunTy A r A₁} {l} {v1} {v2} val1 val2 = {!v1 v2 val1 val2!}
+ulem {W} {≤} {w} {Unit} {l} {.unit} {.unit} unitInterpV unitInterpV = {!!}
+ulem {W} {≤} {w} {Box r A} {l} {v1} {v2} val1 val2 = {!!}
+ulem {W} {≤} {w} {BoolTy} {l} {vtrue} {vtrue} boolInterpTrue boolInterpTrue = {!!}
+ulem {W} {≤} {w} {BoolTy} {l} {vfalse} {vfalse} boolInterpFalse boolInterpFalse = {!!}
+ulem {W} {≤} {w} {BoolTy} {l} {vtrue} {vfalse} boolInterpTrue boolInterpFalse = {!!}
+
+ulem {W} {≤} {w} {BoolTy} {l} {v1} {v2} val1 val2 = {!v1 val1 v2 val2!}
 
 
 boolToSet : Bool -> Set
@@ -196,9 +201,39 @@ boolToSet false = ⊥
 -------------------------------
 -- Non-interference
 
+nonInterfSpecialised : {A : Type} {e : Term}
+        -> Ext Empty (Grad A Hi) ⊢ e ∶ Box Lo BoolTy
+
+        -> (v1 v2 : Term)
+        -> {v1' v2' : Term}
+        -> Empty ⊢ v1 ∶ A
+        -> Empty ⊢ v2 ∶ A
+        -> Value v1
+        -> Value v2
+
+        -> multiRedux (subs v1 0 e) ≡ v1'
+        -> multiRedux (subs v2 0 e) ≡ v2'
+        -> v1' ≡ v2'
+
+nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 isvalv2 v1redux v2redux rewrite v1redux | v2redux =
+ let
+   ord = \x -> \y -> boolToSet (pre x y)
+
+--   ww = utheorem {Semiring} {ord} {Lo} {
+
+   ev1 = theorem {Semiring} {ord} {Empty} {Promote v1} {Box Hi A}
+                  (pr v1typing) {Hi} {[]} {[]} Hi tt
+
+   z = theorem {Semiring} {ord} {Ext Empty (Grad A Lo)} {Var 0} {A}
+          (var {A} {Ext Empty (Grad A Lo)} {Empty} {Empty} refl)
+          {Lo} {v1 ∷ []} {v2 ∷ []} Lo {!!}
+
+   (w , (rel , res)) = theorem {Semiring} {ord} {Ext Empty (Grad A Hi)} {e}
+        {Box Lo BoolTy} typing {Lo} {v1 ∷ []} {v2 ∷ []} Lo ({!!} , tt) v1' v2' v1redux v2redux
+ in {!!}
+
 nonInterf : {A : Type} {li l : Semiring} {e : Term}
         -> (pre li l ≡ false)  -- condition on labels
-
         -> Ext Empty (Grad A li) ⊢ e ∶ Box l BoolTy
 
         -> (v1 v2 : Term)
@@ -215,12 +250,13 @@ nonInterf {A} {li} {l} {e} rel typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
        ev1 = theorem {Semiring} {ord} {Empty} {Promote v1} {Box li A}
                   (pr v1typing) {li} {[]} {[]} l tt
 
-       uth1 = utheorem {Semiring} {ord} {{!!}} {[]} {Empty} {v1} {A} v1typing {{!!}} tt
-       uth2 = utheorem {Semiring} {ord} {{!!}} {[]} {Empty} {v2} {A} v2typing {{!!}} tt
+      -- uth1 = utheorem {Semiring} {ord} {{!!}} {[]} {Empty} {v1} {A} v1typing {{!!}} tt
+      -- uth2 = utheorem {Semiring} {ord} {{!!}} {[]} {Empty} {v2} {A} v2typing {{!!}} tt
 
+      -- fromUtoV = ulem {Semiring} {ord} {{!!}} {{!!}} {{!!}} {{!!}} (uth1 {!!} {!!}) {!!}
 
-       (l' , (rel , ev1')) = lem {Semiring} {ord} {li} {l} {Box li A}
-             {Promote v1} {Promote v1} (promoteValue isvalv1) (promoteValue isvalv1) ev1
+      -- (l' , (rel , ev1')) = lem {Semiring} {ord} {li} {l} {Box li A}
+      --     {Promote v1} {Promote v1} (promoteValue isvalv1) (promoteValue isvalv1) ev1
 
        x = theorem {Semiring} {ord} {Ext Empty (Grad A li)} {e}
               {Box l BoolTy} typing {l} {v1 ∷ []} {v2 ∷ []} l ({!!} , tt)
