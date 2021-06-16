@@ -84,7 +84,7 @@ mutual
   --
 
   -- TODO:
-  ⟦ Box r A ⟧v adv {W} {_≤_} w (Promote v1) (Promote v2) with pre r adv
+  ⟦ Box r A ⟧v adv {W} {_≤_} w (Promote v1) (Promote v2) with pre adv r
   ... | false = ([ A ]v v1) × ([ A ]v v2)
   ... | true  = ⟦ A ⟧v adv {W} {_≤_} w v1 v2
 
@@ -155,7 +155,7 @@ utheorem = {!!}
 -------------------------------
 -- Binary fundamental theorem
 
-theorem :  {W : Set}
+biFundamentalTheorem :  {W : Set}
         -> {≤ : W -> W -> Set}
         -> {Γ : Context} {e : Term} {τ : Type}
 
@@ -165,7 +165,7 @@ theorem :  {W : Set}
         -> (adv : Semiring)
         -> ⟦ Γ ⟧Γ adv {W} {≤} w γ1 γ2
         -> ⟦ τ ⟧e adv {W} {≤} w (multisubst γ1 e) (multisubst γ2 e)
-theorem = {!!}
+biFundamentalTheorem = {!!}
 
 lem : {W : Set} {_≤_ : W -> W -> Set} {w : W} {adv : Semiring}
       {A : Type} {v1 v2 : Term}
@@ -198,6 +198,12 @@ boolToSet : Bool -> Set
 boolToSet true = ⊤
 boolToSet false = ⊥
 
+binaryImpliesUnary :
+  {W : Set} {≤ : W -> W -> Set} {w : W} {A : Type} {adv : Semiring}
+  -> (v0 : Term)
+  -> ⟦ A ⟧v adv {W} {≤} w v0 v0 -> [ A ]v v0
+binaryImpliesUnary = {!!}
+
 -------------------------------
 -- Non-interference
 
@@ -221,15 +227,29 @@ nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 
 
 --   ww = utheorem {Semiring} {ord} {Lo} {
 
-   ev1 = theorem {Semiring} {ord} {Empty} {Promote v1} {Box Hi A}
-                  (pr v1typing) {Hi} {[]} {[]} Hi tt
+   (w1' , (rel1 , ev1)) = biFundamentalTheorem {Semiring} {ord} {Empty} {Promote v1} {Box {!!} A}
+                  (pr v1typing) {{!!}} {[]} {[]} {!!} tt (Promote v1) (Promote v1)
+                  (valuesDontReduce {Promote v1} (promoteValue isvalv1))
+                  (valuesDontReduce {Promote v1} (promoteValue isvalv1))
 
-   z = theorem {Semiring} {ord} {Ext Empty (Grad A Lo)} {Var 0} {A}
-          (var {A} {Ext Empty (Grad A Lo)} {Empty} {Empty} refl)
-          {Lo} {v1 ∷ []} {v2 ∷ []} Lo {!!}
+   (w2' , (rel2 , ev2)) = biFundamentalTheorem {Semiring} {ord} {Empty} {Promote v2} {Box {!!} A}
+                  (pr v2typing) {{!!}} {[]} {[]} Hi tt (Promote v2) (Promote v2)
+                  (valuesDontReduce {Promote v2} (promoteValue isvalv2))
+                  (valuesDontReduce {Promote v2} (promoteValue isvalv2))
 
-   (w , (rel , res)) = theorem {Semiring} {ord} {Ext Empty (Grad A Hi)} {e}
-        {Box Lo BoolTy} typing {Lo} {v1 ∷ []} {v2 ∷ []} Lo ({!!} , tt) v1' v2' v1redux v2redux
+   valEv1 = binaryImpliesUnary {Semiring} {ord} {{!!}} {A} {{!!}} v1 ev1
+   valEv2 = binaryImpliesUnary {Semiring} {ord} {{!!}} {A} {{!!}} v2 ev2
+
+
+   z = biFundamentalTheorem {Semiring} {ord} {Ext Empty (Grad A {!!})} {Var 0} {A}
+          (var {A} {Ext Empty (Grad A {!!})} {Empty} {Empty} refl)
+          {{!!}} {v1 ∷ []} {v2 ∷ []} {!!} ((valEv1 , valEv2) , tt)
+
+
+   (w'' , (rel' , zAsVal)) = lem {Semiring} {ord} {{!!}} {{!!}} {A} {v1} {v2} isvalv1 isvalv2 z
+
+   (w , (rel , res)) = biFundamentalTheorem {Semiring} {ord} {Ext Empty (Grad A {!!})} {e}
+        {Box Lo BoolTy} typing {{!!}} {v1 ∷ []} {v2 ∷ []} {!!} (z , tt) v1' v2' v1redux v2redux
  in {!!}
 
 nonInterf : {A : Type} {li l : Semiring} {e : Term}
@@ -247,7 +267,7 @@ nonInterf : {A : Type} {li l : Semiring} {e : Term}
 nonInterf {A} {li} {l} {e} rel typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
   let  ord = \x -> \y -> boolToSet (pre x y)
 
-       ev1 = theorem {Semiring} {ord} {Empty} {Promote v1} {Box li A}
+       ev1 = biFundamentalTheorem {Semiring} {ord} {Empty} {Promote v1} {Box li A}
                   (pr v1typing) {li} {[]} {[]} l tt
 
       -- uth1 = utheorem {Semiring} {ord} {{!!}} {[]} {Empty} {v1} {A} v1typing {{!!}} tt
@@ -258,6 +278,6 @@ nonInterf {A} {li} {l} {e} rel typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
       -- (l' , (rel , ev1')) = lem {Semiring} {ord} {li} {l} {Box li A}
       --     {Promote v1} {Promote v1} (promoteValue isvalv1) (promoteValue isvalv1) ev1
 
-       x = theorem {Semiring} {ord} {Ext Empty (Grad A li)} {e}
+       x = biFundamentalTheorem {Semiring} {ord} {Ext Empty (Grad A li)} {e}
               {Box l BoolTy} typing {l} {v1 ∷ []} {v2 ∷ []} l ({!!} , tt)
   in {!!}
