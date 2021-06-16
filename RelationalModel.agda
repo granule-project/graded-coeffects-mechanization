@@ -227,29 +227,29 @@ nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 
 
 --   ww = utheorem {Semiring} {ord} {Lo} {
 
-   (w1' , (rel1 , ev1)) = biFundamentalTheorem {Semiring} {ord} {Empty} {Promote v1} {Box {!!} A}
-                  (pr v1typing) {{!!}} {[]} {[]} {!!} tt (Promote v1) (Promote v1)
+   (w1' , (rel1 , ev1)) = biFundamentalTheorem {Semiring} {ord} {Empty} {Promote v1} {Box Hi A}
+                  (pr v1typing) {Hi} {[]} {[]} Lo tt (Promote v1) (Promote v1)
                   (valuesDontReduce {Promote v1} (promoteValue isvalv1))
                   (valuesDontReduce {Promote v1} (promoteValue isvalv1))
 
-   (w2' , (rel2 , ev2)) = biFundamentalTheorem {Semiring} {ord} {Empty} {Promote v2} {Box {!!} A}
-                  (pr v2typing) {{!!}} {[]} {[]} Hi tt (Promote v2) (Promote v2)
+   (w2' , (rel2 , ev2)) = biFundamentalTheorem {Semiring} {ord} {Empty} {Promote v2} {Box Hi A}
+                  (pr v2typing) {Hi} {[]} {[]} Lo tt (Promote v2) (Promote v2)
                   (valuesDontReduce {Promote v2} (promoteValue isvalv2))
                   (valuesDontReduce {Promote v2} (promoteValue isvalv2))
 
-   valEv1 = binaryImpliesUnary {Semiring} {ord} {{!!}} {A} {{!!}} v1 ev1
-   valEv2 = binaryImpliesUnary {Semiring} {ord} {{!!}} {A} {{!!}} v2 ev2
+   valEv1 = binaryImpliesUnary {Semiring} {ord} {{!!}} {A} {Lo} v1 ev1
+   valEv2 = binaryImpliesUnary {Semiring} {ord} {{!!}} {A} {Lo} v2 ev2
 
 
-   z = biFundamentalTheorem {Semiring} {ord} {Ext Empty (Grad A {!!})} {Var 0} {A}
-          (var {A} {Ext Empty (Grad A {!!})} {Empty} {Empty} refl)
-          {{!!}} {v1 ∷ []} {v2 ∷ []} {!!} ((valEv1 , valEv2) , tt)
+   z = biFundamentalTheorem {Semiring} {ord} {Ext Empty (Grad A Lo)} {Var 0} {A}
+          (var {A} {Ext Empty (Grad A Lo)} {Empty} {Empty} refl)
+          {{!!}} {v1 ∷ []} {v2 ∷ []} Hi ((valEv1 , valEv2) , tt)
 
 
-   (w'' , (rel' , zAsVal)) = lem {Semiring} {ord} {{!!}} {{!!}} {A} {v1} {v2} isvalv1 isvalv2 z
+   (w'' , (rel' , zAsVal)) = lem {Semiring} {ord} {Lo} {Hi} {A} {v1} {v2} isvalv1 isvalv2 z
 
-   (w , (rel , res)) = biFundamentalTheorem {Semiring} {ord} {Ext Empty (Grad A {!!})} {e}
-        {Box Lo BoolTy} typing {{!!}} {v1 ∷ []} {v2 ∷ []} {!!} (z , tt) v1' v2' v1redux v2redux
+   (w , (rel , res)) = biFundamentalTheorem {Semiring} {ord} {Ext Empty (Grad A Hi)} {e}
+        {Box Lo BoolTy} typing {Lo} {v1 ∷ []} {v2 ∷ []} {!!} (z , tt) v1' v2' v1redux v2redux
  in {!!}
 
 nonInterf : {A : Type} {li l : Semiring} {e : Term}
