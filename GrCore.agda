@@ -5,10 +5,10 @@ module GrCore where
 
 open import Data.Product
 open import Data.Sum
-open import Data.Nat
+open import Data.Nat hiding (_≤_)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
-open import Data.Bool hiding (_≟_)
+open import Data.Bool hiding (_≟_; _≤_)
 
 -- Sec
 data Semiring : Set where
@@ -35,11 +35,11 @@ leftUnit : {r : Semiring} -> 1r *R r ≡ r
 leftUnit {Hi} = refl
 leftUnit {Lo} = refl
 
-pre : Semiring -> Semiring -> Bool
-pre Lo Hi = true
-pre Lo Lo = true
-pre Hi Hi = true
-pre Hi Lo = false
+_≤_ : Semiring -> Semiring -> Bool
+_≤_ Lo Hi = true
+_≤_ Lo Lo = true
+_≤_ Hi Hi = true
+_≤_ Hi Lo = false
 
 data Type : Set where
   FunTy : (A : Type) -> (r : Semiring) -> (B : Type) -> Type -- A r -> B
@@ -70,9 +70,13 @@ r · Ext g (Grad A s) = Ext (r · g) (Grad A (r *R s))
 -- Make contexts a module
 postulate
   -- TODO
-  _++_ : Context -> Context -> Context
-   -- _++_ = {!!}
+_++_ : Context -> Context -> Context
+Empty ++ G = G
+G ++ Empty = G
+(Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
+G' ++ G'' = ?
 
+postulate
   absorptionContext : {Γ Γ' : Context} -> (0r · Γ) ++ Γ' ≡ Γ'
   leftUnitContext : {Γ : Context} -> 1r · Γ ≡ Γ
 
@@ -104,6 +108,8 @@ subs t x unit = unit
 subs t x vtrue = vtrue
 subs t x vfalse = vfalse
 subs t x (If t1 t2 t3) = If (subs t x t1) (subs t x t2) (subs t x t3)
+
+
 
 -------------------------------------------------
 -- Typing
@@ -177,16 +183,15 @@ data _⊢_∶_ : Context -> Term -> Type -> Set where
 
 -- Value predicate
 data Value : Term -> Set where
-  unitValue : Value unit
-  varValue : {n : ℕ} -> Value (Var n)
-  absValue : {n : ℕ} -> {t : Term} -> Value t -> Value (Abs n t)
-  appValue : {t1 t2 : Term} -> Value t1 -> Value t2 -> Value (App t1 t2)
-  promoteValue : {t : Term} -> Value t -> Value (Promote t)
+  unitValue    : Value unit
+  varValue     : {n : ℕ} -> Value (Var n)
+  absValue     : {n : ℕ} -> (t : Term) -> Value (Abs n t)
+  promoteValue : (t : Term) -> Value (Promote t)
 
 -- substitution
 substitution : {Γ Γ1 Γ2 Γ3 : Context} {r : Semiring} {A B : Type} {t1 t2 : Term}
       -> Γ ⊢ t1 ∶ B
-      -> (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A 1r)) ,, (0r · Γ2)))
+      -> (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A r)) ,, (0r · Γ2)))
       -> Γ3 ⊢ t2 ∶ A
       -> ∃ (\t -> ((Γ1 ++ (r · Γ2)) ++ Γ3) ⊢ t ∶ B)
 
@@ -208,14 +213,14 @@ redux {Γ} {A} {.(App (Abs _ _) _)} (app (abs pos deriv) deriv₁) = {!!}
 
 redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) with redux deriv1
 redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 with redux deriv2
-redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₁ v2 = inj₁ (appValue v1 v2)
+redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₁ v2 = inj₁ {!!}
 
 redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₂ (t2' , deriv2') = inj₂ (App t1 t2' , app deriv1 deriv2')
 
 redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₂ (t1' , deriv1') = inj₂ (App t1' t2 , app deriv1' deriv2)
 
 redux {Γ} {.(FunTy _ _ _)} {(Abs n t)} (abs pos deriv) with redux deriv
-... | inj₁ v = inj₁ (absValue v)
+... | inj₁ v = inj₁ {!!}
 ... | inj₂ (t' , deriv') = inj₂ (Abs n t' , abs pos deriv')
 
 redux {Γ} {A} {unit} _ = inj₁ unitValue
@@ -223,6 +228,15 @@ redux {Γ} {A} {t} t1 = {!!}
 
 multiRedux : Term -> Term
 multiRedux = {!!}
+
+multiReduxProducesValues : {A : Type} {t : Term} -> Empty ⊢ t ∶ A -> Value (multiRedux t)
+multiReduxProducesValues {A} {t} typing = {!!}
+
+preservation : {Γ : Context} {A : Type} {t : Term}
+             -> Γ ⊢ t ∶ A
+             -> Γ ⊢ multiRedux t ∶ A
+preservation = {!!}
+
 
 valuesDontReduce : {t : Term} -> Value t -> multiRedux t ≡ t
 valuesDontReduce {t} v = {!!}
