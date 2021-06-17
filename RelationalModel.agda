@@ -26,7 +26,7 @@ data [_]v : Type -> Term -> Set where
              -> {x : ℕ}
              -> (e v : Term)
 
-             -> [ A ]v v -> [ B ]v (subs v x e)
+             -> [ A ]v v -> [ B ]v (syntacticSubst v x e)
 
              -> [ FunTy A r B ]v (Abs x e)
 
@@ -63,7 +63,7 @@ mutual
    -- But we have graded arrows here
 
     -> ⟦ Box r A ⟧v adv (Promote v1) (Promote v2)
-    -> ⟦ B ⟧e adv (subs v1 x e1) (subs v2 y e2))
+    -> ⟦ B ⟧e adv (syntacticSubst v1 x e1) (syntacticSubst v2 y e2))
 
   {- × (forall (vc : Term)
       -> [ A ]v vc -> [ B ]e {!a!} (subs vc x e1))
@@ -121,7 +121,7 @@ mutual
 multisubst' : ℕ -> List Term -> Term -> Term
 multisubst' n [] t' = t'
 multisubst' n (t ∷ ts) t' =
-  multisubst' (n + 1) ts (subs t n t')
+  multisubst' (n + 1) ts (syntacticSubst t n t')
 
 multisubst : List Term -> Term -> Term
 multisubst [] t' = t'
@@ -282,11 +282,11 @@ nonInterfSpecialised : {A : Type} {e : Term}
         -> Value v1
         -> Value v2
 
-        -> multiRedux (subs v1 0 e) ≡ v1'
-        -> multiRedux (subs v2 0 e) ≡ v2'
+        -> multiRedux (syntacticSubst v1 0 e) ≡ v1'
+        -> multiRedux (syntacticSubst v2 0 e) ≡ v2'
         -> v1' ≡ v2'
 
-nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 isvalv2 v1redux v2redux rewrite v1redux | v2redux =
+nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 isvalv2 v1redux v2redux =
  let
 --   ww = utheorem {Semiring} {ord} {Lo} {
 
@@ -300,16 +300,31 @@ nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 
                   (valuesDontReduce {Promote v2} (promoteValue v2))
                   (valuesDontReduce {Promote v2} (promoteValue v2))
 
-   (af , bf) = substitution {Ext Empty (Grad A Hi)} {Empty} {Empty} {Empty} {Hi} typing refl v1typing
-   (v1'' , prf1) = promoteValueLemma {multiRedux af} {Lo} {BoolTy} (preservation bf)   (multiReduxProducesValues bf)
+   substTy1 = substitution {Ext Empty (Grad A Hi)} {Empty} {Empty} {Empty} {Hi} typing refl v1typing
+   (v1'' , prf1) = promoteValueLemma {multiRedux (syntacticSubst v1 0 e)} {Lo} {BoolTy} (preservation {Empty} {Box Lo BoolTy} {syntacticSubst v1 0 e} substTy1)   (multiReduxProducesValues substTy1)
 
-   (af2 , bf2) = substitution {Ext Empty (Grad A Hi)} {Empty} {Empty} {Empty} {Hi} typing refl v2typing
-   (v2'' , prf2) = promoteValueLemma {multiRedux af2} {Lo} {BoolTy} (preservation bf2) (multiReduxProducesValues bf2)
+   substTy2  = substitution {Ext Empty (Grad A Hi)} {Empty} {Empty} {Empty} {Hi} typing refl v2typing
+   (v2'' , prf2) = promoteValueLemma {_} {Lo} {BoolTy} (preservation substTy2) (multiReduxProducesValues substTy2)
 
    res = biFundamentalTheorem {Ext Empty (Grad A Hi)} {e}
         {Box Lo BoolTy} typing {v1 ∷ []} {v2 ∷ []} Lo (((valv1 ,
-        valv2)) , tt) (Promote v1') (Promote v2') {!!} {!!}
- in boolBinaryValueInterpEquality v1' v2' res
+        valv2)) , tt) (Promote v1'') (Promote v2'') prf1 prf2
+
+--   res = biFundamentalTheorem {Ext Empty (Grad A Hi)} {e}
+--        {Box Lo BoolTy} typing {v1 ∷ []} {v2 ∷ []} Lo (((valv1 ,
+--        valv2)) , tt) (multiRedux (syntacticSubst v1 0 e)) (multiRedux (syntacticSubst v2 0 e)) refl refl
+
+
+   --aieou = boolBinaryValueInterpEquality (multiRedux (syntacticSubst v1 0 e)) (multiRedux (syntacticSubst v2 0 e)) {!!}
+
+   aieou = boolBinaryValueInterpEquality v1'' v2'' res
+
+   aieou' = trans (sym v1redux) prf1
+   oo = trans (sym v2redux) prf2
+
+   meagle = trans aieou' (cong Promote aieou)
+
+ in trans meagle (sym oo)
 
 
 nonInterf : {A : Type} {li l : Semiring} {e : Term}
@@ -322,7 +337,7 @@ nonInterf : {A : Type} {li l : Semiring} {e : Term}
         -> Value v1
         -> Value v2
 
-        -> multiRedux (subs v1 0 e) ≡ multiRedux (subs v2 0 e)
+        -> multiRedux (syntacticSubst v1 0 e) ≡ multiRedux (syntacticSubst v2 0 e)
 
 nonInterf {A} {li} {l} {e} rel typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
   let

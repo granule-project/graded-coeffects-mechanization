@@ -74,7 +74,7 @@ _++_ : Context -> Context -> Context
 Empty ++ G = G
 G ++ Empty = G
 (Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
-G' ++ G'' = ?
+G' ++ G'' = {!!}
 
 postulate
   absorptionContext : {Γ Γ' : Context} -> (0r · Γ) ++ Γ' ≡ Γ'
@@ -95,19 +95,19 @@ data Term : Set where
   vfalse : Term
   If : Term -> Term -> Term -> Term
 
-subs : Term -> ℕ -> Term -> Term
-subs t x (Var y) with x ≟ y
+syntacticSubst : Term -> ℕ -> Term -> Term
+syntacticSubst t x (Var y) with x ≟ y
 ... | yes p = t
 ... | no ¬p = Var y
-subs t x (App t1 t2) = App (subs t x t1) (subs t x t2)
-subs t x (Abs y t1) with x ≟ y
+syntacticSubst t x (App t1 t2) = App (syntacticSubst t x t1) (syntacticSubst t x t2)
+syntacticSubst t x (Abs y t1) with x ≟ y
 ... | yes p = Abs y t1
-... | no ¬p = Abs y (subs t x t1)
-subs t x (Promote t1) = Promote (subs t x t1)
-subs t x unit = unit
-subs t x vtrue = vtrue
-subs t x vfalse = vfalse
-subs t x (If t1 t2 t3) = If (subs t x t1) (subs t x t2) (subs t x t3)
+... | no ¬p = Abs y (syntacticSubst t x t1)
+syntacticSubst t x (Promote t1) = Promote (syntacticSubst t x t1)
+syntacticSubst t x unit = unit
+syntacticSubst t x vtrue = vtrue
+syntacticSubst t x vfalse = vfalse
+syntacticSubst t x (If t1 t2 t3) = If (syntacticSubst t x t1) (syntacticSubst t x t2) (syntacticSubst t x t3)
 
 
 
@@ -193,13 +193,13 @@ substitution : {Γ Γ1 Γ2 Γ3 : Context} {r : Semiring} {A B : Type} {t1 t2 : T
       -> Γ ⊢ t1 ∶ B
       -> (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A r)) ,, (0r · Γ2)))
       -> Γ3 ⊢ t2 ∶ A
-      -> ∃ (\t -> ((Γ1 ++ (r · Γ2)) ++ Γ3) ⊢ t ∶ B)
+      -> ((Γ1 ++ (r · Γ2)) ++ Γ3) ⊢ syntacticSubst t2 (length Γ1) t1 ∶ B
 
 --substitution {Γ1} {Γ2} {.1r} {A} {.A} {Var .0} {t2} (var (Here .Γ1 .A (Γ1' , allZeroesPrf))) substitee
 --  rewrite allZeroesPrf | absorptionContext {Γ1'} {1r · Γ2} | leftUnitContext {Γ2} =
 --    t2 , substitee
 
-substitution {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {t1} {t2} subs pos e = {!subs!}
+substitution {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {t1} {t2} substitutee pos e = {!subs!}
 
 
 -- constructive progress
