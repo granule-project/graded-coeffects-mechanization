@@ -19,14 +19,15 @@ open import Function
 -- # Unary interpretation of values in types
 -- (as an indexed data type)
 
+{-# NO_POSITIVITY_CHECK #-}
 data [_]v : Type -> Term -> Set where
   unitInterpV : [ Unit ]v unit
 
   funInterpV  : {A B : Type} {r : Semiring}
              -> {x : ℕ}
-             -> (e v : Term)
-
-             -> [ A ]v v -> [ B ]v (syntacticSubst v x e)
+             -> (e : Term)
+             -> (forall (v : Term) ->
+                  [ Box r A ]v (Promote v) -> [ B ]v (syntacticSubst v x e))
 
              -> [ FunTy A r B ]v (Abs x e)
 
@@ -161,31 +162,23 @@ lem : {adv : Semiring}
 lem {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
   mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
 
-{-
-ulem :  {A : Type}
-     -> {l : Semiring}
-     -> {v1 v2 : Term}
-     -> [ A ]v v1
-     -> [ A ]v v2
-     -> ⟦ Box Hi A ⟧v l (Promote v1) (Promote v2)
-ulem {FunTy A r A₁} {l} {v1} {v2} val1 val2 = {!v1 v2 val1 val2!}
-ulem {Unit} {l} {.unit} {.unit} unitInterpV unitInterpV = {!!}
-ulem {Box r A} {l} {v1} {v2} val1 val2 = {!!}
-ulem {BoolTy} {l} {vtrue} {vtrue} boolInterpTrue boolInterpTrue = {!!}
-ulem {BoolTy} {l} {vfalse} {vfalse} boolInterpFalse boolInterpFalse = {!!}
-ulem {BoolTy} {l} {vtrue} {vfalse} boolInterpTrue boolInterpFalse = {!!}
-
-ulem {BoolTy} {l} {v1} {v2} val1 val2 = {!v1 val1 v2 val2!}
--}
-
-boolToSet : Bool -> Set
-boolToSet true = ⊤
-boolToSet false = ⊥
-
 binaryImpliesUnary : {A : Type} {adv : Semiring}
   -> (v0 : Term)
   -> ⟦ A ⟧v adv v0 v0 -> [ A ]v v0
-binaryImpliesUnary = {!!}
+binaryImpliesUnary {FunTy A r B} {adv} (Abs x e) pre = funInterpV e funinterp
+  where
+    funinterp : (v1 : Term) → [ Box r A ]v (Promote v1) → [ B ]v (syntacticSubst v1 x e)
+    funinterp v1 argInterp  with r ≤ adv | argInterp
+    ... | false | boxInterpV .v1 ainterp = let prek = pre v1 v1 (ainterp , ainterp) (multiRedux (syntacticSubst v1 x e)) (multiRedux (syntacticSubst v1 x e)) refl refl in {!!}
+    ... | true  | c = {!!}
+
+
+binaryImpliesUnary {Unit} {adv} unit pre = unitInterpV
+binaryImpliesUnary {Box r A} {adv} (Promote v0) pre with r ≤ adv
+... | false = boxInterpV v0 (proj₁ pre)
+... | true  = boxInterpV v0 (binaryImpliesUnary v0 pre)
+binaryImpliesUnary {BoolTy} {adv} vtrue pre = boolInterpTrue
+binaryImpliesUnary {BoolTy} {adv} vfalse pre = boolInterpFalse
 
 boolBinaryValueInterpEquality : (v1 v2 : Term) -> ⟦ BoolTy ⟧v Lo v1 v2 -> v1 ≡ v2
 boolBinaryValueInterpEquality (Var x) (Var x₁) ()
