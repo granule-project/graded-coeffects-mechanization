@@ -274,17 +274,14 @@ nonInterfSpecialised : {A : Type} {e : Term}
         -> Ext Empty (Grad A Hi) ⊢ e ∶ Box Lo BoolTy
 
         -> (v1 v2 : Term)
-        -> {v1' v2' : Term}
         -> Empty ⊢ v1 ∶ A
         -> Empty ⊢ v2 ∶ A
         -> Value v1
         -> Value v2
 
-        -> multiRedux (syntacticSubst v1 0 e) ≡ v1'
-        -> multiRedux (syntacticSubst v2 0 e) ≡ v2'
-        -> v1' ≡ v2'
+        -> multiRedux (syntacticSubst v1 0 e) ≡ multiRedux (syntacticSubst v2 0 e)
 
-nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 isvalv2 v1redux v2redux rewrite sym v1redux | sym v2redux =
+nonInterfSpecialised {A} {e} typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
  let
    -- Apply fundamental binary theorem to v1
    (valv1 , valv1') = biFundamentalTheorem {Empty} {Promote v1} {Box Hi A}
