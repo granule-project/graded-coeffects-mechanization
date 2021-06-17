@@ -269,9 +269,7 @@ promoteValueLemma (var {A} {.Empty} {Γ1} {Γ2} pos) varValue = ⊥-elim (unequa
     unequal {Ext G x} {Ext G' x₁} {A} ()
 promoteValueLemma typing (promoteValue t) = t , refl
 
-
 -- Non-interference
-
 nonInterfSpecialised : {A : Type} {e : Term}
         -> Ext Empty (Grad A Hi) ⊢ e ∶ Box Lo BoolTy
 
@@ -286,45 +284,40 @@ nonInterfSpecialised : {A : Type} {e : Term}
         -> multiRedux (syntacticSubst v2 0 e) ≡ v2'
         -> v1' ≡ v2'
 
-nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 isvalv2 v1redux v2redux =
+nonInterfSpecialised {A} {e} typing v1 v2 {v1'} {v2'} v1typing v2typing isvalv1 isvalv2 v1redux v2redux rewrite sym v1redux | sym v2redux =
  let
---   ww = utheorem {Semiring} {ord} {Lo} {
-
+   -- Apply fundamental binary theorem to v1
    (valv1 , valv1') = biFundamentalTheorem {Empty} {Promote v1} {Box Hi A}
                   (pr v1typing) {[]} {[]} Lo tt (Promote v1) (Promote v1)
                   (valuesDontReduce {Promote v1} (promoteValue v1))
                   (valuesDontReduce {Promote v1} (promoteValue v1))
 
+   -- Apply fundamental binary theorem to v2
    (valv2 , valv2') = biFundamentalTheorem {Empty} {Promote v2} {Box Hi A}
                   (pr v2typing)  {[]} {[]} Lo tt (Promote v2) (Promote v2)
                   (valuesDontReduce {Promote v2} (promoteValue v2))
                   (valuesDontReduce {Promote v2} (promoteValue v2))
 
+   -- Show that substituting v1 and evaluating yields a value
+   -- and since it is a graded modal type then this value is necessarily
+   -- of the form Promote v1''
    substTy1 = substitution {Ext Empty (Grad A Hi)} {Empty} {Empty} {Empty} {Hi} typing refl v1typing
-   (v1'' , prf1) = promoteValueLemma {multiRedux (syntacticSubst v1 0 e)} {Lo} {BoolTy} (preservation {Empty} {Box Lo BoolTy} {syntacticSubst v1 0 e} substTy1)   (multiReduxProducesValues substTy1)
+   (v1'' , prf1) = promoteValueLemma {_} {Lo} {BoolTy} (preservation {Empty} {Box Lo BoolTy} {syntacticSubst v1 0 e} substTy1) (multiReduxProducesValues substTy1)
 
+   -- ... same as above but for v2 ... leading to result of Promote v2''
    substTy2  = substitution {Ext Empty (Grad A Hi)} {Empty} {Empty} {Empty} {Hi} typing refl v2typing
    (v2'' , prf2) = promoteValueLemma {_} {Lo} {BoolTy} (preservation substTy2) (multiReduxProducesValues substTy2)
 
-   res = biFundamentalTheorem {Ext Empty (Grad A Hi)} {e}
-        {Box Lo BoolTy} typing {v1 ∷ []} {v2 ∷ []} Lo (((valv1 ,
-        valv2)) , tt) (Promote v1'') (Promote v2'') prf1 prf2
+   -- Apply fundamental binary theorem on the result with the values coming from syntacitcally substituting
+   -- then evaluating
+   res = biFundamentalTheorem {Ext Empty (Grad A Hi)} {e} {Box Lo BoolTy} typing {v1 ∷ []} {v2 ∷ []} Lo
+          (((valv1 , valv2)) , tt) (Promote v1'') (Promote v2'') prf1 prf2
 
---   res = biFundamentalTheorem {Ext Empty (Grad A Hi)} {e}
---        {Box Lo BoolTy} typing {v1 ∷ []} {v2 ∷ []} Lo (((valv1 ,
---        valv2)) , tt) (multiRedux (syntacticSubst v1 0 e)) (multiRedux (syntacticSubst v2 0 e)) refl refl
+   -- Boolean typed (low) values are equal inside the binary interepration
+   boolTyEq = boolBinaryValueInterpEquality v1'' v2'' res
 
-
-   --aieou = boolBinaryValueInterpEquality (multiRedux (syntacticSubst v1 0 e)) (multiRedux (syntacticSubst v2 0 e)) {!!}
-
-   aieou = boolBinaryValueInterpEquality v1'' v2'' res
-
-   aieou' = trans (sym v1redux) prf1
-   oo = trans (sym v2redux) prf2
-
-   meagle = trans aieou' (cong Promote aieou)
-
- in trans meagle (sym oo)
+    -- Plug together the equalities
+ in trans (trans prf1 (cong Promote boolTyEq)) (sym prf2)
 
 
 nonInterf : {A : Type} {li l : Semiring} {e : Term}
