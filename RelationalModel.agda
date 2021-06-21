@@ -41,7 +41,7 @@ mutual
 
                -> [ FunTy A r B ]v (Abs x e)
 
-  boxInterpV  : {A : Type} {r : Semiring}
+    boxInterpV  : {A : Type} {r : Semiring}
              -> (e : Term)
              -> [ A ]v e -> [ Box r A ]v (Promote e)
 
@@ -193,10 +193,16 @@ binaryImpliesUnary : {A : Type} {adv : Semiring}
   -> ⟦ A ⟧v adv v0 v0 -> [ A ]v v0
 binaryImpliesUnary {FunTy A r B} {adv} (Abs x e) pre = funInterpV e funinterp
   where
-    funinterp : (v1 : Term) → [ Box r A ]v (Promote v1) → [ B ]v (syntacticSubst v1 x e)
-    funinterp v1 argInterp  with r ≤ adv | argInterp
-    ... | false | boxInterpV .v1 ainterp = let prek = pre v1 v1 (ainterp , ainterp) (multiRedux (syntacticSubst v1 x e)) (multiRedux (syntacticSubst v1 x e)) refl refl in {!!}
-    ... | true  | c = {!!}
+    funinterp : (v1 : Term) → [ Box r A ]v (Promote v1) → [ B ]e (syntacticSubst v1 x e)
+    funinterp v1 argInterp vee prf with r ≤ adv | argInterp
+    ... | false | boxInterpV .v1 ainterp rewrite sym prf =
+        let prek = pre v1 v1 (ainterp , ainterp) (multiRedux (syntacticSubst v1 x e)) (multiRedux (syntacticSubst v1 x e)) refl refl
+        in  -- recurse
+            binaryImpliesUnary {B} {adv} (multiRedux (syntacticSubst v1 x e)) prek
+    ... | true | boxInterpV .v1 ainterp rewrite sym prf =
+        let prek = pre v1 v1 {!!} (multiRedux (syntacticSubst v1 x e)) (multiRedux (syntacticSubst v1 x e)) refl refl
+        in  -- recurse
+            binaryImpliesUnary {B} {adv} (multiRedux (syntacticSubst v1 x e)) prek
 
 
 binaryImpliesUnary {Unit} {adv} unit pre = unitInterpV
