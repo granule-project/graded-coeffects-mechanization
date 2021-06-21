@@ -11,39 +11,49 @@ open import Data.Bool hiding (_≤_)
 open import Data.List
 open import Data.Nat hiding (_≤_)
 open import Function
+open import Data.Maybe
 
 -- Based on Vineet and Deepak's paper model but without
 -- heaps (as we don't have references) and without step indexing
 -- (as we aren't considering recursion here).
 
+-- # Helpers
+unequalContexts : {G G' : Context} {A : Assumption} -> Empty ≡ Ext G A ,, G' -> ⊥
+unequalContexts {Empty} {Empty} {A} ()
+unequalContexts {Empty} {Ext G' x} {A} ()
+unequalContexts {Ext G x} {Empty} {A} ()
+unequalContexts {Ext G x} {Ext G' x₁} {A} ()
+
 -- # Unary interpretation of values in types
 -- (as an indexed data type)
 
-{-# NO_POSITIVITY_CHECK #-}
-data [_]v : Type -> Term -> Set where
-  unitInterpV : [ Unit ]v unit
+mutual
 
-  funInterpV  : {A B : Type} {r : Semiring}
-             -> {x : ℕ}
-             -> (e : Term)
-             -> (forall (v : Term) ->
-                  [ Box r A ]v (Promote v) -> [ B ]v (syntacticSubst v x e))
+  {-# NO_POSITIVITY_CHECK #-}
+  data [_]v : Type -> Term -> Set where
+    unitInterpV : [ Unit ]v unit
 
-             -> [ FunTy A r B ]v (Abs x e)
+    funInterpV  : {A B : Type} {r : Semiring}
+               -> {x : ℕ}
+               -> (e : Term)
+               -> (forall (v : Term) ->
+                    [ Box r A ]v (Promote v) -> [ B ]e (syntacticSubst v x e))
+
+               -> [ FunTy A r B ]v (Abs x e)
 
   boxInterpV  : {A : Type} {r : Semiring}
              -> (e : Term)
              -> [ A ]v e -> [ Box r A ]v (Promote e)
 
-  boolInterpTrue  : [ BoolTy ]v vtrue
-  boolInterpFalse : [ BoolTy ]v vfalse
+    boolInterpTrue  : [ BoolTy ]v vtrue
+    boolInterpFalse : [ BoolTy ]v vfalse
 
--- # Unary interpretation of expressions in types
+  -- # Unary interpretation of expressions in types
 
-[_]e : Type -> Term -> Set
-[ A ]e t =
-  forall (v : Term)
-  -> multiRedux t ≡ v -> [ A ]v v
+  [_]e : Type -> Term -> Set
+  [ A ]e t =
+    forall (v : Term)
+    -> multiRedux t ≡ v -> [ A ]v v
 
 -- # Relational interpretation of types
 
@@ -66,13 +76,7 @@ mutual
     -> ⟦ Box r A ⟧v adv (Promote v1) (Promote v2)
     -> ⟦ B ⟧e adv (syntacticSubst v1 x e1) (syntacticSubst v2 y e2))
 
-  {- × (forall (vc : Term)
-      -> [ A ]v vc -> [ B ]e {!a!} (subs vc x e1))
-
-   × (forall (vc : Term)
-      -> [ A ]v vc -> [ B ]e {!!} (subs vc y e2))
-  -}
-
+  -- Note:
   -- pre Hi Lo   false
   -- Lo ≤ Hi means adversary is lo, box is hi, so cannot observe the
   -- equality
@@ -111,11 +115,11 @@ mutual
 ⟦ Empty   ⟧Γ adv _ _  = ⊤
 ⟦ Ext _ _ ⟧Γ adv _ [] = ⊥
 ⟦ Ext _ _ ⟧Γ adv [] _ = ⊥
-⟦ Ext g (Grad A r) ⟧Γ adv (v1 ∷ vs1) (v2 ∷ vs2) =
+⟦ Ext g (Grad A r) ⟧Γ adv (t1 ∷ ts1) (t2 ∷ ts2) =
 
-   ⟦ Box r A ⟧v adv (Promote v1) (Promote v2)
+   ⟦ Box r A ⟧v adv (Promote t1) (Promote t2)
    ×
-   ⟦ g ⟧Γ adv vs1 vs2
+   ⟦ g ⟧Γ adv ts1 ts2
 
 -----------------------------
 
@@ -136,7 +140,29 @@ utheorem : {γ : List Term}
         -> Γ ⊢ e ∶ τ
         -> [ Γ ]Γ γ
         -> [ τ ]e (multisubst γ e)
-utheorem = {!!}
+utheorem {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {_} {.Γ} {Γ1} {Γ2} pos) context v substi
+ with γ | Γ | Γlength Γ1
+... | _ | Empty | _ = ⊥-elim (unequalContexts {Hi · Γ1} {Hi · Γ2} {Grad τ Lo} pos)
+... | x ∷ xs | Ext g (Grad A r) | zero = let z = subst (\h -> [ h ]v x) inja (proj₁ context) in {!!}
+  where
+    inja : A ≡ τ
+    inja = injGradTy (injExt2 pos)
+
+
+... | x ∷ a | Ext b x₁ | suc c = {!!}
+
+{- ... | [] | Empty = ⊥-elim (unequalContexts {Hi · Γ1} {Hi · Γ2} {Grad τ Lo} pos)
+... | x ∷ x₁ | Empty = ⊥-elim (unequalContexts pos)
+... | x ∷ xs | Ext y g with 0 Data.Nat.≟ GrCore.length Γ1
+-}
+
+utheorem {γ} {Γ} {.(App _ _)} {τ} (app {Γ} {Γ1} {Γ2} {r} typing typing₁) context = {!!}
+utheorem {γ} {Γ} {.(Abs (Γlength _ + 1) _)} {.(FunTy _ _ _)} (abs pos typing) context = {!!}
+utheorem {γ} {Γ} {.(Promote _)} {.(Box _ _)} (pr typing) context = {!!}
+utheorem {γ} {.(Hi · _)} {.unit} {.Unit} unitConstr context = {!!}
+utheorem {γ} {.(Hi · _)} {.vtrue} {.BoolTy} trueConstr context = {!!}
+utheorem {γ} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr context = {!!}
+utheorem {γ} {Γ} {.(If _ _ _)} {τ} (if typing typing₁ typing₂) context = {!!}
 
 -------------------------------
 -- Binary fundamental theorem
@@ -246,6 +272,12 @@ boolBinaryValueInterpEquality (If v1 v2 v3) vtrue ()
 boolBinaryValueInterpEquality (If v1 v2 v3) vfalse ()
 boolBinaryValueInterpEquality (If v1 v2 v3) (If v4 v5 v6) ()
 
+boolBinaryExprInterpEquality : (v1 v2 : Term)
+                              -> ⟦ BoolTy ⟧e Lo v1 v2
+                              -> multiRedux v1 ≡ multiRedux v2
+boolBinaryExprInterpEquality t1 t2 prf = boolBinaryValueInterpEquality (multiRedux t1) (multiRedux t2) ((prf (multiRedux t1) (multiRedux t2) refl refl))
+--
+
 -- Value lemma for promotion
 promoteValueLemma : {v : Term} {r : Semiring} {A : Type}
 
@@ -253,13 +285,8 @@ promoteValueLemma : {v : Term} {r : Semiring} {A : Type}
   -> Value v
   -> Σ Term (\v' -> v ≡ Promote v')
 
-promoteValueLemma (var {A} {.Empty} {Γ1} {Γ2} pos) varValue = ⊥-elim (unequal pos)
+promoteValueLemma (var {A} {.Empty} {Γ1} {Γ2} pos) varValue = ⊥-elim (unequalContexts pos)
   where
-    unequal : {G G' : Context} {A : Assumption} -> Empty ≡ Ext G A ,, G' -> ⊥
-    unequal {Empty} {Empty} {A} ()
-    unequal {Empty} {Ext G' x} {A} ()
-    unequal {Ext G x} {Empty} {A} ()
-    unequal {Ext G x} {Ext G' x₁} {A} ()
 promoteValueLemma typing (promoteValue t) = t , refl
 
 -- Non-interference
