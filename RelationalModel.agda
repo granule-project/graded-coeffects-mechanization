@@ -107,9 +107,8 @@ mutual
 -- unary
 [_]Γ : Context -> List Term -> Set
 [ Empty            ]Γ _ = ⊤
-[ Ext _ _          ]Γ [] = ⊥
-[ Ext g (Grad A r) ]Γ (v ∷ vs) =
-  ([ A ]e v) × ([ g ]Γ vs)
+[ Ext g (Grad A r) ]Γ (Promote v ∷ vs) = ([ A ]e v) × ([ g ]Γ vs)
+[ Ext _ _          ]Γ _ = ⊥
 
 -- binary
 ⟦_⟧Γ : Context -> (Adv : Semiring) -> List Term -> List Term -> Set
@@ -165,7 +164,34 @@ utheorem {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {_} {.Γ} {Γ1} {Γ2} pos) 
 -}
 
 utheorem {γ} {Γ} {.(App _ _)} {τ} (app {Γ} {Γ1} {Γ2} {r} typing typing₁) context = {!!}
-utheorem {γ} {Γ} {.(Abs (Γlength _ + 1) _)} {.(FunTy _ _ _)} (abs pos typing) context = {!!}
+
+utheorem {γ} {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {Γ} {Γ1} {Γ2} {Γ'} pos typing {rel}) context v substi rewrite pos | rel =
+  let
+    ih = (\v -> \av -> utheorem {Promote v ∷ γ} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} typing (av , context))
+  in
+    subst (\h -> [ FunTy A r B ]v h) thm (funInterpV (multisubst γ t) body)
+ where
+
+
+   lem : {n : ℕ} {γ : List Term} {x : ℕ} {t : Term} -> multisubst' n γ (Abs x t) ≡ Abs x (multisubst' n γ t)
+   lem = {!!}
+
+   x = (Γlength Γ1 + 1)
+
+
+   thm : Abs x (multisubst γ t) ≡ v
+   thm =
+     let
+       qr = cong multiRedux (lem {0} {γ} {x} {t})
+       qr' = trans qr (valuesDontReduce {Abs x (multisubst γ t)} (absValue {x} (multisubst γ t)))
+     in sym (trans (sym substi) qr')
+
+   body : (v' : Term) → [ Box r A ]e (Promote v') → [ B ]e (syntacticSubst v' x (multisubst γ t))
+   body v' arg v1 prf with arg (Promote v') (valuesDontReduce (promoteValue v'))
+   ... | boxInterpV .v' arg' =
+     let
+      ih = utheorem {Promote v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} typing ( arg'  , context)
+     in {!!}
 
 
 utheorem {γ} {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typing {prf}) context v substi rewrite prf =
@@ -176,22 +202,17 @@ utheorem {γ} {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typing {prf}) context v
   where
     underBox : {r : Semiring} {γ : List Term} {Γ : Context} -> [ r · Γ ]Γ γ -> [ Γ ]Γ γ
     underBox {r} {_} {Empty}   g = tt
-    underBox {r} {[]} {Ext Γ x} g with r · (Ext Γ x)
-    ... | Empty = {!!}
-    underBox {r} {x₁ ∷ γ} {Ext Γ x} g = {!!}
+    underBox {r} {Promote x₁ ∷ γ} {Ext Γ (Grad A s)} (ass , g) = ass , underBox {r} {γ} {Γ} g
+    underBox {r} {_} {Ext Γ (Grad A r₁)} g = {!!}
 
     lem : {n : ℕ} {γ : List Term} {t : Term} -> multisubst' n γ (Promote t) ≡ Promote (multisubst' n γ t)
     lem {n} {[]} {t} = refl
     lem {n} {x ∷ γ} {t} = lem {n + 1} {γ} {syntacticSubst x n t}
 
-    mr : {t : Term} -> multiRedux (Promote t) ≡ Promote t
-    mr {t} = refl
-
     thm : Promote (multisubst γ t) ≡ v
     thm =
-       let (rel) = lem {0} {γ} {t}
-           qr = cong multiRedux rel
-           qr' = trans qr (mr {(multisubst γ t)})
+       let qr = cong multiRedux (lem {0} {γ} {t})
+           qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym substi) qr')
 
 utheorem {γ} {.(Hi · _)} {.unit} {.Unit} unitConstr context v substi =
