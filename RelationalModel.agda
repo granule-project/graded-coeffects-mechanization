@@ -334,8 +334,9 @@ promoteValueLemma : {v : Term} {r : Semiring} {A : Type}
   -> Value v
   -> Σ Term (\v' -> v ≡ Promote v')
 
-promoteValueLemma (var {A} {.Empty} {Γ1} {Γ2} pos) varValue = ⊥-elim (unequalContexts pos)
-  where
+promoteValueLemma {_} {r} (var {A} {.Empty} {Γ1} {Γ2} pos) varValue =
+  ⊥-elim (unequalContexts {Hi · Γ1} {Hi · Γ2} {Grad A Lo} pos)
+
 promoteValueLemma typing (promoteValue t) = t , refl
 
 -- Non-interference
@@ -348,7 +349,7 @@ nonInterfSpecialised : {A : Type} {e : Term}
         -> Value v1
         -> Value v2
 
-        -> multiRedux (syntacticSubst v1 0 e) ≡ multiRedux (syntacticSubst v2 0 e)
+        -> multiRedux (syntacticSubst v1 0 e) == multiRedux (syntacticSubst v2 0 e)
 
 nonInterfSpecialised {A} {e} typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
  let
@@ -380,11 +381,14 @@ nonInterfSpecialised {A} {e} typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
           (inner valv1' valv2' , tt) (Promote v1'') (Promote v2'') prf1 prf2
 
    -- Boolean typed (low) values are equal inside the binary interepration
-   --boolTyEq = boolBinaryValueInterpEquality v1'' v2'' {!!}
    boolTyEq = boolBinaryExprInterpEquality v1'' v2'' res
 
-    -- Plug together the equalities
- in trans (trans prf1 (cong Promote {!boolTyEq!})) (sym prf2)
+   -- Plug together the equalities
+     -- Promote
+   eq = PromoteEq {v1''} {v2''} (embedReduxCong {v1''} {v2''} boolTyEq)
+   eq2 = transFullBetaEq (embedEq prf1) eq
+
+ in transFullBetaEq eq2 (embedEq (sym prf2))
    where
      inner : [ A ]e v1 -> [ A ]e v2 -> ⟦ Box Hi A ⟧e Lo (Promote v1) (Promote v2)
      inner av1 av2 v3 v4 v3redux v4redux

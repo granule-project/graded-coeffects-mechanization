@@ -284,3 +284,36 @@ preservation = {!!}
 
 valuesDontReduce : {t : Term} -> Value t -> multiRedux t ≡ t
 valuesDontReduce {t} v = {!!}
+
+data FullBetaEq : Term -> Term -> Set where
+  VarEq     : {x : ℕ} -> FullBetaEq (Var x) (Var x)
+  AppEq     : {t1 t1' t2 t2' : Term} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (App t1 t2) (App t1' t2')
+  AbsEq     : {x : ℕ} {t1 t2 : Term} -> FullBetaEq t1 t2 -> FullBetaEq (Abs x t1) (Abs x t2)
+  UnitEq    : FullBetaEq unit unit
+  PromoteEq : {t1 t2 : Term} -> FullBetaEq t1 t2 -> FullBetaEq (Promote t1) (Promote t2)
+  VTrue     : FullBetaEq vtrue vtrue
+  VFalse    : FullBetaEq vfalse vfalse
+  IfEq      : {t t' t1 t1' t2 t2' : Term} -> FullBetaEq t t' -> FullBetaEq t1 t1' -> FullBetaEq t2 t2'
+               -> FullBetaEq (If t t1 t2) (If t' t1' t2')
+  BetaEq    : {x : ℕ} {t1 t2 : Term} -> FullBetaEq (App (Abs x t1) t2) (syntacticSubst t1 x t2)
+  EmbedRedux : {t : Term} -> FullBetaEq (multiRedux t) t
+
+
+_==_ : Term -> Term -> Set
+t == t' = FullBetaEq t t'
+
+embedReduxCong : {t1 t2 : Term} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
+embedReduxCong = {!!}
+
+embedEq : {t1 t2 : Term} -> t1 ≡ t2 -> FullBetaEq t1 t2
+embedEq {Var x} {Var .x} refl = VarEq
+embedEq {App t1 t2} {App .t1 .t2} refl = AppEq (embedEq {t1} {t1} refl) (embedEq {t2} {t2} refl)
+embedEq {Abs x t1} {Abs x₁ t2} prf = {!!}
+embedEq {unit} {unit} refl = UnitEq
+embedEq {Promote t1} {Promote .t1} refl = PromoteEq (embedEq {t1} {t1} refl)
+embedEq {vtrue} {vtrue} refl = VTrue
+embedEq {vfalse} {vfalse} refl = VFalse
+embedEq {If t1 t2 t3} {If .t1 .t2 .t3} refl = IfEq (embedEq {t1} {t1} refl) (embedEq {t2} {t2} refl) (embedEq {t3} {t3} refl)
+
+transFullBetaEq : {t1 t2 t3 : Term} -> t1 == t2 -> t2 == t3 -> t1 == t3
+transFullBetaEq = {!!}
