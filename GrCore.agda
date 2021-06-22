@@ -96,7 +96,7 @@ postulate
 
 Γlength : Context -> ℕ
 Γlength Empty = 0
-Γlength (Ext g _) = 1 + Γlength g
+Γlength (Ext g a) = 1 + Γlength g
 
 data Term : Set where
   Var : ℕ -> Term

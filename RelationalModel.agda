@@ -130,7 +130,6 @@ multisubst' n (t ∷ ts) t' =
   multisubst' (n + 1) ts (syntacticSubst t n t')
 
 multisubst : List Term -> Term -> Term
-multisubst [] t' = t'
 multisubst ts t' = multisubst' 0 ts t'
 
 -------------------------------
@@ -167,10 +166,68 @@ utheorem {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {_} {.Γ} {Γ1} {Γ2} pos) 
 
 utheorem {γ} {Γ} {.(App _ _)} {τ} (app {Γ} {Γ1} {Γ2} {r} typing typing₁) context = {!!}
 utheorem {γ} {Γ} {.(Abs (Γlength _ + 1) _)} {.(FunTy _ _ _)} (abs pos typing) context = {!!}
-utheorem {γ} {Γ} {.(Promote _)} {.(Box _ _)} (pr typing) context = {!!}
-utheorem {γ} {.(Hi · _)} {.unit} {.Unit} unitConstr context = {!!}
-utheorem {γ} {.(Hi · _)} {.vtrue} {.BoolTy} trueConstr context = {!!}
-utheorem {γ} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr context = {!!}
+
+
+utheorem {γ} {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typing {prf}) context v substi rewrite prf =
+   let
+     ih = utheorem {γ} {Γ} {t} {A} typing (underBox context)
+   in
+     subst (\h -> [ Box r A ]v h) thm (boxInterpV (multisubst γ t) ih)
+  where
+    underBox : {r : Semiring} {γ : List Term} {Γ : Context} -> [ r · Γ ]Γ γ -> [ Γ ]Γ γ
+    underBox {r} {_} {Empty}   g = tt
+    underBox {r} {[]} {Ext Γ x} g with r · (Ext Γ x)
+    ... | Empty = {!!}
+    underBox {r} {x₁ ∷ γ} {Ext Γ x} g = {!!}
+
+    lem : {n : ℕ} {γ : List Term} {t : Term} -> multisubst' n γ (Promote t) ≡ Promote (multisubst' n γ t)
+    lem {n} {[]} {t} = refl
+    lem {n} {x ∷ γ} {t} = lem {n + 1} {γ} {syntacticSubst x n t}
+
+    mr : {t : Term} -> multiRedux (Promote t) ≡ Promote t
+    mr {t} = refl
+
+    thm : Promote (multisubst γ t) ≡ v
+    thm =
+       let (rel) = lem {0} {γ} {t}
+           qr = cong multiRedux rel
+           qr' = trans qr (mr {(multisubst γ t)})
+       in sym (trans (sym substi) qr')
+
+utheorem {γ} {.(Hi · _)} {.unit} {.Unit} unitConstr context v substi =
+  subst (\h -> [ Unit ]v h) thm unitInterpV
+
+  where
+    lem : {γ : List Term} {n : ℕ} -> multisubst' n γ unit ≡ unit
+    lem {[]}    {n} = refl
+    lem {x ∷ g} {n} = lem {g} {n + 1}
+
+    thm : unit ≡ v
+    thm = trans (sym (cong multiRedux (lem {γ} {0}))) substi
+
+utheorem {γ} {.(Hi · _)} {.vtrue} {.BoolTy} trueConstr context v substi =
+ subst (\h -> [ BoolTy ]v h) thm boolInterpTrue
+
+  where
+    lem : {γ : List Term} {n : ℕ} -> multisubst' n γ vtrue ≡ vtrue
+    lem {[]}    {n} = refl
+    lem {x ∷ g} {n} = lem {g} {n + 1}
+
+    thm : vtrue ≡ v
+    thm = trans (sym (cong multiRedux (lem {γ} {0}))) substi
+
+
+utheorem {γ} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr context v substi =
+ subst (\h -> [ BoolTy ]v h) thm boolInterpFalse
+
+  where
+    lem : {γ : List Term} {n : ℕ} -> multisubst' n γ vfalse ≡ vfalse
+    lem {[]}    {n} = refl
+    lem {x ∷ g} {n} = lem {g} {n + 1}
+
+    thm : vfalse ≡ v
+    thm = trans (sym (cong multiRedux (lem {γ} {0}))) substi
+
 utheorem {γ} {Γ} {.(If _ _ _)} {τ} (if typing typing₁ typing₂) context = {!!}
 
 -------------------------------
@@ -185,7 +242,16 @@ biFundamentalTheorem :
         -> ⟦ Γ ⟧Γ adv γ1 γ2
         -> ⟦ τ ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
 
-biFundamentalTheorem = {!!}
+biFundamentalTheorem {Γ} {.(Var (Γlength _))} {τ} (var pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {Γ} {.(App _ _)} {τ} (app typ typ₁) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {Γ} {.(Abs (Γlength _ + 1) _)} {.(FunTy _ _ _)} (abs pos typ) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {Γ} {.(Promote _)} {.(Box _ _)} (pr typ) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+
+biFundamentalTheorem {.(Hi · _)} {.unit} {.Unit} unitConstr {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+
+biFundamentalTheorem {.(Hi · _)} {.vtrue} {.BoolTy} trueConstr {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {.(_ GrCore.++ _)} {.(If _ _ _)} {τ} (if typ typ₁ typ₂) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
 lem : {adv : Semiring}
       {A : Type} {v1 v2 : Term}
@@ -197,63 +263,6 @@ lem : {adv : Semiring}
 lem {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
   mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
 
-unaryIn : {A : Type} {adv : Semiring} (v0 v1 v2 : Term)
-        -> multiRedux v1 ≡ v0
-        -> multiRedux v2 ≡ v0
-        -> [ A ]v v1
-        -> [ A ]v v2
-        -> ⟦ A ⟧v adv v1 v2
-unaryIn {FunTy A r A₁} {adv} v0 .(Abs _ e) .(Abs _ e₁) v1redux v2redux (funInterpV e x) (funInterpV e₁ x₁) = {!!}
-unaryIn {Unit} {adv} v0 .unit .unit v1redux v2redux unitInterpV unitInterpV = tt
-unaryIn {Box r A} {adv} v0 .(Promote e1) .(Promote e2) v1redux v2redux (boxInterpV e1 interp1) (boxInterpV e2 interp2) with r ≤ adv
-... | false = (interp1 , interp2)
-... | true = {!!}
-unaryIn {BoolTy} {adv} v0 .vtrue .vtrue v1redux v2redux boolInterpTrue boolInterpTrue = tt
-unaryIn {BoolTy} {adv} v0 .vtrue .vfalse v1redux v2redux boolInterpTrue boolInterpFalse with trans v2redux (sym v1redux)
-... | ()
-unaryIn {BoolTy} {adv} v0 .vfalse .vtrue v1redux v2redux boolInterpFalse boolInterpTrue with trans v1redux (sym v2redux)
-... | ()
-unaryIn {BoolTy} {adv} v0 .vfalse .vfalse v1redux v2redux boolInterpFalse boolInterpFalse = tt
-
-{-  unaryImpliesBinary : {A : Type} {adv : Semiring}
-    -> (v0 : Term)
-    -> [ A ]v v0 -> ⟦ A ⟧v adv v0 v0
-  unaryImpliesBinary {FunTy A r A₁} {adv} (Abs x v0) (funInterpV .v0  x₁) v1 v2 rel v1' v2' v1redux v2redux with r ≤ adv
-  ... | false = {!\!}
-  ... | true = {!!}
-  unaryImpliesBinary {Unit} {adv} unit pre = tt
-  unaryImpliesBinary {Box r A} {adv} (Promote v0) (boxInterpV .v0 pre) with r ≤ adv
-  ... | false = pre , pre
-  ... | true = unaryImpliesBinary v0 pre
-  unaryImpliesBinary {BoolTy} {adv} vtrue pre = tt
-  unaryImpliesBinary {BoolTy} {adv} vfalse pre = tt
-
--}
-
-mutual
-
-  binaryImpliesUnary : {A : Type} {adv : Semiring}
-    -> (v0 : Term)
-    -> ⟦ A ⟧v adv v0 v0 -> [ A ]v v0
-  binaryImpliesUnary {FunTy A r B} {adv} (Abs x e) pre = funInterpV e funinterp
-    where
-      funinterp : (v1 : Term) → [ Box r A ]e (Promote v1) → [ B ]e (syntacticSubst v1 x e)
-      funinterp v1 argInterp vee prf with r ≤ adv
-      ... | zxz = {!!}
-
-
-  binaryImpliesUnary {Unit} {adv} unit pre = unitInterpV
-  binaryImpliesUnary {Box r A} {adv} (Promote v0) pre with r ≤ adv
-  ... | false = boxInterpV v0 (proj₁ pre) -- (proj₁ pre)
-  ... | true  = boxInterpV v0 ((binaryImpliesUnaryExp v0 pre)) -- (binaryImpliesUnary v0 pre)
-  binaryImpliesUnary {BoolTy} {adv} vtrue pre = boolInterpTrue
-  binaryImpliesUnary {BoolTy} {adv} vfalse pre = boolInterpFalse
-
-
-  binaryImpliesUnaryExp : {A : Type} {adv : Semiring}
-     -> (v0 : Term)
-     -> ⟦ A ⟧e adv v0 v0 -> [ A ]e v0
-  binaryImpliesUnaryExp {A} {adv} v0 pre v0' redux = binaryImpliesUnary {A} {adv} v0' (pre v0' v0' redux redux)
 
 boolBinaryValueInterpEquality : (v1 v2 : Term) -> ⟦ BoolTy ⟧v Lo v1 v2 -> v1 ≡ v2
 boolBinaryValueInterpEquality (Var x) (Var x₁) ()
