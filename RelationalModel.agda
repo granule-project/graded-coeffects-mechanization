@@ -3,15 +3,16 @@
 module RelationalModel where
 
 open import GrCore
-open import Data.Unit hiding (_≤_)
+open import Data.Unit hiding (_≤_; _≟_)
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
 open import Data.Product
-open import Data.Bool hiding (_≤_)
+open import Data.Bool hiding (_≤_; _≟_)
 open import Data.List
 open import Data.Nat hiding (_≤_)
 open import Function
 open import Data.Maybe
+open import Relation.Nullary
 
 -- Based on Vineet and Deepak's paper model but without
 -- heaps (as we don't have references) and without step indexing
@@ -63,34 +64,42 @@ Rel A1 A2 = A1 -> A2 -> Set
 mutual
   -- # Binary interpretation of values in types
 
-  {-# TERMINATING #-}
-  ⟦_⟧v : Type ->  (Adv : Semiring) -> Rel Term Term
-  ⟦ Unit ⟧v adv unit unit = ⊤
+  {-# NO_POSITIVITY_CHECK #-}
+  data ⟦_⟧v : Type ->  (Adv : Semiring) -> Rel Term Term where
+    unitInterpE : {adv : Semiring} -> ⟦ Unit ⟧v adv unit unit
 
-  ⟦ FunTy A r B ⟧v adv (Abs x e1) (Abs y e2) =
-    (forall (v1 : Term) (v2 : Term)
+    funInterpE : {adv : Semiring} {A B : Type} {r : Semiring}
+             -> {x y : ℕ}
+             -> (e1 e2 : Term)
+             -> (forall (v1 : Term) (v2 : Term)
 
-   -- In the original model this:
-   -- -> ⟦ A ⟧v adv {W} {_≤_} w' v1 v2
-   -- But we have graded arrows here
+               -- In the original model this:
+               -- -> ⟦ A ⟧v adv {W} {_≤_} w' v1 v2
+               -- But we have graded arrows here
 
-    -> ⟦ Box r A ⟧e adv (Promote v1) (Promote v2)
-    -> ⟦ B ⟧e adv (syntacticSubst v1 x e1) (syntacticSubst v2 y e2))
+                 -> ⟦ Box r A ⟧e adv (Promote v1) (Promote v2)
+                 -> ⟦ B ⟧e adv (syntacticSubst v1 x e1) (syntacticSubst v2 y e2))
+             ->   ⟦ FunTy A r B ⟧v adv (Abs x e1) (Abs y e2)
 
-  -- Note:
-  -- pre Hi Lo   false
-  -- Lo ≤ Hi means adversary is lo, box is hi, so cannot observe the
-  -- equality
+    -- Note:
+    -- pre Hi Lo   false
+    -- Lo ≤ Hi means adversary is lo, box is hi, so cannot observe the
+    -- equality
 
-  ⟦ Box r A ⟧v adv (Promote t1) (Promote t2) with r ≤ adv
-  ... | true  = ⟦ A ⟧e adv t1 t2
-  ... | false = ([ A ]e t1) × ([ A ]e t2)
+    boxInterpEobs : {adv : Semiring} -> {A : Type} {r : Semiring}
+              -> (r ≤ adv ≡ true)
+              -> (t1 t2 : Term)
+              -> ⟦ A ⟧e adv t1 t2
+              -> ⟦ Box r A ⟧v adv (Promote t1) (Promote t2)
 
-  ⟦ BoolTy ⟧v adv vtrue vtrue = ⊤
+    boxInterpEunobs : {adv : Semiring} -> {A : Type} {r : Semiring}
+              -> (r ≤ adv ≡ false)
+              -> (t1 t2 : Term)
+              -> ([ A ]e t1) × ([ A ]e t2)
+              -> ⟦ Box r A ⟧v adv (Promote t1) (Promote t2)
 
-  ⟦ BoolTy ⟧v adv vfalse vfalse = ⊤
-
-  ⟦ _ ⟧v adv _ _ = ⊥
+    boxInterpTrueE  : {adv : Semiring} -> ⟦ BoolTy ⟧v adv vtrue vtrue
+    boxInterpFalseE : {adv : Semiring} -> ⟦ BoolTy ⟧v adv vfalse vfalse
 
   {-# TERMINATING #-}
   -- # Binary interpretation of expressions in types

@@ -11,6 +11,7 @@ open import Relation.Nullary
 open import Data.Bool hiding (_≟_; _≤_)
 open import Data.Maybe
 open import Data.Empty
+open import Data.Unit hiding (_≟_; _≤_)
 
 -- Sec
 data Semiring : Set where
@@ -42,6 +43,17 @@ _≤_ Lo Hi = true
 _≤_ Lo Lo = true
 _≤_ Hi Hi = true
 _≤_ Hi Lo = false
+
+boolToSet : Bool -> Set
+boolToSet false = ⊥
+boolToSet true = ⊤
+
+invProperty : {r s adv : Semiring} -> boolToSet ((r *R s) ≤ adv) -> boolToSet (s ≤ adv)
+invProperty {Hi} {Hi} {Hi} pre = tt
+invProperty {Hi} {Lo} {Hi} pre = tt
+invProperty {Lo} {Hi} {Hi} pre = tt
+invProperty {Lo} {Lo} {Hi} pre = tt
+invProperty {Lo} {Lo} {Lo} pre = tt
 
 data Type : Set where
   FunTy : (A : Type) -> (r : Semiring) -> (B : Type) -> Type -- A r -> B
@@ -76,6 +88,8 @@ injExt2 refl = refl
 _,,_ : Context -> Context -> Context
 Empty      ,, G2 = G2
 (Ext G1 a) ,, G2 = Ext (G1 ,, G2) a
+--G1 ,, Empty = G1
+--G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
 
 _·_ : Semiring -> Context -> Context
 r · Empty = Empty
