@@ -29,8 +29,8 @@ record Semiring : Set₁ where
     distrib1    : {r s t : carrier} -> r *R (s +R t) ≡ (r *R s) +R (r *R t)
     distrib2    : {r s t : carrier} -> (r +R s) *R t ≡ (r *R s) +R (r *R t)
 
-    monotone*  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R r2) ≤ (s1 *R s2)
-    monotone+  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R r2) ≤ (s1 +R s2)
+    monotone*  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
+    monotone+  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s2) ≤ (r2 +R s2)
 
 
 
@@ -144,45 +144,45 @@ distrib1 levelSemiring {r} {s} {t} = {!!}
 
 distrib2 levelSemiring {r} {s} {t} = {!!}
 
-monotone* levelSemiring {.Unused} {.Public} {.Unused} {.Public} 0Pub 0Pub = Refl Unused
-monotone* levelSemiring {.Unused} {.Public} {.Unused} {.Private} 0Pub 0Priv = Refl Unused
-monotone* levelSemiring {.Unused} {.Public} {.Private} {.Public} 0Pub PrivPub = 0Pub
-monotone* levelSemiring {.Unused} {.Public} {.Unused} {.Dunno} 0Pub 0Dunno = Refl Unused
-monotone* levelSemiring {.Unused} {.Public} {.Private} {.Dunno} 0Pub PrivDunno = 0Dunno
-monotone* levelSemiring {.Unused} {.Public} {.Public} {.Public} 0Pub (Refl Public) = 0Pub
-monotone* levelSemiring {.Unused} {.Public} {.Private} {.Private} 0Pub (Refl Private) = 0Priv
-monotone* levelSemiring {.Unused} {.Public} {.Dunno} {.Dunno} 0Pub (Refl Dunno) = 0Dunno
-monotone* levelSemiring {.Unused} {.Public} {.Unused} {.Unused} 0Pub (Refl Unused) = Refl {!!}
-monotone* levelSemiring {.Unused} {.Private} {.Unused} {.Public} 0Priv 0Pub = Refl {!!}
-monotone* levelSemiring {.Unused} {.Private} {.Unused} {.Private} 0Priv 0Priv = Refl {!!}
-monotone* levelSemiring {.Unused} {.Private} {.Private} {.Public} 0Priv PrivPub = 0Pub
-monotone* levelSemiring {.Unused} {.Private} {.Unused} {.Dunno} 0Priv 0Dunno = Refl {!!}
-monotone* levelSemiring {.Unused} {.Private} {.Private} {.Dunno} 0Priv PrivDunno = 0Dunno
-monotone* levelSemiring {.Unused} {.Private} {s1} {.s1} 0Priv (Refl .s1) = {!!}
-monotone* levelSemiring {.Private} {.Public} {.Unused} {.Public} PrivPub 0Pub = {!!}
-monotone* levelSemiring {.Private} {.Public} {.Unused} {.Private} PrivPub 0Priv = {!!}
-monotone* levelSemiring {.Private} {.Public} {.Private} {.Public} PrivPub PrivPub = {!!}
-monotone* levelSemiring {.Private} {.Public} {.Unused} {.Dunno} PrivPub 0Dunno = {!!}
-monotone* levelSemiring {.Private} {.Public} {.Private} {.Dunno} PrivPub PrivDunno = {!!}
-monotone* levelSemiring {.Private} {.Public} {s1} {.s1} PrivPub (Refl .s1) = {!!}
-monotone* levelSemiring {.Unused} {.Dunno} {.Unused} {.Public} 0Dunno 0Pub = {!!}
-monotone* levelSemiring {.Unused} {.Dunno} {.Unused} {.Private} 0Dunno 0Priv = {!!}
-monotone* levelSemiring {.Unused} {.Dunno} {.Private} {.Public} 0Dunno PrivPub = {!!}
-monotone* levelSemiring {.Unused} {.Dunno} {.Unused} {.Dunno} 0Dunno 0Dunno = {!!}
-monotone* levelSemiring {.Unused} {.Dunno} {.Private} {.Dunno} 0Dunno PrivDunno = {!!}
-monotone* levelSemiring {.Unused} {.Dunno} {s1} {.s1} 0Dunno (Refl .s1) = {!!}
-monotone* levelSemiring {.Private} {.Dunno} {.Unused} {.Public} PrivDunno 0Pub = {!!}
-monotone* levelSemiring {.Private} {.Dunno} {.Unused} {.Private} PrivDunno 0Priv = {!!}
-monotone* levelSemiring {.Private} {.Dunno} {.Private} {.Public} PrivDunno PrivPub = {!!}
-monotone* levelSemiring {.Private} {.Dunno} {.Unused} {.Dunno} PrivDunno 0Dunno = {!!}
-monotone* levelSemiring {.Private} {.Dunno} {.Private} {.Dunno} PrivDunno PrivDunno = {!!}
-monotone* levelSemiring {.Private} {.Dunno} {s1} {.s1} PrivDunno (Refl .s1) = {!!}
-monotone* levelSemiring {r1} {.r1} {.Unused} {.Public} (Refl .r1) 0Pub = {!!}
-monotone* levelSemiring {r1} {.r1} {.Unused} {.Private} (Refl .r1) 0Priv = {!!}
-monotone* levelSemiring {r1} {.r1} {.Private} {.Public} (Refl .r1) PrivPub = {!!}
-monotone* levelSemiring {r1} {.r1} {.Unused} {.Dunno} (Refl .r1) 0Dunno = {!!}
-monotone* levelSemiring {r1} {.r1} {.Private} {.Dunno} (Refl .r1) PrivDunno = {!!}
-monotone* levelSemiring {r1} {.r1} {s1} {.s1} (Refl .r1) (Refl .s1) = {!!}
+monotone* levelSemiring 0Pub 0Pub = 0Pub
+monotone* levelSemiring 0Pub 0Priv = 0Pub
+monotone* levelSemiring 0Pub PrivPub = 0Pub
+monotone* levelSemiring 0Pub 0Dunno = 0Pub
+monotone* levelSemiring 0Pub PrivDunno = 0Pub
+monotone* levelSemiring 0Pub (Refl Public) = 0Pub
+monotone* levelSemiring 0Pub (Refl Private) = 0Pub
+monotone* levelSemiring 0Pub (Refl Dunno) = 0Pub
+monotone* levelSemiring 0Pub (Refl Unused) = Refl Unused
+monotone* levelSemiring 0Priv 0Pub = 0Pub
+monotone* levelSemiring 0Priv 0Priv = 0Priv
+monotone* levelSemiring 0Priv PrivPub = 0Pub
+monotone* levelSemiring 0Priv 0Dunno = 0Dunno
+monotone* levelSemiring 0Priv PrivDunno = 0Dunno
+monotone* levelSemiring 0Priv (Refl s) = {!!}
+monotone* levelSemiring PrivPub 0Pub = {!!}
+monotone* levelSemiring PrivPub 0Priv = {!!}
+monotone* levelSemiring PrivPub PrivPub = {!!}
+monotone* levelSemiring PrivPub 0Dunno = {!!}
+monotone* levelSemiring PrivPub PrivDunno = {!!}
+monotone* levelSemiring PrivPub (Refl _) = {!!}
+monotone* levelSemiring 0Dunno 0Pub = {!!}
+monotone* levelSemiring 0Dunno 0Priv = {!!}
+monotone* levelSemiring 0Dunno PrivPub = {!!}
+monotone* levelSemiring 0Dunno 0Dunno = {!!}
+monotone* levelSemiring 0Dunno PrivDunno = {!!}
+monotone* levelSemiring 0Dunno (Refl _) = {!!}
+monotone* levelSemiring PrivDunno 0Pub = {!!}
+monotone* levelSemiring PrivDunno 0Priv = {!!}
+monotone* levelSemiring PrivDunno PrivPub = {!!}
+monotone* levelSemiring PrivDunno 0Dunno = {!!}
+monotone* levelSemiring PrivDunno PrivDunno = {!!}
+monotone* levelSemiring PrivDunno (Refl _) = {!!}
+monotone* levelSemiring (Refl _) 0Pub = {!!}
+monotone* levelSemiring (Refl _) 0Priv = {!!}
+monotone* levelSemiring (Refl _) PrivPub = {!!}
+monotone* levelSemiring (Refl _) 0Dunno = {!!}
+monotone* levelSemiring (Refl _) PrivDunno = {!!}
+monotone* levelSemiring (Refl _) (Refl _) = {!!}
 
 monotone+ levelSemiring {r1} {r2} {s1} {s2} pre1 pre2 = {!!}
 
