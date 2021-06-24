@@ -83,6 +83,14 @@ invPropertyC {Lo} {Hi} {Lo} refl refl = refl
 invPropertyC {Lo} {Lo} {Hi} () pre2
 invPropertyC {Lo} {Lo} {Lo} () pre2
 
+invPropertyD : {r s adv : Semiring} -> (r ≤ adv) ≡ false -> ((r *R s) ≤ adv) ≡ false
+invPropertyD {Hi} {Hi} {Lo}  pre = pre
+invPropertyD {Hi} {Lo} {Lo}  pre = refl
+invPropertyD {Lo} {Hi} {Hi} ()
+invPropertyD {Lo} {Hi} {Lo} ()
+invPropertyD {Lo} {Lo} {Hi} ()
+invPropertyD {Lo} {Lo} {Lo} ()
+
 invPropertyI : {r s adv : Semiring} -> boolToSet (s ≤ adv) -> boolToSet ((r *R s) ≤ adv)
 invPropertyI {Hi} {Hi} {Hi} pre = tt
 invPropertyI {Hi} {Lo} {Hi} pre = tt

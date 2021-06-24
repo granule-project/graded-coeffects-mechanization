@@ -165,6 +165,8 @@ substPresAbs {n} {v ∷ γ} {x} {t} with n ≟ x
 ... | yes refl = {!!}
 ... | no ¬p = substPresAbs {n + 1} {γ} {x} {syntacticSubst v n t}
 
+reduxProm : {v : Term} -> multiRedux (Promote v) ≡ Promote v
+reduxProm {v} = refl
 
 postulate
  -- This is about the structure of substitutions and relates to abs
@@ -340,11 +342,26 @@ biFundamentalTheorem {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typ {prf}) {γ1}
            qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
 
-    convB : {s : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]e (Promote v1)) × ([ Box s A ]e (Promote v2))
-    convB {s} {v1} {v2} {A} arg1 = {!!}
+    convB : {s : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]v (Promote v1)) × ([ Box s A ]v (Promote v2))
+    convB {s} {v1} {v2} {A} (boxInterpEobs eq' .v1 .v2 ainterp) =
+      ⊥-elim bot
+       where
+        bot : ⊥
+        bot with (trans (sym eq') (invPropertyD eq))
+        ... | ()
+
+    convB {s} {v1} {v2} {A} (boxInterpEunobs eq .v1 .v2 (left , right)) = (boxInterpV v1 left) , (boxInterpV v2 right)
 
     convA : {s : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ([ Box s A ]e (Promote v1)) × ([ Box s A ]e (Promote v2))
-    convA {s} {v1} {v2} {A} arg1 = {!!}
+    convA {s} {v1} {v2} {A} arg1 = (left , right)
+      where
+        left : [ Box s A ]e (Promote v1)
+        left v0 redux rewrite trans (sym redux) (reduxProm {v1}) with convB {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
+        ... | (left' , right') = left'
+
+        right : [ Box s A ]e (Promote v2)
+        right v0 redux rewrite trans (sym redux) (reduxProm {v2}) with convB {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
+        ... | (left' , right') = right'
 
     -- potential to do something clever here with [ Γ ]Γ in the result instead?
     underBox : {γ1 γ2 : List Term} {Γ : Context} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> [ Γ ]Γ γ1 × [ Γ ]Γ γ2
@@ -355,14 +372,9 @@ biFundamentalTheorem {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typ {prf}) {γ1}
     underBox {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A r')} (arg , g) =
      let
       (left , right) = underBox {γ1} {γ2} {Γ} g
+      (l , r) = convA arg
      in
-       ({!!} , left) , ({!!} , right)
-
-    conv : {Γ : Context} {γ1 γ2 : List Term} -> ⟦ Γ ⟧Γ adv γ1 γ2 -> [ Γ ]Γ γ1 × [ Γ ]Γ γ2
-    conv {Empty} {_} {_} pre = tt , tt
-    conv {Ext Γ (Grad A r)} {t1 ∷ γ1} {t2 ∷ γ2} (tinterp , rest) =
-      let (rest1 , rest2) = conv {Γ} {γ1} {γ2} rest
-      in ({!!} , rest1) , ({!!} , rest2)
+       (l , left) , (r , right)
 
 --------------------------------------------------------
 ... | true  | [ eq ] rewrite prf =
@@ -372,8 +384,6 @@ biFundamentalTheorem {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typ {prf}) {γ1}
     subst₂ (\h1 h2 -> ⟦ Box r A ⟧v adv h1 h2) (thm {v1} {γ1} v1redux) (thm {v2} {γ2} v2redux) (boxInterpEobs eq (multisubst γ1 t) (multisubst γ2 t) ih)
 
   where
-    reduxProm : {v : Term} -> multiRedux (Promote v) ≡ Promote v
-    reduxProm {v} = refl
 
     thing2 : {s : Semiring} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
     thing2 {s} {v1} {v2} {A} (boxInterpEobs prop .v1 .v2 interp) = boxInterpEobs prop' v1 v2 interp
@@ -394,29 +404,12 @@ biFundamentalTheorem {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typ {prf}) {γ1}
     underBox {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
     underBox {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} ()
 
-
-
-{-
-    thing2 : {s : Semiring} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
-    thing2 {s} (boxInterpEobs pre .v1 .v2 inner) with s ≤ adv | inspect (\x -> x ≤ adv) s
-    ... | false | [ eq ] = boxInterpEunobs eq v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner )
-    ... | true  | [ eq ] = boxInterpEobs eq v1 v2 inner
-
-    -- problem when
-    -- (r * s ≤ adv) false   e.g.  Hi * Lo <= Lo    (as this would be Hi <= Lo)
-    -- but s ≤ adv is true.. e.g.  Lo <= Lo
-    thing2 {s} (boxInterpEunobs pre .v1 .v2 inner) with s ≤ adv | inspect (\x -> x ≤ adv) s
-    ... | false | [ eq ] = boxInterpEunobs eq v1 v2 inner
-    ... | true  | [ eq ] = {!!} -- boxInterpEobs   eq v1 v2 {!!}
--}
-
     thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
     thm {v} {γ} redux =
        let qr = cong multiRedux (substPresProm {0} {γ} {t})
            qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
 
---  subst₂ (\h1 h2 -> ⟦ Box r A ⟧e adv h1 h2) ? ? ?
 
 biFundamentalTheorem {.(Hi · _)} {.unit} {.Unit} unitConstr {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
   subst₂ (\h1 h2 -> ⟦ Unit ⟧v adv h1 h2) thm1 thm2 (unitInterpE {adv})
