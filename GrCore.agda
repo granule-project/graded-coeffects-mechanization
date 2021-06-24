@@ -55,6 +55,60 @@ invProperty {Lo} {Hi} {Hi} pre = tt
 invProperty {Lo} {Lo} {Hi} pre = tt
 invProperty {Lo} {Lo} {Lo} pre = tt
 
+invPropertyA : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ true -> (s ≤ adv) ≡ true
+invPropertyA {Hi} {Hi} {Hi} pre = refl
+invPropertyA {Hi} {Lo} {Hi} pre = refl
+invPropertyA {Lo} {Hi} {Hi} pre = pre
+invPropertyA {Lo} {Lo} {Hi} pre = refl
+invPropertyA {Lo} {Lo} {Lo} pre = refl
+
+invPropertyB : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ false -> (s ≤ adv) ≡ false
+invPropertyB {Hi} {Hi} {Lo} pre = refl
+-- Hi * Lo <= Lo  is  Hi <= Lo which is false but Lo <= Lo is true
+invPropertyB {Hi} {Lo} {Lo} pre = {!!}
+invPropertyB {Lo} {Hi} {Lo} pre = refl
+invPropertyB {Hi} {Hi} {Hi} pre = pre
+invPropertyB {Hi} {Lo} {Hi} pre = pre
+invPropertyB {Lo} {Hi} {Hi} pre = pre
+invPropertyB {Lo} {Lo} {Hi} pre = pre
+invPropertyB {Lo} {Lo} {Lo} pre = pre
+
+invPropertyC : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ false -> (r ≤ adv) ≡ true -> (s ≤ adv) ≡ false
+invPropertyC {Hi} {Hi} {Hi} () pre2
+invPropertyC {Hi} {Hi} {Lo} refl ()
+invPropertyC {Hi} {Lo} {Hi} () pre2
+invPropertyC {Hi} {Lo} {Lo} refl ()
+invPropertyC {Lo} {Hi} {Hi} () pre2
+invPropertyC {Lo} {Hi} {Lo} refl refl = refl
+invPropertyC {Lo} {Lo} {Hi} () pre2
+invPropertyC {Lo} {Lo} {Lo} () pre2
+
+invPropertyI : {r s adv : Semiring} -> boolToSet (s ≤ adv) -> boolToSet ((r *R s) ≤ adv)
+invPropertyI {Hi} {Hi} {Hi} pre = tt
+invPropertyI {Hi} {Lo} {Hi} pre = tt
+-- Lo <= Lo  but Hi * Lo <= Lo is false.
+invPropertyI {Hi} {Lo} {Lo} pre = {!!}
+invPropertyI {Lo} {Hi} {Hi} pre = tt
+invPropertyI {Lo} {Lo} {Hi} pre = tt
+invPropertyI {Lo} {Lo} {Lo} pre = tt
+
+
+
+
+infFlo : {r s adv : Semiring} -> ¬ (boolToSet ((r *R s) ≤ adv))
+                           -> boolToSet (s ≤ adv)
+                           -> ⊥
+infFlo {Hi} {Hi} {Hi} narg arg = narg arg
+infFlo {Hi} {Lo} {Hi} narg arg = narg tt
+-- Hi * Lo = Hi   <= Lo   false
+-- but
+--    Lo <= Lo   true
+--
+infFlo {Hi} {Lo} {Lo} narg arg = {!!}
+infFlo {Lo} {Hi} {Hi} narg arg = {!!}
+infFlo {Lo} {Lo} {Hi} narg arg = {!!}
+infFlo {Lo} {Lo} {Lo} narg arg = {!!}
+
 data Type : Set where
   FunTy : (A : Type) -> (r : Semiring) -> (B : Type) -> Type -- A r -> B
   Unit  : Type
