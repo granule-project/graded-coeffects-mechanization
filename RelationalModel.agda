@@ -270,9 +270,28 @@ utheorem {γ} {Γ} {.(If _ _ _)} {τ} (if typing typing₁ typing₂) context = 
 -------------------------------
 -- Binary fundamental theorem
 
+binaryImpliesUnaryV : {A : Type} {t1 t2 : Term} {adv : Semiring}
+                  -> ⟦ A ⟧v adv t1 t2 -> [ A ]v t1 × [ A ]v t2
+binaryImpliesUnaryV {FunTy A r A₁} {t1} {t2} {adv} arg = {!!}
+binaryImpliesUnaryV {Unit} {.unit} {.unit} {adv} unitInterpE = unitInterpV , unitInterpV
+binaryImpliesUnaryV {Box r A} {t1} {t2} {adv} arg = {!!}
+binaryImpliesUnaryV {BoolTy} {t1} {t2} {adv} arg = {!!}
+
 binaryImpliesUnary : {A : Type} {t1 t2 : Term} {adv : Semiring}
                   -> ⟦ A ⟧e adv t1 t2 -> [ A ]e t1 × [ A ]e t2
-binaryImpliesUnary {A} {t1} {t2} {adv} arg = {!!}
+binaryImpliesUnary {FunTy A r A₁} {t1} {t2} {adv} arg = {!!}
+binaryImpliesUnary {Unit} {t1} {t2} {adv} arg = (left , right)
+  where
+    left : [ Unit ]e t1
+    left v redux with arg v v redux {!!}
+    ... | unitInterpE = unitInterpV
+
+    right : [ Unit ]e t2
+    right v redux with arg v v {!!} {!!}
+    ... | unitInterpE rewrite sym redux = {!!}
+
+binaryImpliesUnary {Box r A} {t1} {t2} {adv} arg = {!!}
+binaryImpliesUnary {BoolTy} {t1} {t2} {adv} arg = {!!}
 
 biFundamentalTheorem :
           {Γ : Context} {e : Term} {τ : Type}
@@ -305,11 +324,15 @@ biFundamentalTheorem {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {Γ} {
 
 
 biFundamentalTheorem {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typ {prf}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux with r ≤ adv | inspect (\x -> x ≤ adv) r
-... | false | [ eq ] =
-  let ih = utheorem {{!!}} {Γ} {t} {A} typ {!!}
+... | false | [ eq ] rewrite prf =
+  let
+    --(uinterp1 , uinterp2) = conv {Γ} {γ1} {γ2} (underBox {γ1} {γ2} {Γ} contextInterp)
+    (uinterp1 , uinterp2) = underBox {γ1} {γ2} {Γ} contextInterp
+    ih1 = utheorem {γ1} {Γ} {t} {A} typ uinterp1
+    ih2 = utheorem {γ2} {Γ} {t} {A} typ uinterp2
   in
    subst₂ (\h1 h2 -> ⟦ Box r A ⟧v adv h1 h2) (thm {v1} {γ1} v1redux) (thm {v2} {γ2} v2redux)
-             (boxInterpEunobs eq (multisubst γ1 t) (multisubst γ2 t) {!!})
+             (boxInterpEunobs eq (multisubst γ1 t) (multisubst γ2 t) (ih1 , ih2))
   where
     thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
     thm {v} {γ} redux =
@@ -317,35 +340,75 @@ biFundamentalTheorem {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typ {prf}) {γ1}
            qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
 
+    convB : {s : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]e (Promote v1)) × ([ Box s A ]e (Promote v2))
+    convB {s} {v1} {v2} {A} arg1 = {!!}
+
+    convA : {s : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ([ Box s A ]e (Promote v1)) × ([ Box s A ]e (Promote v2))
+    convA {s} {v1} {v2} {A} arg1 = {!!}
+
+    -- potential to do something clever here with [ Γ ]Γ in the result instead?
+    underBox : {γ1 γ2 : List Term} {Γ : Context} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> [ Γ ]Γ γ1 × [ Γ ]Γ γ2
+    underBox {_} {_} {Empty} g = (tt , tt)
+    underBox {[]} {[]} {Ext Γ (Grad A r)} ()
+    underBox {[]} {x ∷ γ2} {Ext Γ (Grad A r)} ()
+    underBox {x ∷ γ1} {[]} {Ext Γ (Grad A r)} ()
+    underBox {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A r')} (arg , g) =
+     let
+      (left , right) = underBox {γ1} {γ2} {Γ} g
+     in
+       ({!!} , left) , ({!!} , right)
+
+    conv : {Γ : Context} {γ1 γ2 : List Term} -> ⟦ Γ ⟧Γ adv γ1 γ2 -> [ Γ ]Γ γ1 × [ Γ ]Γ γ2
+    conv {Empty} {_} {_} pre = tt , tt
+    conv {Ext Γ (Grad A r)} {t1 ∷ γ1} {t2 ∷ γ2} (tinterp , rest) =
+      let (rest1 , rest2) = conv {Γ} {γ1} {γ2} rest
+      in ({!!} , rest1) , ({!!} , rest2)
+
+--------------------------------------------------------
 ... | true  | [ eq ] rewrite prf =
   let
-    ih = biFundamentalTheorem {{!!}} {t} {A} typ {γ1} {γ2} adv {!!}
+    ih = biFundamentalTheorem {Γ} {t} {A} typ {γ1} {γ2} adv (underBox {γ1} {γ2} contextInterp)
   in
     subst₂ (\h1 h2 -> ⟦ Box r A ⟧v adv h1 h2) (thm {v1} {γ1} v1redux) (thm {v2} {γ2} v2redux) (boxInterpEobs eq (multisubst γ1 t) (multisubst γ2 t) ih)
 
   where
-    underBox : {r : Semiring} {γ1 γ2 : List Term} {Γ : Context} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
-    underBox {r} {_} {_} {Empty}   g = tt
-    underBox {r} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = {!!} , underBox {r} {γ1} {γ2} {Γ} g
-    underBox {r} {_} {_} {Ext Γ (Grad A r₁)} g = {!!}
+    reduxProm : {v : Term} -> multiRedux (Promote v) ≡ Promote v
+    reduxProm {v} = refl
 
-    thing : {s : Semiring} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
-    thing {s} arg1 v1' v2' v1redux' v2redux' =
-       let
-        eh = arg1 v1' v2' v1redux' v2redux'
-       in {!!}
+    thing2 : {s : Semiring} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
+    thing2 {s} {v1} {v2} {A} (boxInterpEobs prop .v1 .v2 interp) = boxInterpEobs prop' v1 v2 interp
+       where
+        prop' : (s ≤ adv) ≡ true
+        prop' = invPropertyA prop
 
+    thing2 {s} {v1} {v2} {A} (boxInterpEunobs x .v1 .v2 interp) = boxInterpEunobs (invPropertyC x eq) v1 v2 interp
+
+    thing : {s : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
+    thing {s} {v1} {v2} {A} arg1 v1' v2' v1redux' v2redux' rewrite trans (sym v1redux') (reduxProm {v1}) | trans (sym v2redux') (reduxProm {v2}) =
+       thing2  {s} {v1} {v2} {A} (arg1 (Promote v1) (Promote v2) refl refl)
+
+    underBox : {γ1 γ2 : List Term} {Γ : Context} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
+    underBox {_} {_} {Empty}   g = tt
+    underBox {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = thing {s} {v1} {v2} {A} ass , underBox {γ1} {γ2} {Γ} g
+    underBox {[]} {[]} {Ext Γ (Grad A r₁)} ()
+    underBox {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
+    underBox {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} ()
+
+
+
+{-
     thing2 : {s : Semiring} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
     thing2 {s} (boxInterpEobs pre .v1 .v2 inner) with s ≤ adv | inspect (\x -> x ≤ adv) s
     ... | false | [ eq ] = boxInterpEunobs eq v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner )
     ... | true  | [ eq ] = boxInterpEobs eq v1 v2 inner
 
     -- problem when
-    -- (r * s ≤ adv) false   e.g.  Public * 0 <= Public    (as this would be 0 <= Public)
-    -- but s ≤ adv is true.. e.g.  0 <= Public
+    -- (r * s ≤ adv) false   e.g.  Hi * Lo <= Lo    (as this would be Hi <= Lo)
+    -- but s ≤ adv is true.. e.g.  Lo <= Lo
     thing2 {s} (boxInterpEunobs pre .v1 .v2 inner) with s ≤ adv | inspect (\x -> x ≤ adv) s
     ... | false | [ eq ] = boxInterpEunobs eq v1 v2 inner
-    ... | true  | [ eq ] = boxInterpEobs   eq v1 v2 {!!}
+    ... | true  | [ eq ] = {!!} -- boxInterpEobs   eq v1 v2 {!!}
+-}
 
     thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
     thm {v} {γ} redux =

@@ -4,6 +4,7 @@ open import Relation.Binary.PropositionalEquality
 open import Data.Bool hiding (_≟_; _≤_)
 open import Data.Empty
 open import Data.Unit hiding (_≟_; _≤_)
+open import Relation.Nullary
 
 record Semiring : Set₁ where
   field
@@ -64,7 +65,10 @@ carrier levelSemiring = Level
 1r levelSemiring      = Private
 0r levelSemiring      = Unused
 
-_≤_ levelSemiring x y = Order x y
+-- remember the ordering in the calculus goes the 'opposite way' to Granule but
+-- the above `Order` data type is defined using Granule's direction
+-- *so we need to flip here*
+_≤_ levelSemiring x y = Order y x
 
 -- unit property
 _+R_ levelSemiring Unused x = x
@@ -255,78 +259,102 @@ reflexive≤ levelSemiring {r} = Refl r
 
 transitive≤ levelSemiring {r} {s} {t} = {!!}
 
-{-
 -- Additional property which would be super useful but doesn't seem to hold for Level
 
-infFlow : {levelSemiring : Semiring} -> {r s adv : carrier} -> boolToSet ((r *R s) ≤ adv) -> boolToSet (s ≤ adv)
-infFlow levelSemiring {Public} {Public} {Public} prop = tt
-infFlow levelSemiring {Public} {Public} {Private} ()
-infFlow levelSemiring {Public} {Public} {Dunno} ()
-infFlow levelSemiring {Public} {Public} {Unused} ()
---      Public * Private <= Public (yes)
--- (as) Public <= Public
--- but Private <= Public (
-infFlow levelSemiring {Public} {Private} {Public} tt = tt
-infFlow levelSemiring {Public} {Private} {Private} prop = tt
-infFlow levelSemiring {Public} {Private} {Dunno} prop = tt
-infFlow levelSemiring {Public} {Private} {Unused} ()
---    Public * Dunno <= Public (yes)
---    Public <= Public
--- but Dunno <= Public is false
-infFlow levelSemiring {Public} {Dunno} {Public} tt = {!!}
-infFlow levelSemiring {Public} {Dunno} {Private} ()
-infFlow levelSemiring {Public} {Dunno} {Dunno} prop = tt
-infFlow levelSemiring {Public} {Dunno} {Unused} ()
-infFlow levelSemiring {Public} {Unused} {Public} prop = tt
-infFlow levelSemiring {Public} {Unused} {Private} prop = tt
-infFlow levelSemiring {Public} {Unused} {Dunno} prop = tt
-infFlow levelSemiring {Public} {Unused} {Unused} prop = tt
-infFlow levelSemiring {Private} {Public} {Public} prop = tt
-infFlow levelSemiring {Private} {Public} {Private} ()
-infFlow levelSemiring {Private} {Public} {Dunno} ()
-infFlow levelSemiring {Private} {Public} {Unused} ()
-infFlow levelSemiring {Private} {Private} {Public} tt = tt
-infFlow levelSemiring {Private} {Private} {Private} prop = tt
-infFlow levelSemiring {Private} {Private} {Dunno} prop = tt
-infFlow levelSemiring {Private} {Private} {Unused} ()
-infFlow levelSemiring {Private} {Dunno} {Public} ()
-infFlow levelSemiring {Private} {Dunno} {Private} ()
-infFlow levelSemiring {Private} {Dunno} {Dunno} prop = tt
-infFlow levelSemiring {Private} {Dunno} {Unused} ()
-infFlow levelSemiring {Private} {Unused} {Public} prop = tt
-infFlow levelSemiring {Private} {Unused} {Private} prop = tt
-infFlow levelSemiring {Private} {Unused} {Dunno} prop = tt
-infFlow levelSemiring {Private} {Unused} {Unused} prop = tt
-infFlow levelSemiring {Dunno} {Public} {Public} prop = tt
-infFlow levelSemiring {Dunno} {Public} {Private} ()
-infFlow levelSemiring {Dunno} {Public} {Dunno} ()
-infFlow levelSemiring {Dunno} {Public} {Unused} ()
-infFlow levelSemiring {Dunno} {Private} {Public} prop = tt
-infFlow levelSemiring {Dunno} {Private} {Private} prop = tt
-infFlow levelSemiring {Dunno} {Private} {Dunno} prop = tt
-infFlow levelSemiring {Dunno} {Private} {Unused} ()
-infFlow levelSemiring {Dunno} {Dunno} {Public} ()
-infFlow levelSemiring {Dunno} {Dunno} {Private} ()
-infFlow levelSemiring {Dunno} {Dunno} {Dunno} prop = tt
-infFlow levelSemiring {Dunno} {Dunno} {Unused} ()
-infFlow levelSemiring {Dunno} {Unused} {Public} prop = tt
-infFlow levelSemiring {Dunno} {Unused} {Private} prop = tt
-infFlow levelSemiring {Dunno} {Unused} {Dunno} prop = tt
-infFlow levelSemiring {Dunno} {Unused} {Unused} prop = tt
-infFlow levelSemiring {Unused} {Public} {Public} prop = tt
-infFlow levelSemiring {Unused} {Public} {Private} tt = {!!}
-infFlow levelSemiring {Unused} {Public} {Dunno} tt = {!!}
-infFlow levelSemiring {Unused} {Public} {Unused} tt = {!!}
-infFlow levelSemiring {Unused} {Private} {Public} tt = tt
-infFlow levelSemiring {Unused} {Private} {Private} prop = tt
-infFlow levelSemiring {Unused} {Private} {Dunno} prop = tt
-infFlow levelSemiring {Unused} {Private} {Unused} tt = {!!}
-infFlow levelSemiring {Unused} {Dunno} {Public} tt = {!!}
-infFlow levelSemiring {Unused} {Dunno} {Private} tt = {!!}
-infFlow levelSemiring {Unused} {Dunno} {Dunno} prop = tt
-infFlow levelSemiring {Unused} {Dunno} {Unused} tt = {!!}
-infFlow levelSemiring {Unused} {Unused} {Public} prop = tt
-infFlow levelSemiring {Unused} {Unused} {Private} prop = tt
-infFlow levelSemiring {Unused} {Unused} {Dunno} prop = tt
-infFlow levelSemiring {Unused} {Unused} {Unused} prop = tt
--}
+infFlow : {r s adv : Level} -> _≤_ levelSemiring (_*R_ levelSemiring r s) adv -> _≤_ levelSemiring s adv
+infFlow {Public} {Public} {Public} inp = Refl Public
+infFlow {Public} {Public} {Private} inp = PrivPub
+infFlow {Public} {Public} {Dunno} inp = DunnoPub
+infFlow {Public} {Public} {Unused} inp = 0Pub
+
+--      Public <<= Public * Private
+--  ==  Public <<= Public
+
+-- BUT
+
+--  -/-> Public <<= Private
+
+infFlow {Public} {Private} {Public} inp = {!!}
+infFlow {Public} {Private} {Private} inp = {!!}
+infFlow {Public} {Private} {Dunno} inp = {!!}
+infFlow {Public} {Private} {Unused} inp = {!!}
+infFlow {Public} {Dunno} {Public} inp = {!!}
+infFlow {Public} {Dunno} {Private} inp = {!!}
+infFlow {Public} {Dunno} {Dunno} inp = {!!}
+infFlow {Public} {Dunno} {Unused} inp = {!!}
+infFlow {Public} {Unused} {Unused} inp = {!!}
+infFlow {Private} {Public} {Public} inp = {!!}
+infFlow {Private} {Public} {Private} inp = {!!}
+infFlow {Private} {Public} {Dunno} inp = {!!}
+infFlow {Private} {Public} {Unused} inp = {!!}
+infFlow {Private} {Private} {Private} inp = {!!}
+infFlow {Private} {Private} {Unused} inp = {!!}
+infFlow {Private} {Dunno} {Private} inp = {!!}
+infFlow {Private} {Dunno} {Dunno} inp = {!!}
+infFlow {Private} {Dunno} {Unused} inp = {!!}
+infFlow {Private} {Unused} {Unused} inp = {!!}
+infFlow {Dunno} {Public} {Public} inp = {!!}
+infFlow {Dunno} {Public} {Private} inp = {!!}
+infFlow {Dunno} {Public} {Dunno} inp = {!!}
+infFlow {Dunno} {Public} {Unused} inp = {!!}
+infFlow {Dunno} {Private} {Private} inp = {!!}
+infFlow {Dunno} {Private} {Dunno} inp = {!!}
+infFlow {Dunno} {Private} {Unused} inp = {!!}
+infFlow {Dunno} {Dunno} {Private} inp = {!!}
+infFlow {Dunno} {Dunno} {Dunno} inp = {!!}
+infFlow {Dunno} {Dunno} {Unused} inp = {!!}
+infFlow {Dunno} {Unused} {Unused} inp = {!!}
+infFlow {Unused} {Public} {Unused} inp = {!!}
+infFlow {Unused} {Private} {Unused} inp = {!!}
+infFlow {Unused} {Dunno} {Unused} inp = {!!}
+infFlow {Unused} {Unused} {Unused} inp = {!!}
+
+--- ALTERNATIVE TRICK
+
+infFlo : {r s adv : Level} -> ¬ (_≤_ levelSemiring (_*R_ levelSemiring r s) adv)
+                           -> _≤_ levelSemiring s adv
+                           -> ⊥
+infFlo {Public} {Public} {Public} negarg (Refl .Public) = negarg (Refl Public)
+infFlo {Public} {Public} {Private} negarg arg = negarg arg
+infFlo {Public} {Public} {Dunno} negarg arg = negarg arg
+infFlo {Public} {Public} {Unused} negarg arg = negarg arg
+infFlo {Public} {Private} {Private} negarg (Refl .Private) = negarg PrivPub
+infFlo {Public} {Private} {Unused} negarg arg = negarg 0Pub
+infFlo {Public} {Dunno} {Private} negarg arg = negarg PrivPub
+infFlo {Public} {Dunno} {Dunno} negarg arg = negarg DunnoPub
+infFlo {Public} {Dunno} {Unused} negarg arg = negarg 0Pub
+infFlo {Public} {Unused} {Unused} negarg arg = negarg arg
+infFlo {Private} {Public} {Public} negarg arg = negarg arg
+infFlo {Private} {Public} {Private} negarg arg = negarg arg
+infFlo {Private} {Public} {Dunno} negarg arg = negarg arg
+infFlo {Private} {Public} {Unused} negarg arg = negarg arg
+infFlo {Private} {Private} {Private} negarg arg = negarg arg
+infFlo {Private} {Private} {Unused} negarg arg = negarg arg
+infFlo {Private} {Dunno} {Private} negarg arg = negarg arg
+infFlo {Private} {Dunno} {Dunno} negarg arg = negarg arg
+infFlo {Private} {Dunno} {Unused} negarg arg = negarg arg
+infFlo {Private} {Unused} {Unused} negarg arg = negarg arg
+infFlo {Dunno} {Public} {Public} negarg arg = negarg arg
+infFlo {Dunno} {Public} {Private} negarg arg = negarg arg
+infFlo {Dunno} {Public} {Dunno} negarg arg = negarg arg
+infFlo {Dunno} {Public} {Unused} negarg arg = negarg arg
+infFlo {Dunno} {Private} {Private} negarg arg = negarg PrivDunno
+infFlo {Dunno} {Private} {Unused} negarg arg = negarg 0Dunno
+infFlo {Dunno} {Dunno} {Private} negarg arg = negarg arg
+infFlo {Dunno} {Dunno} {Dunno} negarg arg = negarg arg
+infFlo {Dunno} {Dunno} {Unused} negarg arg = negarg arg
+infFlo {Dunno} {Unused} {Unused} negarg arg = negarg arg
+
+-- Public <<= Unused * Public   Public <<= Unused   (false)
+-- Public <<= Public (true)
+
+infFlo {Unused} {Public} {Public} negarg (Refl .Public) = {!!}
+infFlo {Unused} {Public} {Private} negarg arg = {!!}
+infFlo {Unused} {Public} {Dunno} negarg arg = {!!}
+infFlo {Unused} {Public} {Unused} negarg arg = {!!}
+infFlo {Unused} {Private} {Private} negarg arg = {!!}
+infFlo {Unused} {Private} {Unused} negarg arg = {!!}
+infFlo {Unused} {Dunno} {Private} negarg arg = {!!}
+infFlo {Unused} {Dunno} {Dunno} negarg arg = {!!}
+infFlo {Unused} {Dunno} {Unused} negarg arg = {!!}
+infFlo {Unused} {Unused} {Unused} negarg arg = {!!}
