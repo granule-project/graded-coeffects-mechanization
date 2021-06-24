@@ -341,8 +341,8 @@ biFundamentalTheorem {Γ'} {Promote t} {Box r A} (pr {Γ} {Γ'} typ {prf}) {γ1}
     ... | true  | [ eq ] = boxInterpEobs eq v1 v2 inner
 
     -- problem when
-    -- (r * s ≤ adv) false
-    -- but s ≤ adv is true..
+    -- (r * s ≤ adv) false   e.g.  Public * 0 <= Public    (as this would be 0 <= Public)
+    -- but s ≤ adv is true.. e.g.  0 <= Public
     thing2 {s} (boxInterpEunobs pre .v1 .v2 inner) with s ≤ adv | inspect (\x -> x ≤ adv) s
     ... | false | [ eq ] = boxInterpEunobs eq v1 v2 inner
     ... | true  | [ eq ] = boxInterpEobs   eq v1 v2 {!!}

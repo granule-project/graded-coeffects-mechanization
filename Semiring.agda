@@ -32,6 +32,8 @@ record Semiring : Set₁ where
     monotone*  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
     monotone+  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s2) ≤ (r2 +R s2)
 
+    reflexive≤ : {r : carrier} -> r ≤ r
+    transitive≤ : {r s t : carrier} -> r ≤ s -> s ≤ t -> r ≤ t
 
 
 open Semiring
@@ -52,6 +54,7 @@ data Order : Level -> Level -> Set where
   -- dunno branch
   0Dunno  : Order Unused Dunno
   PrivDunno : Order Private Dunno
+  DunnoPub  : Order Dunno Public
   -- reflexive cases
   Refl : (l : Level) -> Order l l
 
@@ -172,8 +175,8 @@ monotone* levelSemiring PrivPub (Refl Private) = PrivPub
 -- Private <= Pub   Dunno <= Dunno
 -- --------------------------------------
  --    Private * Dunno <= Pub * Dunno
- --       Dunno        <= Pub    uh oh.
-monotone* levelSemiring PrivPub (Refl Dunno) = {!!}
+ --       Dunno        <= Pub    (didn't have this previously 24/06/2021).
+monotone* levelSemiring PrivPub (Refl Dunno) = DunnoPub
 monotone* levelSemiring PrivPub (Refl Unused) = Refl Unused
 monotone* levelSemiring 0Dunno 0Pub = 0Pub
 monotone* levelSemiring 0Dunno 0Priv = 0Dunno
@@ -203,7 +206,7 @@ monotone* levelSemiring (Refl Dunno) 0Priv = 0Dunno
 monotone* levelSemiring (Refl Unused) 0Priv = Refl Unused
 monotone* levelSemiring (Refl Public) PrivPub = Refl Public
 monotone* levelSemiring (Refl Private) PrivPub = PrivPub
-monotone* levelSemiring (Refl Dunno) PrivPub = {!!}
+monotone* levelSemiring (Refl Dunno) PrivPub = DunnoPub
 monotone* levelSemiring (Refl Unused) PrivPub = Refl Unused
 monotone* levelSemiring (Refl Public) 0Dunno = 0Pub
 monotone* levelSemiring (Refl Private) 0Dunno = 0Dunno
@@ -226,9 +229,31 @@ monotone* levelSemiring (Refl Dunno) (Refl Private) = Refl Dunno
 monotone* levelSemiring (Refl Dunno) (Refl Dunno) = Refl Dunno
 monotone* levelSemiring (Refl Dunno) (Refl Unused) = Refl Unused
 monotone* levelSemiring (Refl Unused) (Refl r) = Refl Unused
+monotone* levelSemiring 0Pub DunnoPub = 0Pub
+monotone* levelSemiring 0Priv DunnoPub = 0Pub
+monotone* levelSemiring PrivPub DunnoPub = DunnoPub
+monotone* levelSemiring 0Dunno DunnoPub = 0Pub
+monotone* levelSemiring PrivDunno DunnoPub = DunnoPub
+monotone* levelSemiring DunnoPub 0Pub = 0Pub
+monotone* levelSemiring DunnoPub 0Priv = 0Pub
+monotone* levelSemiring DunnoPub PrivPub = DunnoPub
+monotone* levelSemiring DunnoPub 0Dunno = 0Pub
+monotone* levelSemiring DunnoPub PrivDunno = DunnoPub
+monotone* levelSemiring DunnoPub DunnoPub = DunnoPub
+monotone* levelSemiring DunnoPub (Refl Public) = Refl Public
+monotone* levelSemiring DunnoPub (Refl Private) = DunnoPub
+monotone* levelSemiring DunnoPub (Refl Dunno) = DunnoPub
+monotone* levelSemiring DunnoPub (Refl Unused) = Refl Unused
+monotone* levelSemiring (Refl Public) DunnoPub = Refl Public
+monotone* levelSemiring (Refl Private) DunnoPub = DunnoPub
+monotone* levelSemiring (Refl Dunno) DunnoPub = DunnoPub
+monotone* levelSemiring (Refl Unused) DunnoPub = Refl Unused
 
 monotone+ levelSemiring {r1} {r2} {s1} {s2} pre1 pre2 = {!!}
 
+reflexive≤ levelSemiring {r} = Refl r
+
+transitive≤ levelSemiring {r} {s} {t} = {!!}
 
 {-
 -- Additional property which would be super useful but doesn't seem to hold for Level
