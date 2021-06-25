@@ -137,40 +137,38 @@ injGradTy refl = refl
 injGradR : {A A' : Type} {r r' : Semiring} -> Grad A r ≡ Grad A' r' -> r ≡ r'
 injGradR refl = refl
 
-data Context : Set where
-  Empty   : Context
-  Ext     : Context -> Assumption -> Context
+data Context : ℕ -> Set where
+  Empty   : Context 0
+  Ext     : {n : ℕ} -> Context n -> Assumption -> Context (1 + n)
 
-injExt1 : {Γ Γ' : Context} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> Γ ≡ Γ'
+injExt1 : {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> Γ ≡ Γ'
 injExt1 refl = refl
 
-injExt2 : {Γ Γ' : Context} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> A ≡ A'
+injExt2 : {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> A ≡ A'
 injExt2 refl = refl
 
-_,,_ : Context -> Context -> Context
+_,,_ : {s t : ℕ} -> Context s -> Context t -> Context (s + t)
 Empty      ,, G2 = G2
 (Ext G1 a) ,, G2 = Ext (G1 ,, G2) a
 --G1 ,, Empty = G1
 --G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
 
-_·_ : Semiring -> Context -> Context
+_·_ : {s : ℕ} -> Semiring -> Context s -> Context s
 r · Empty = Empty
 r · Ext g (Grad A s) = Ext (r · g) (Grad A (r *R s))
 
 -- Make contexts a module
 postulate
   -- TODO
-_++_ : Context -> Context -> Context
-Empty ++ G = G
-G ++ Empty = G
+_++_ : {s : ℕ} -> Context s -> Context s -> Context s
+Empty ++ Empty = Empty
 (Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
-G' ++ G'' = {!!}
 
 postulate
-  absorptionContext : {Γ Γ' : Context} -> (0r · Γ) ++ Γ' ≡ Γ'
-  leftUnitContext : {Γ : Context} -> 1r · Γ ≡ Γ
+  absorptionContext : {s : ℕ} {Γ Γ' : Context s} -> (0r · Γ) ++ Γ' ≡ Γ'
+  leftUnitContext : {s : ℕ} {Γ : Context s} -> 1r · Γ ≡ Γ
 
-Γlength : Context -> ℕ
+Γlength : {s : ℕ} -> Context s -> ℕ
 Γlength Empty = 0
 Γlength (Ext g a) = 1 + Γlength g
 
@@ -203,20 +201,24 @@ syntacticSubst t x (If t1 t2 t3) = If (syntacticSubst t x t1) (syntacticSubst t 
 
 -------------------------------------------------
 -- Typing
-data _⊢_∶_ : Context -> Term -> Type -> Set where
+data _⊢_∶_ : {s : ℕ} -> Context s -> Term -> Type -> Set where
 
 --  (x : A) ∈ Γ
 ----------------------------
 --  Γ |- x : A
 
-  var : { A : Type }
-        { Γ Γ1 Γ2 : Context }
+  var : {s1 s2 : ℕ}
+        { A : Type }
+        { Γ : Context ((1 + s1) + s2) }
+        { Γ1 : Context s1 }
+        { Γ2 : Context s2 }
         (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A 1r)) ,, (0r · Γ2)))
     ->  ---------------------
         Γ ⊢ Var (Γlength Γ1) ∶ A
 
 
-  app : { Γ Γ1 Γ2 : Context }
+  app : {s : ℕ}
+        { Γ Γ1 Γ2 : Context s }
         { r : Semiring }
         { A B : Type}
         { t1 t2 : Term }
@@ -228,7 +230,11 @@ data _⊢_∶_ : Context -> Term -> Type -> Set where
           Γ ⊢ App t1 t2 ∶ B
 
 
-  abs : { Γ Γ1 Γ2 Γ' : Context }
+  abs : {s1 s2 : ℕ}
+        { Γ : Context ((1 + s1) + s2) }
+        { Γ1 : Context s1 }
+        { Γ2 : Context s2 }
+        { Γ' : Context (s1 + s2) }
         { r : Semiring}
         { A B : Type }
         { t : Term }
@@ -240,7 +246,8 @@ data _⊢_∶_ : Context -> Term -> Type -> Set where
          Γ' ⊢ Abs (Γlength Γ1 + 1) t ∶ FunTy A r B
 
 
-  pr : { Γ Γ' : Context }
+  pr : {s : ℕ}
+    -> { Γ Γ' : Context s }
     -> { r : Semiring }
     -> { A : Type }
     -> { t : Term }
@@ -251,19 +258,20 @@ data _⊢_∶_ : Context -> Term -> Type -> Set where
     -> Γ' ⊢ Promote t ∶ Box r A
 
 
-  unitConstr : { Γ : Context }
+  unitConstr : {s : ℕ} { Γ : Context s }
       -> --------------------------------
           (0r · Γ) ⊢ unit ∶ Unit
 
-  trueConstr : { Γ : Context }
+  trueConstr : {s : ℕ} { Γ : Context s }
       -> --------------------------------
            (0r · Γ) ⊢ vtrue ∶ BoolTy
 
-  falseConstr : { Γ : Context }
+  falseConstr : {s : ℕ} { Γ : Context s }
       -> --------------------------------
            (0r · Γ) ⊢ vfalse ∶ BoolTy
 
-  if : { Γ1 Γ2 : Context }
+  if : {s : ℕ}
+       { Γ1 Γ2 : Context s }
        { B : Type }
        { t1 t2 t3 : Term }
 
@@ -284,11 +292,11 @@ data Value : Term -> Set where
   falseValue   : Value vfalse
 
 -- substitution
-substitution : {Γ Γ1 Γ2 Γ3 : Context} {r : Semiring} {A B : Type} {t1 t2 : Term}
+substitution : {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : Semiring} {A B : Type} {t1 t2 : Term}
       -> Γ ⊢ t1 ∶ B
-      -> (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A r)) ,, (0r · Γ2)))
-      -> Γ3 ⊢ t2 ∶ A
-      -> ((Γ1 ++ (r · Γ2)) ++ Γ3) ⊢ syntacticSubst t2 (Γlength Γ1) t1 ∶ B
+      -> (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A r)) ,, (0r · Γ3)))
+      -> Γ2 ⊢ t2 ∶ A
+      -> ((Γ1 ,, Γ3) ++ (r · Γ2)) ⊢ syntacticSubst t2 (Γlength Γ1) t1 ∶ B
 
 --substitution {Γ1} {Γ2} {.1r} {A} {.A} {Var .0} {t2} (var (Here .Γ1 .A (Γ1' , allZeroesPrf))) substitee
 --  rewrite allZeroesPrf | absorptionContext {Γ1'} {1r · Γ2} | leftUnitContext {Γ2} =
@@ -298,28 +306,28 @@ substitution {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {t1} {t2} substitutee pos e = {!
 
 
 -- constructive progress
-redux : {Γ : Context} {A : Type} {t : Term}
+redux : {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
       -> Γ ⊢ t ∶ A
       -> (Value t) ⊎ ∃ (\t' -> Γ ⊢ t' ∶ A)
 
-redux {Γ} {A} {Var _} (var _) = inj₁ varValue
+redux {s} {Γ} {A} {Var _} (var _) = inj₁ varValue
 
-redux {Γ} {A} {.(App (Abs _ _) _)} (app (abs pos deriv) deriv₁) = {!!}
+redux {s} {Γ} {A} {.(App (Abs _ _) _)} (app (abs pos deriv) deriv₁) = {!!}
 
-redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) with redux deriv1
-redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 with redux deriv2
-redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₁ v2 = inj₁ {!!}
+redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) with redux deriv1
+redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 with redux deriv2
+redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₁ v2 = inj₁ {!!}
 
-redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₂ (t2' , deriv2') = inj₂ (App t1 t2' , app deriv1 deriv2')
+redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₂ (t2' , deriv2') = inj₂ (App t1 t2' , app deriv1 deriv2')
 
-redux {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₂ (t1' , deriv1') = inj₂ (App t1' t2 , app deriv1' deriv2)
+redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₂ (t1' , deriv1') = inj₂ (App t1' t2 , app deriv1' deriv2)
 
-redux {Γ} {.(FunTy _ _ _)} {(Abs n t)} (abs pos deriv) with redux deriv
+redux {s} {Γ} {.(FunTy _ _ _)} {(Abs n t)} (abs pos deriv) with redux deriv
 ... | inj₁ v = inj₁ {!!}
 ... | inj₂ (t' , deriv') = inj₂ (Abs n t' , abs pos deriv')
 
-redux {Γ} {A} {unit} _ = inj₁ unitValue
-redux {Γ} {A} {t} t1 = {!!}
+redux {s} {Γ} {A} {unit} _ = inj₁ unitValue
+redux {s} {Γ} {A} {t} t1 = {!!}
 
 untypedRedux : Term -> Maybe Term
 untypedRedux (App (Abs x t) t') = just (syntacticSubst t' x t)
@@ -340,9 +348,9 @@ multiRedux t with untypedRedux t
 ... | nothing = t
 
 multiReduxProducesValues : {A : Type} {t : Term} -> Empty ⊢ t ∶ A -> Value (multiRedux t)
-multiReduxProducesValues {A} {Var _} (var ())
+multiReduxProducesValues {A} {Var _} ()
 multiReduxProducesValues {A} {App t1 t2} (app typing1 typing2) = {!!}
-multiReduxProducesValues {.(FunTy _ _ _)} {Abs x t} (abs {Γ} {Γ1} refl typing)
+multiReduxProducesValues {FunTy _ _ _} {Abs x t} _
   with untypedRedux (Abs x t) | inspect untypedRedux (Abs x t)
 ... | just t' | [ () ]
 ... | nothing | [ prf ] = absValue {x} t
@@ -352,7 +360,7 @@ multiReduxProducesValues {A} {vtrue} typing = trueValue
 multiReduxProducesValues {A} {vfalse} typing = falseValue
 multiReduxProducesValues {A} {If t t₁ t₂} typing = {!!}
 
-preservation : {Γ : Context} {A : Type} {t : Term}
+preservation : {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
              -> Γ ⊢ t ∶ A
              -> Γ ⊢ multiRedux t ∶ A
 preservation = {!!}
