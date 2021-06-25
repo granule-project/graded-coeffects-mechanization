@@ -28,7 +28,7 @@ record Semiring : Set₁ where
     assoc+     : {r s t : carrier} -> (r +R s) +R t ≡ r +R (s +R t)
 
     distrib1    : {r s t : carrier} -> r *R (s +R t) ≡ (r *R s) +R (r *R t)
-    distrib2    : {r s t : carrier} -> (r +R s) *R t ≡ (r *R s) +R (r *R t)
+    distrib2    : {r s t : carrier} -> (r +R s) *R t ≡ (r *R t) +R (s *R t)
 
     monotone*  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
     monotone+  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s2) ≤ (r2 +R s2)
@@ -225,9 +225,108 @@ assoc+ levelSemiring {Dunno} {Dunno} {Unused} = refl
 assoc+ levelSemiring {Dunno} {Unused} {t} = refl
 assoc+ levelSemiring {Unused} {s} {t} = refl
 
-distrib1 levelSemiring {r} {s} {t} = {!!}
+distrib1 levelSemiring {Public} {Public} {Public} = refl
+distrib1 levelSemiring {Public} {Public} {Private} = refl
+distrib1 levelSemiring {Public} {Public} {Dunno} = refl
+distrib1 levelSemiring {Public} {Public} {Unused} = refl
+distrib1 levelSemiring {Public} {Private} {Public} = refl
+distrib1 levelSemiring {Public} {Private} {Private} = refl
+distrib1 levelSemiring {Public} {Private} {Dunno} = refl
+distrib1 levelSemiring {Public} {Private} {Unused} = refl
+distrib1 levelSemiring {Public} {Dunno} {Public} = refl
+distrib1 levelSemiring {Public} {Dunno} {Private} = refl
+distrib1 levelSemiring {Public} {Dunno} {Dunno} = refl
+distrib1 levelSemiring {Public} {Dunno} {Unused} = refl
+distrib1 levelSemiring {Public} {Unused} {t} = refl
+distrib1 levelSemiring {Private} {Public} {Public} = refl
+distrib1 levelSemiring {Private} {Public} {Private} = refl
+distrib1 levelSemiring {Private} {Public} {Dunno} = refl
+distrib1 levelSemiring {Private} {Public} {Unused} = refl
+distrib1 levelSemiring {Private} {Private} {Public} = refl
+distrib1 levelSemiring {Private} {Private} {Private} = refl
+distrib1 levelSemiring {Private} {Private} {Dunno} = refl
+distrib1 levelSemiring {Private} {Private} {Unused} = refl
+distrib1 levelSemiring {Private} {Dunno} {Public} = refl
+distrib1 levelSemiring {Private} {Dunno} {Private} = refl
+distrib1 levelSemiring {Private} {Dunno} {Dunno} = refl
+distrib1 levelSemiring {Private} {Dunno} {Unused} = refl
+distrib1 levelSemiring {Private} {Unused} {t} = refl
+distrib1 levelSemiring {Dunno} {Public} {Public} = refl
+distrib1 levelSemiring {Dunno} {Public} {Private} = refl
+distrib1 levelSemiring {Dunno} {Public} {Dunno} = refl
+distrib1 levelSemiring {Dunno} {Public} {Unused} = refl
+distrib1 levelSemiring {Dunno} {Private} {Public} = refl
+distrib1 levelSemiring {Dunno} {Private} {Private} = refl
+distrib1 levelSemiring {Dunno} {Private} {Dunno} = refl
+distrib1 levelSemiring {Dunno} {Private} {Unused} = refl
+distrib1 levelSemiring {Dunno} {Dunno} {Public} = refl
+distrib1 levelSemiring {Dunno} {Dunno} {Private} = refl
+distrib1 levelSemiring {Dunno} {Dunno} {Dunno} = refl
+distrib1 levelSemiring {Dunno} {Dunno} {Unused} = refl
+distrib1 levelSemiring {Dunno} {Unused} {t} = refl
+distrib1 levelSemiring {Unused} {s} {t} = refl
 
-distrib2 levelSemiring {r} {s} {t} = {!!}
+distrib2 levelSemiring {Public} {Public} {Public} = refl
+distrib2 levelSemiring {Public} {Public} {Private} = refl
+distrib2 levelSemiring {Public} {Public} {Dunno} = refl
+distrib2 levelSemiring {Public} {Public} {Unused} = refl
+distrib2 levelSemiring {Public} {Private} {Public} = refl
+distrib2 levelSemiring {Public} {Private} {Private} = refl
+distrib2 levelSemiring {Public} {Private} {Dunno} = refl
+distrib2 levelSemiring {Public} {Private} {Unused} = refl
+distrib2 levelSemiring {Public} {Dunno} {Public} = refl
+distrib2 levelSemiring {Public} {Dunno} {Private} = refl
+distrib2 levelSemiring {Public} {Dunno} {Dunno} = refl
+distrib2 levelSemiring {Public} {Dunno} {Unused} = refl
+distrib2 levelSemiring {Public} {Unused} {Public} = refl
+distrib2 levelSemiring {Public} {Unused} {Private} = refl
+distrib2 levelSemiring {Public} {Unused} {Dunno} = refl
+distrib2 levelSemiring {Public} {Unused} {Unused} = refl
+distrib2 levelSemiring {Private} {Public} {Public} = refl
+distrib2 levelSemiring {Private} {Public} {Private} = refl
+distrib2 levelSemiring {Private} {Public} {Dunno} = refl
+distrib2 levelSemiring {Private} {Public} {Unused} = refl
+distrib2 levelSemiring {Private} {Private} {Public} = refl
+distrib2 levelSemiring {Private} {Private} {Private} = refl
+distrib2 levelSemiring {Private} {Private} {Dunno} = refl
+distrib2 levelSemiring {Private} {Private} {Unused} = refl
+distrib2 levelSemiring {Private} {Dunno} {Public} = refl
+distrib2 levelSemiring {Private} {Dunno} {Private} = refl
+distrib2 levelSemiring {Private} {Dunno} {Dunno} = refl
+distrib2 levelSemiring {Private} {Dunno} {Unused} = refl
+distrib2 levelSemiring {Private} {Unused} {Public} = refl
+distrib2 levelSemiring {Private} {Unused} {Private} = refl
+distrib2 levelSemiring {Private} {Unused} {Dunno} = refl
+distrib2 levelSemiring {Private} {Unused} {Unused} = refl
+distrib2 levelSemiring {Dunno} {Public} {Public} = refl
+distrib2 levelSemiring {Dunno} {Public} {Private} = refl
+distrib2 levelSemiring {Dunno} {Public} {Dunno} = refl
+distrib2 levelSemiring {Dunno} {Public} {Unused} = refl
+distrib2 levelSemiring {Dunno} {Private} {Public} = refl
+distrib2 levelSemiring {Dunno} {Private} {Private} = refl
+distrib2 levelSemiring {Dunno} {Private} {Dunno} = refl
+distrib2 levelSemiring {Dunno} {Private} {Unused} = refl
+distrib2 levelSemiring {Dunno} {Dunno} {Public} = refl
+distrib2 levelSemiring {Dunno} {Dunno} {Private} = refl
+distrib2 levelSemiring {Dunno} {Dunno} {Dunno} = refl
+distrib2 levelSemiring {Dunno} {Dunno} {Unused} = refl
+distrib2 levelSemiring {Dunno} {Unused} {Public} = refl
+distrib2 levelSemiring {Dunno} {Unused} {Private} = refl
+distrib2 levelSemiring {Dunno} {Unused} {Dunno} = refl
+distrib2 levelSemiring {Dunno} {Unused} {Unused} = refl
+distrib2 levelSemiring {Unused} {Public} {Public} = refl
+distrib2 levelSemiring {Unused} {Public} {Private} = refl
+distrib2 levelSemiring {Unused} {Public} {Dunno} = refl
+distrib2 levelSemiring {Unused} {Public} {Unused} = refl
+distrib2 levelSemiring {Unused} {Private} {Public} = refl
+distrib2 levelSemiring {Unused} {Private} {Private} = refl
+distrib2 levelSemiring {Unused} {Private} {Dunno} = refl
+distrib2 levelSemiring {Unused} {Private} {Unused} = refl
+distrib2 levelSemiring {Unused} {Dunno} {Public} = refl
+distrib2 levelSemiring {Unused} {Dunno} {Private} = refl
+distrib2 levelSemiring {Unused} {Dunno} {Dunno} = refl
+distrib2 levelSemiring {Unused} {Dunno} {Unused} = refl
+distrib2 levelSemiring {Unused} {Unused} {t} = refl
 
 monotone* levelSemiring 0Pub 0Pub = 0Pub
 monotone* levelSemiring 0Pub 0Priv = 0Pub
