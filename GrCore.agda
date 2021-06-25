@@ -214,19 +214,19 @@ injExt1 refl = refl
 injExt2 : {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> A ≡ A'
 injExt2 refl = refl
 
+-- Disjoint context concatentation
 _,,_ : {s t : ℕ} -> Context s -> Context t -> Context (s + t)
 Empty      ,, G2 = G2
 (Ext G1 a) ,, G2 = Ext (G1 ,, G2) a
 --G1 ,, Empty = G1
 --G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
 
+-- Context scalar multiplication
 _·_ : {s : ℕ} -> Semiring -> Context s -> Context s
 r · Empty = Empty
 r · Ext g (Grad A s) = Ext (r · g) (Grad A (r *R s))
 
--- Make contexts a module
-postulate
-  -- TODO
+-- Context addition
 _++_ : {s : ℕ} -> Context s -> Context s -> Context s
 Empty ++ Empty = Empty
 (Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
