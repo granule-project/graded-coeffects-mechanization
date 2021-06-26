@@ -434,7 +434,40 @@ monotone+ levelSemiring {r1} {r2} {s1} {s2} pre1 pre2 = {!!}
 
 reflexive≤ levelSemiring {r} = Refl r
 
-transitive≤ levelSemiring {r} {s} {t} = {!!}
+transitive≤ levelSemiring {Public} {Public} {Public} inp1 inp2 = inp2
+transitive≤ levelSemiring {Public} {Public} {Private} inp1 inp2 = inp2
+transitive≤ levelSemiring {Public} {Public} {Dunno} inp1 inp2 = inp2
+transitive≤ levelSemiring {Public} {Public} {Unused} inp1 inp2 = inp2
+transitive≤ levelSemiring {Public} {Private} {Public} inp1 inp2 = Refl Public
+transitive≤ levelSemiring {Public} {Private} {Private} inp1 inp2 = inp1
+transitive≤ levelSemiring {Public} {Private} {Dunno} inp1 inp2 = DunnoPub
+transitive≤ levelSemiring {Public} {Private} {Unused} inp1 inp2 = 0Pub
+transitive≤ levelSemiring {Public} {Dunno} {Public} inp1 inp2 = Refl Public
+transitive≤ levelSemiring {Public} {Dunno} {Private} inp1 inp2 = PrivPub
+transitive≤ levelSemiring {Public} {Dunno} {Dunno} inp1 inp2 = inp1
+transitive≤ levelSemiring {Public} {Dunno} {Unused} inp1 inp2 = 0Pub
+transitive≤ levelSemiring {Public} {Unused} {Public} inp1 inp2 = Refl Public
+transitive≤ levelSemiring {Public} {Unused} {Private} inp1 inp2 = PrivPub
+transitive≤ levelSemiring {Public} {Unused} {Dunno} inp1 inp2 = DunnoPub
+transitive≤ levelSemiring {Public} {Unused} {Unused} inp1 inp2 = inp1
+transitive≤ levelSemiring {Private} {Public} {Public} inp1 inp2 = inp1
+transitive≤ levelSemiring {Private} {Public} {Private} inp1 inp2 = Refl Private
+transitive≤ levelSemiring {Private} {Public} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Public} {Unused} inp1 inp2 = 0Priv
+transitive≤ levelSemiring {Private} {Private} {Public} inp1 inp2 = {!!} -- Order Public Private
+transitive≤ levelSemiring {Private} {Private} {Private} inp1 inp2 = Refl Private
+transitive≤ levelSemiring {Private} {Private} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Private} {Unused} inp1 inp2 = 0Priv
+transitive≤ levelSemiring {Private} {Dunno} {Public} inp1 inp2 = {!!} -- Order Public Private
+transitive≤ levelSemiring {Private} {Dunno} {Private} inp1 inp2 = Refl Private
+transitive≤ levelSemiring {Private} {Dunno} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Dunno} {Unused} inp1 inp2 = 0Priv
+transitive≤ levelSemiring {Private} {Unused} {Public} inp1 inp2 = {!!} -- Order Public Private
+transitive≤ levelSemiring {Private} {Unused} {Private} inp1 inp2 = Refl Private
+transitive≤ levelSemiring {Private} {Unused} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Unused} {Unused} inp1 inp2 = 0Priv
+transitive≤ levelSemiring {Dunno} {s} {t} = {!!}
+transitive≤ levelSemiring {Unused} {s} {t} = {!!}
 
 -- Additional property which would be super useful but doesn't seem to hold for Level
 
