@@ -264,6 +264,12 @@ utheorem {_} {γ} {Γ} {.(If _ _ _)} {τ} (if typing typing₁ typing₂) contex
 discrimBool : vtrue ≡ vfalse -> ⊥
 discrimBool ()
 
+absInj2 : {x y : ℕ} {e1 e2 : Term} -> Abs x e1 ≡ Abs y e2 -> e1 ≡ e2
+absInj2 refl = refl
+
+absInj1 : {x y : ℕ} {e1 e2 : Term} -> Abs x e1 ≡ Abs y e2 -> x ≡ y
+absInj1 refl = refl
+
 mutual
   unaryToBinaryV : {A : Type} {t : Term} {adv : Semiring}
                    -> [ A ]v t -> ⟦ A ⟧v adv t t
@@ -275,20 +281,31 @@ mutual
 
   unaryToBinary : {A : Type} {t : Term} {adv : Semiring}
                 -> [ A ]e t -> ⟦ A ⟧e adv t t
+                -- don't forget that via v0redux and v1redux we know v0 = v1
   unaryToBinary {A} {t} {adv} un v0 v1 v0redux v1redux with un v0 v0redux | un v1 v1redux
   ... | unitInterpV     | unitInterpV      = unitInterpBi
-  ... | funInterpV {A'} {B} {r} {x} e1 body1  | funInterpV {_} {_} {_} {x'} e2 body2 = funInterpBi e1 e2 body'
+
+-- Case for {Fun A' r B} want to derive [ Fun A' r B ]e (Abs x e1) -> [[ Fun A' r B ]]e (Abs x e1)
+-- note below x == x' and e1 == e2
+  ... | funInterpV {A'} {B} {r} {x} e1 body1  | funInterpV {_} {_} {_} {x'} e2 body2
+    rewrite absInj2 (trans (sym v0redux) v1redux)
+          | absInj1 (trans (sym v0redux) v1redux) = funInterpBi e2 e2 body'
    where
+      -- body1 : (v : Term) -> [ Box r A ]e (Promote v) -> [ B ]e (syntacticSubst v x e1)
+      -- body2 : (v : Term) -> [ Box r A ]e (Promote v) -> [ B ]e (syntacticSubst v x e2)
+      -- goal  : ⟦ B ⟧v adv vb1 vb2
       body' : (v2 v3 : Term) →
                 ⟦ Box r A' ⟧e adv (Promote v2) (Promote v3) →
-                ⟦ B ⟧e adv (syntacticSubst v2 x e1) (syntacticSubst v3 x' e2)
+                ⟦ B ⟧e adv (syntacticSubst v2 x' e2) (syntacticSubst v3 x' e2)
       body' v2 v3 arg vb1 vb2 vb1redux vb2redux with arg (Promote v2) (Promote v3) refl refl
       ... | boxInterpBiobs   eq .v2 .v3 inner =
          let
-            arg' = arg {!!} {!!} {!!} {!!}
+            -- any chance we can equate v2 and v3?
+            arg' = arg (Promote v2) (Promote v3) refl refl
             ( o1 , o2 ) = binaryImpliesUnaryV arg'
             ab = body1 v2 (λ v x₁ → proj₁ (binaryImpliesUnaryV (arg v (Promote v3) x₁ refl)))
-            ab0 = ab vb1 {!!}
+            ab0 = ab vb1 vb1redux
+            ih = unaryToBinaryV {B} {vb1} {adv} ab0
          in {!!}
       ... | boxInterpBiunobs eq .v2 .v3 inner = {!!}
 
