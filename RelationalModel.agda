@@ -301,10 +301,18 @@ mutual
       ... | boxInterpBiobs   eq .v2 .v3 inner =
          let
             -- any chance we can equate v2 and v3?
-            arg' = arg (Promote v2) (Promote v3) refl refl
-            ( o1 , o2 ) = binaryImpliesUnaryV arg'
             ab = body1 v2 (λ v x₁ → proj₁ (binaryImpliesUnaryV (arg v (Promote v3) x₁ refl)))
             ab0 = ab vb1 vb1redux
+
+            ab' = body1 v3 (λ v x₁ → proj₁ (binaryImpliesUnaryV (arg v (Promote v3) {!!} refl)))
+            ab0' = ab vb2 {!vb2redux!}
+
+            ab'' = body1 v3
+
+            arg' = arg (Promote v2) (Promote v3) refl refl
+            ( o1 , o2 ) = binaryImpliesUnaryV arg'
+
+
             ih = unaryToBinaryV {B} {vb1} {adv} ab0
          in {!!}
       ... | boxInterpBiunobs eq .v2 .v3 inner = {!!}
