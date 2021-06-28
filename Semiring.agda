@@ -434,40 +434,58 @@ monotone+ levelSemiring {r1} {r2} {s1} {s2} pre1 pre2 = {!!}
 
 reflexive≤ levelSemiring {r} = Refl r
 
-transitive≤ levelSemiring {Public} {Public} {Public} inp1 inp2 = inp2
-transitive≤ levelSemiring {Public} {Public} {Private} inp1 inp2 = inp2
-transitive≤ levelSemiring {Public} {Public} {Dunno} inp1 inp2 = inp2
-transitive≤ levelSemiring {Public} {Public} {Unused} inp1 inp2 = inp2
+transitive≤ levelSemiring {Public} {Public} {Public} inp1 inp2 = Refl Public
+transitive≤ levelSemiring {Public} {Public} {Private} inp1 inp2 = PrivPub
+transitive≤ levelSemiring {Public} {Public} {Dunno} inp1 inp2 = DunnoPub
+transitive≤ levelSemiring {Public} {Public} {Unused} inp1 inp2 = 0Pub
 transitive≤ levelSemiring {Public} {Private} {Public} inp1 inp2 = Refl Public
-transitive≤ levelSemiring {Public} {Private} {Private} inp1 inp2 = inp1
+transitive≤ levelSemiring {Public} {Private} {Private} inp1 inp2 = PrivPub
 transitive≤ levelSemiring {Public} {Private} {Dunno} inp1 inp2 = DunnoPub
 transitive≤ levelSemiring {Public} {Private} {Unused} inp1 inp2 = 0Pub
 transitive≤ levelSemiring {Public} {Dunno} {Public} inp1 inp2 = Refl Public
 transitive≤ levelSemiring {Public} {Dunno} {Private} inp1 inp2 = PrivPub
-transitive≤ levelSemiring {Public} {Dunno} {Dunno} inp1 inp2 = inp1
+transitive≤ levelSemiring {Public} {Dunno} {Dunno} inp1 inp2 = DunnoPub
 transitive≤ levelSemiring {Public} {Dunno} {Unused} inp1 inp2 = 0Pub
 transitive≤ levelSemiring {Public} {Unused} {Public} inp1 inp2 = Refl Public
 transitive≤ levelSemiring {Public} {Unused} {Private} inp1 inp2 = PrivPub
 transitive≤ levelSemiring {Public} {Unused} {Dunno} inp1 inp2 = DunnoPub
-transitive≤ levelSemiring {Public} {Unused} {Unused} inp1 inp2 = inp1
-transitive≤ levelSemiring {Private} {Public} {Public} inp1 inp2 = inp1
+transitive≤ levelSemiring {Public} {Unused} {Unused} inp1 inp2 = 0Pub
+transitive≤ levelSemiring {Private} {Public} {Public} () inp2
 transitive≤ levelSemiring {Private} {Public} {Private} inp1 inp2 = Refl Private
-transitive≤ levelSemiring {Private} {Public} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Public} {Dunno} () inp2
 transitive≤ levelSemiring {Private} {Public} {Unused} inp1 inp2 = 0Priv
-transitive≤ levelSemiring {Private} {Private} {Public} inp1 inp2 = {!!} -- Order Public Private
+transitive≤ levelSemiring {Private} {Private} {Public} inp1 ()
 transitive≤ levelSemiring {Private} {Private} {Private} inp1 inp2 = Refl Private
-transitive≤ levelSemiring {Private} {Private} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Private} {Dunno} inp1 ()
 transitive≤ levelSemiring {Private} {Private} {Unused} inp1 inp2 = 0Priv
-transitive≤ levelSemiring {Private} {Dunno} {Public} inp1 inp2 = {!!} -- Order Public Private
+transitive≤ levelSemiring {Private} {Dunno} {Public} inp1 ()
 transitive≤ levelSemiring {Private} {Dunno} {Private} inp1 inp2 = Refl Private
-transitive≤ levelSemiring {Private} {Dunno} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Dunno} {Dunno} () inp2
 transitive≤ levelSemiring {Private} {Dunno} {Unused} inp1 inp2 = 0Priv
-transitive≤ levelSemiring {Private} {Unused} {Public} inp1 inp2 = {!!} -- Order Public Private
+transitive≤ levelSemiring {Private} {Unused} {Public} inp1 ()
 transitive≤ levelSemiring {Private} {Unused} {Private} inp1 inp2 = Refl Private
-transitive≤ levelSemiring {Private} {Unused} {Dunno} inp1 inp2 = {!!} -- Order Dunno Private
+transitive≤ levelSemiring {Private} {Unused} {Dunno} inp1 ()
 transitive≤ levelSemiring {Private} {Unused} {Unused} inp1 inp2 = 0Priv
-transitive≤ levelSemiring {Dunno} {s} {t} = {!!}
-transitive≤ levelSemiring {Unused} {s} {t} = {!!}
+transitive≤ levelSemiring {Dunno} {Public} {Public} () inp2
+transitive≤ levelSemiring {Dunno} {Public} {Private} () inp2
+transitive≤ levelSemiring {Dunno} {Public} {Dunno} inp1 inp2 = Refl Dunno
+transitive≤ levelSemiring {Dunno} {Public} {Unused} inp1 inp2 = 0Dunno
+transitive≤ levelSemiring {Dunno} {Private} {Public} inp1 ()
+transitive≤ levelSemiring {Dunno} {Private} {Private} inp1 inp2 = PrivDunno
+transitive≤ levelSemiring {Dunno} {Private} {Dunno} inp1 inp2 = Refl Dunno
+transitive≤ levelSemiring {Dunno} {Private} {Unused} inp1 inp2 = 0Dunno
+transitive≤ levelSemiring {Dunno} {Dunno} {Public} inp1 ()
+transitive≤ levelSemiring {Dunno} {Dunno} {Private} inp1 inp2 = PrivDunno
+transitive≤ levelSemiring {Dunno} {Dunno} {Dunno} inp1 inp2 = Refl Dunno
+transitive≤ levelSemiring {Dunno} {Dunno} {Unused} inp1 inp2 = 0Dunno
+transitive≤ levelSemiring {Dunno} {Unused} {Public} inp1 ()
+transitive≤ levelSemiring {Dunno} {Unused} {Private} inp1 inp2 = PrivDunno
+transitive≤ levelSemiring {Dunno} {Unused} {Dunno} inp1 inp2 = Refl Dunno
+transitive≤ levelSemiring {Dunno} {Unused} {Unused} inp1 inp2 = 0Dunno
+transitive≤ levelSemiring {Unused} {Public} {t} () inp2
+transitive≤ levelSemiring {Unused} {Private} {t} () inp2
+transitive≤ levelSemiring {Unused} {Dunno} {t} () inp2
+transitive≤ levelSemiring {Unused} {Unused} {.Unused} inp1 (Refl .Unused) = Refl Unused
 
 -- Additional property which would be super useful but doesn't seem to hold for Level
 
