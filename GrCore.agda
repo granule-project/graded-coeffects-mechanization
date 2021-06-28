@@ -194,7 +194,7 @@ invPropertyE {Lo} {Lo} {Lo} {Hi} pre = tt
 invPropertyE {Lo} {Lo} {Lo} {Lo} pre = tt
 
 invPropertyHo : {r1 r2 r adv : Semiring}  -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ true -> (r ≤ adv) ≡ false -> ⊥
-invPropertyHo {Hi} {Lo} {Hi} {Lo} pre1 pre2 pre3 = ?
+invPropertyHo {Hi} {Lo} {Hi} {Lo} pre1 pre2 pre3 = {!!}
 invPropertyHo {_} {_} {_} {_} () () ()
 
 invPropertH : {r1 r2 r adv : Semiring}  -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ true -> ⊥
@@ -220,6 +220,19 @@ invPropertH {Lo} {Lo} {Hi} {Hi} pre pre2 = {!!}
 invPropertH {Lo} {Lo} {Hi} {Lo} pre pre2 = {!!}
 invPropertH {Lo} {Lo} {Lo} {Hi} pre pre2 = {!!}
 invPropertH {Lo} {Lo} {Lo} {Lo} pre pre2 = {!!}
+
+invPropertyHope : {r1 r2 r adv : Semiring} -> boolToSet ((r1 +R (r *R r2)) ≤ adv) -> r ≤ adv ≡ true -> boolToSet (r2 ≤ adv)
+invPropertyHope {Hi} {Hi} {Hi} {Hi} pre1 pre2 = tt
+invPropertyHope {Hi} {Hi} {Lo} {Hi} pre1 pre2 = tt
+invPropertyHope {Hi} {Lo} {Hi} {Hi} pre1 pre2 = tt
+invPropertyHope {Hi} {Lo} {Lo} {Hi} pre1 pre2 = tt
+invPropertyHope {Hi} {Lo} {Lo} {Lo} pre1 pre2 = tt
+invPropertyHope {Lo} {Hi} {Hi} {Hi} pre1 pre2 = tt
+invPropertyHope {Lo} {Hi} {Lo} {Hi} pre1 pre2 = tt
+invPropertyHope {Lo} {Hi} {Lo} {Lo} pre1 pre2 = {!!}
+invPropertyHope {Lo} {Lo} {Hi} {Hi} pre1 pre2 = tt
+invPropertyHope {Lo} {Lo} {Lo} {Hi} pre1 pre2 = tt
+invPropertyHope {Lo} {Lo} {Lo} {Lo} pre1 pre2 = tt
 
 infFlo : {r s adv : Semiring} -> ¬ (boolToSet ((r *R s) ≤ adv))
                            -> boolToSet (s ≤ adv)

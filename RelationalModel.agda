@@ -170,6 +170,18 @@ reduxFalse = refl
 reduxTrue : multiRedux vtrue ≡ vtrue
 reduxTrue = refl
 
+reduxTheoremApp : {t1 t2 v : Term} -> multiRedux (App t1 t2) ≡ v -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1')
+reduxTheoremApp = {!!}
+
+multiSubstTy : {n : ℕ} {Γ : Context n} {t : Term} {A : Type} {γ : List Term} -> Γ ⊢ t ∶ A -> Empty ⊢ multisubst' 0 γ t ∶ A
+multiSubstTy = {!!}
+
+reduxTheoremAppTy : {t1 t2 v : Term} {s : ℕ} {Γ : Context s} {A B : Type} {r : Semiring}
+                 -> multiRedux (App t1 t2) ≡ v
+                 -> Γ ⊢ t1 ∶ FunTy A r B
+                 -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1' × ((Ext Γ (Grad A r)) ⊢ (Abs z v1') ∶  B))
+reduxTheoremAppTy = {!!}
+
 
 postulate
  -- This is about the structure of substitutions and relates to abs
@@ -423,17 +435,29 @@ biFundamentalTheorem {_} {Γ} {.(Var (Γlength _))} {τ} (var pos) {γ1} {γ2} a
 
 -- IDEA: Think more about the overall structure (as this seemed to work better in box)
 -- i.e., what is the shape of the final terms we need to produce etc.
-biFundamentalTheorem {sz} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos
- with r ≤ adv | inspect (\x -> x ≤ adv) r
-... | false | [ eq ] =
+biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos =
    let
     ih1 = biFundamentalTheorem {sz} {Γ1} {t1} {FunTy A r B} typ1 adv (splitContext1 contextInterp)
-    iha = ih1 {!!} {!!}
-    ih2 = biFundamentalTheorem {sz} {Γ2} {t2} {A} typ2 adv {!!} {!!} {!!} {!!} {!!}
+    ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst' 0 γ1 t1} {multisubst' 0 γ1 t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ1} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ1} typ1)
+    ((var2 , bod2) , (fun2redux , bodTy2)) = reduxTheoremAppTy {multisubst' 0 γ2 t1} {multisubst' 0 γ2 t2} {v2} (subst (\r -> multiRedux r ≡ v2) (substPresApp {0} {γ2} {t1} {t2}) v2redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ2} typ1)
+    fun1 = Abs var1 bod1
+    fun2 = Abs var2 bod2
+    iha = ih1  fun1 fun2 fun1redux fun2redux
+
+    ihn = biFundamentalTheorem {1} {Ext Empty (Grad A r)} {bod1} {B} bodTy1 {t2 ∷ []} {t2 ∷ []} adv
+            (argUp , tt)
+
+    -- thought: it's possible I don't have to do this induction here because of CBN...
+    -- ih2 = biFundamentalTheorem {sz} {Γ2} {t2} {A} typ2 adv {!!}
+    -- ihb = ih2 {!!} {!!} {!!} {!!}
    in
-     {!!} -- subst₂ (\h1 h2 -> ⟦ τ ⟧v adv h1 h2) {!!} {!!} {!!}
+     ihn v1 v2 {!!} {!!} -- subst₂ (\h1 h2 -> ⟦ τ ⟧v adv h1 h2) {!!} {!!} {!!}
   where
     -- thm
+    argUp : ⟦ Box r A ⟧e adv (Promote t2) (Promote t2)
+    argUp va vb varedux vbredux with r ≤ adv | inspect (\x -> x ≤ adv) r
+    ... | false | [ eq ] rewrite sym varedux | sym vbredux = boxInterpBiunobs eq t2 t2 ((utheorem typ2 {!!} , utheorem typ2 {!!}))
+    ... | true  | [ eq ] rewrite sym varedux | sym vbredux = boxInterpBiobs eq t2 t2 {!!}
 
     convertVal : {r1 r2 : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
     convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤ adv | inspect (\x -> x ≤ adv) r1
@@ -453,26 +477,6 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A
     splitContext1 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext1 {(suc s)} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (arg , rest) =
       convert {r1} {r2} {v1} {v2} {A} arg , splitContext1 {s} {γ1} {γ2} {Γ1} {Γ2} rest
-
-    convertVal2 : {r1 r2 : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2)
-    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 argInterp) with r2 ≤ adv | inspect (\x -> x ≤ adv) r2
-    ... | false | [ eq' ] = boxInterpBiunobs eq'  v1 v2 {!!}
-    ... | true  | [ eq' ] = boxInterpBiobs eq' v1 v2 argInterp
-    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) with r2 ≤ adv | inspect (\x -> x ≤ adv) r2
-    ... | false | [ eq' ] = boxInterpBiunobs eq' v1 v2 argInterp
-    ... | true  | [ eq' ] = boxInterpBiobs eq' v1 v2 {!!}
-
-    convert2 : {r1 r2 : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧e adv (Promote v1) (Promote v2)
-    convert2 {r1} {r2} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
-      rewrite trans (sym v1redux') (reduxProm {v1})
-            | trans (sym v2redux') (reduxProm {v2}) = convertVal2 {r1} {r2} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
-
-    splitContext2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ Γ2 ⟧Γ adv γ1 γ2
-    splitContext2 {.0} {γ1} {γ2} {Empty} {Empty} pre = tt
-    splitContext2 {suc s} {e1 ∷ γ1} {e2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (arg , rest) =
-      convert2 {r1} {r2} {e1} {e2} {A'} {!!} , splitContext2 {s} {γ1} {γ2} {Γ1} {Γ2} rest
-
-... | true  | [ eq ] = {!!}
 
 {-
 
