@@ -193,6 +193,10 @@ invPropertyE {Lo} {Lo} {Hi} {Lo} pre = tt
 invPropertyE {Lo} {Lo} {Lo} {Hi} pre = tt
 invPropertyE {Lo} {Lo} {Lo} {Lo} pre = tt
 
+invPropertyHo : {r1 r2 r adv : Semiring}  -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ true -> (r ≤ adv) ≡ false -> ⊥
+invPropertyHo {Hi} {Lo} {Hi} {Lo} pre1 pre2 pre3 = ?
+invPropertyHo {_} {_} {_} {_} () () ()
+
 invPropertH : {r1 r2 r adv : Semiring}  -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ true -> ⊥
 invPropertH {Hi} {Hi} {Hi} {Lo} refl ()
 invPropertH {Hi} {Hi} {Lo} {Lo} refl ()
