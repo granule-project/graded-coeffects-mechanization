@@ -31,7 +31,7 @@ record Semiring : Set₁ where
     distrib2    : {r s t : carrier} -> (r +R s) *R t ≡ (r *R t) +R (s *R t)
 
     monotone*  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
-    monotone+  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s2) ≤ (r2 +R s2)
+    monotone+  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s1) ≤ (r2 +R s2)
 
     reflexive≤ : {r : carrier} -> r ≤ r
     transitive≤ : {r s t : carrier} -> r ≤ s -> s ≤ t -> r ≤ t
@@ -430,7 +430,82 @@ monotone* levelSemiring (Refl Private) DunnoPub = DunnoPub
 monotone* levelSemiring (Refl Dunno) DunnoPub = DunnoPub
 monotone* levelSemiring (Refl Unused) DunnoPub = Refl Unused
 
-monotone+ levelSemiring {r1} {r2} {s1} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Public} {Public} {Public} {Public} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Public} {Private} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Public} {Dunno} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Public} {Unused} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Private} {Private} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Private} {Unused} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Dunno} {Private} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Dunno} {Dunno} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Dunno} {Unused} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Public} {Unused} {Unused} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Private} {Public} {Public} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Private} {Public} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Public} {Dunno} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Public} {Unused} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Private} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Private} {Unused} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Dunno} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Dunno} {Dunno} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Dunno} {Unused} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Private} {Unused} {Unused} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Dunno} {Public} {Public} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Dunno} {Public} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Dunno} {Public} {Dunno} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Dunno} {Public} {Unused} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Dunno} {Private} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Dunno} {Private} {Unused} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Dunno} {Dunno} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Dunno} {Dunno} {Dunno} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Dunno} {Dunno} {Unused} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Dunno} {Unused} {Unused} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Unused} {Public} {Public} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Public} {Unused} {Public} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Unused} {Public} {Dunno} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Unused} {Public} {Unused} pre1 pre2 = 0Pub
+monotone+ levelSemiring {Public} {Unused} {Private} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Unused} {Private} {Unused} pre1 pre2 = 0Pub
+monotone+ levelSemiring {Public} {Unused} {Dunno} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Public} {Unused} {Dunno} {Dunno} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Public} {Unused} {Dunno} {Unused} pre1 pre2 = 0Pub
+monotone+ levelSemiring {Public} {Unused} {Unused} {Unused} pre1 pre2 = 0Pub
+monotone+ levelSemiring {Private} {Private} {Public} {Public} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Private} {Private} {Public} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Private} {Private} {Public} {Dunno} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Private} {Private} {Public} {Unused} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Private} {Private} {Private} {Private} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Private} {Private} {Unused} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Private} {Dunno} {Private} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Private} {Dunno} {Dunno} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Private} {Dunno} {Unused} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Private} {Unused} {Unused} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Unused} {Public} {Public} pre1 pre2 = Refl Public
+monotone+ levelSemiring {Private} {Unused} {Public} {Private} pre1 pre2 = PrivPub
+monotone+ levelSemiring {Private} {Unused} {Public} {Dunno} pre1 pre2 = DunnoPub
+monotone+ levelSemiring {Private} {Unused} {Public} {Unused} pre1 pre2 = 0Pub
+monotone+ levelSemiring {Private} {Unused} {Private} {Private} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Unused} {Private} {Unused} pre1 pre2 = 0Priv
+monotone+ levelSemiring {Private} {Unused} {Dunno} {Private} pre1 pre2 = Refl Private
+monotone+ levelSemiring {Private} {Unused} {Dunno} {Dunno} pre1 pre2 = {!!} -- Order Dunno Private
+monotone+ levelSemiring {Private} {Unused} {Dunno} {Unused} pre1 pre2 = {!!}
+monotone+ levelSemiring {Private} {Unused} {Unused} {Unused} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Private} {Public} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Private} {Private} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Private} {Dunno} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Private} {Unused} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Dunno} {Public} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Dunno} {Private} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Dunno} {Dunno} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Dunno} {Unused} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Unused} {Public} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Unused} {Private} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Unused} {Dunno} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Dunno} {Unused} {Unused} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Unused} {Unused} {Public} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Unused} {Unused} {Private} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Unused} {Unused} {Dunno} {s2} pre1 pre2 = {!!}
+monotone+ levelSemiring {Unused} {Unused} {Unused} {s2} pre1 pre2 = {!!}
 
 reflexive≤ levelSemiring {r} = Refl r
 
@@ -485,7 +560,7 @@ transitive≤ levelSemiring {Dunno} {Unused} {Unused} inp1 inp2 = 0Dunno
 transitive≤ levelSemiring {Unused} {Public} {t} () inp2
 transitive≤ levelSemiring {Unused} {Private} {t} () inp2
 transitive≤ levelSemiring {Unused} {Dunno} {t} () inp2
-transitive≤ levelSemiring {Unused} {Unused} {.Unused} inp1 (Refl .Unused) = Refl Unused
+transitive≤ levelSemiring {Unused} {Unused} {Unused} inp1 inp2 = Refl Unused
 
 -- Additional property which would be super useful but doesn't seem to hold for Level
 
