@@ -48,254 +48,74 @@ boolToSet : Bool -> Set
 boolToSet false = ⊥
 boolToSet true = ⊤
 
+
+propInvPlusMono1 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r1 ≤ adv) ≡ false
+propInvPlusMono1 {Hi} {Hi} {Hi} {Hi} ()
+propInvPlusMono1 {Hi} {Hi} {Lo} {Hi} ()
+propInvPlusMono1 {Hi} {Lo} {Hi} {Hi} ()
+propInvPlusMono1 {Hi} {Lo} {Lo} {Hi} ()
+propInvPlusMono1 {Hi} {Lo} {Lo} {Lo} ()
+propInvPlusMono1 {Lo} {Hi} {Hi} {Hi} ()
+propInvPlusMono1 {Lo} {Hi} {Hi} {Lo} ()
+propInvPlusMono1 {Lo} {Hi} {Lo} {Hi} ()
+propInvPlusMono1 {Lo} {Hi} {Lo} {Lo} ()
+propInvPlusMono1 {Lo} {Lo} {Hi} {Hi} ()
+propInvPlusMono1 {Lo} {Lo} {Hi} {Lo} ()
+propInvPlusMono1 {Lo} {Lo} {Lo} {Hi} ()
+propInvPlusMono1 {Lo} {Lo} {Lo} {Lo} ()
+propInvPlusMono1 {Hi} {Hi} {Hi} {Lo} refl = refl
+propInvPlusMono1 {Hi} {Hi} {Lo} {Lo} refl = refl
+propInvPlusMono1 {Hi} {Lo} {Hi} {Lo} refl = refl
+
+propInvPlusMono2 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> ((r *R r2) ≤ adv) ≡ false
+propInvPlusMono2 {Hi} {Hi} {Hi} {Hi} ()
+propInvPlusMono2 {Hi} {Hi} {Hi} {Lo} refl = refl
+propInvPlusMono2 {Hi} {Hi} {Lo} {Hi} ()
+propInvPlusMono2 {Hi} {Hi} {Lo} {Lo} refl = refl
+propInvPlusMono2 {Hi} {Lo} {Hi} {Hi} ()
+propInvPlusMono2 {Hi} {Lo} {Hi} {Lo} refl = refl
+propInvPlusMono2 {Hi} {Lo} {Lo} {Hi} ()
+propInvPlusMono2 {Hi} {Lo} {Lo} {Lo} ()
+propInvPlusMono2 {Lo} {Hi} {Hi} {Hi} ()
+propInvPlusMono2 {Lo} {Hi} {Hi} {Lo} ()
+propInvPlusMono2 {Lo} {Hi} {Lo} {Hi} ()
+propInvPlusMono2 {Lo} {Hi} {Lo} {Lo} ()
+propInvPlusMono2 {Lo} {Lo} {Hi} {Hi} ()
+propInvPlusMono2 {Lo} {Lo} {Hi} {Lo} ()
+propInvPlusMono2 {Lo} {Lo} {Lo} {Hi} ()
+propInvPlusMono2 {Lo} {Lo} {Lo} {Lo} ()
+
+propNonMonoTimes1 : {r s adv : Semiring} -> (r ≤ adv) ≡ false -> ((r *R s) ≤ adv) ≡ false
+propNonMonoTimes1 {Hi} {Hi} {Lo}  pre = pre
+propNonMonoTimes1 {Hi} {Lo} {Lo}  pre = refl
+propNonMonoTimes1 {Lo} {Hi} {Hi} ()
+propNonMonoTimes1 {Lo} {Hi} {Lo} ()
+propNonMonoTimes1 {Lo} {Lo} {Hi} ()
+propNonMonoTimes1 {Lo} {Lo} {Lo} ()
+
+propInvTimesMono2 : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ true -> (s ≤ adv) ≡ true
+propInvTimesMono2 {Hi} {Hi} {Hi} pre = refl
+propInvTimesMono2 {Hi} {Lo} {Hi} pre = refl
+propInvTimesMono2 {Lo} {Hi} {Hi} pre = pre
+propInvTimesMono2 {Lo} {Lo} {Hi} pre = refl
+propInvTimesMono2 {Lo} {Lo} {Lo} pre = refl
+
+propInvTimesMonoAsym : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ false -> (r ≤ adv) ≡ true -> (s ≤ adv) ≡ false
+propInvTimesMonoAsym {Hi} {Hi} {Hi} () pre2
+propInvTimesMonoAsym {Hi} {Hi} {Lo} refl ()
+propInvTimesMonoAsym {Hi} {Lo} {Hi} () pre2
+propInvTimesMonoAsym {Hi} {Lo} {Lo} refl ()
+propInvTimesMonoAsym {Lo} {Hi} {Hi} () pre2
+propInvTimesMonoAsym {Lo} {Hi} {Lo} refl refl = refl
+propInvTimesMonoAsym {Lo} {Lo} {Hi} () pre2
+propInvTimesMonoAsym {Lo} {Lo} {Lo} () pre2
+
 invProperty : {r s adv : Semiring} -> boolToSet ((r *R s) ≤ adv) -> boolToSet (s ≤ adv)
 invProperty {Hi} {Hi} {Hi} pre = tt
 invProperty {Hi} {Lo} {Hi} pre = tt
 invProperty {Lo} {Hi} {Hi} pre = tt
 invProperty {Lo} {Lo} {Hi} pre = tt
 invProperty {Lo} {Lo} {Lo} pre = tt
-
-invPropertyA : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ true -> (s ≤ adv) ≡ true
-invPropertyA {Hi} {Hi} {Hi} pre = refl
-invPropertyA {Hi} {Lo} {Hi} pre = refl
-invPropertyA {Lo} {Hi} {Hi} pre = pre
-invPropertyA {Lo} {Lo} {Hi} pre = refl
-invPropertyA {Lo} {Lo} {Lo} pre = refl
-
-invPropertyB : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ false -> (s ≤ adv) ≡ false
-invPropertyB {Hi} {Hi} {Lo} pre = refl
--- Hi * Lo <= Lo  is  Hi <= Lo which is false but Lo <= Lo is true
-invPropertyB {Hi} {Lo} {Lo} pre = {!!}
-invPropertyB {Lo} {Hi} {Lo} pre = refl
-invPropertyB {Hi} {Hi} {Hi} pre = pre
-invPropertyB {Hi} {Lo} {Hi} pre = pre
-invPropertyB {Lo} {Hi} {Hi} pre = pre
-invPropertyB {Lo} {Lo} {Hi} pre = pre
-invPropertyB {Lo} {Lo} {Lo} pre = pre
-
-invPropertyC : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ false -> (r ≤ adv) ≡ true -> (s ≤ adv) ≡ false
-invPropertyC {Hi} {Hi} {Hi} () pre2
-invPropertyC {Hi} {Hi} {Lo} refl ()
-invPropertyC {Hi} {Lo} {Hi} () pre2
-invPropertyC {Hi} {Lo} {Lo} refl ()
-invPropertyC {Lo} {Hi} {Hi} () pre2
-invPropertyC {Lo} {Hi} {Lo} refl refl = refl
-invPropertyC {Lo} {Lo} {Hi} () pre2
-invPropertyC {Lo} {Lo} {Lo} () pre2
-
-invPropertyD : {r s adv : Semiring} -> (r ≤ adv) ≡ false -> ((r *R s) ≤ adv) ≡ false
-invPropertyD {Hi} {Hi} {Lo}  pre = pre
-invPropertyD {Hi} {Lo} {Lo}  pre = refl
-invPropertyD {Lo} {Hi} {Hi} ()
-invPropertyD {Lo} {Hi} {Lo} ()
-invPropertyD {Lo} {Lo} {Hi} ()
-invPropertyD {Lo} {Lo} {Lo} ()
-
-invPropertyI : {r s adv : Semiring} -> boolToSet (s ≤ adv) -> boolToSet ((r *R s) ≤ adv)
-invPropertyI {Hi} {Hi} {Hi} pre = tt
-invPropertyI {Hi} {Lo} {Hi} pre = tt
--- Lo <= Lo  but Hi * Lo <= Lo is false.
-invPropertyI {Hi} {Lo} {Lo} pre = {!!}
-invPropertyI {Lo} {Hi} {Hi} pre = tt
-invPropertyI {Lo} {Lo} {Hi} pre = tt
-invPropertyI {Lo} {Lo} {Lo} pre = tt
-
-invPropertyE' : {r1 r2 r adv : Semiring} -> boolToSet (r1 ≤ adv) -> boolToSet ((r1 +R (r *R r2)) ≤ adv)
-invPropertyE' {Hi} {Hi} {Hi} {Hi} pre = tt
-invPropertyE' {Hi} {Hi} {Lo} {Hi} pre = tt
-invPropertyE' {Hi} {Lo} {Hi} {Hi} pre = tt
-invPropertyE' {Hi} {Lo} {Lo} {Hi} pre = tt
-invPropertyE' {Lo} {Hi} {Hi} {Hi} pre = tt
-invPropertyE' {Lo} {Hi} {Hi} {Lo} pre = tt
-invPropertyE' {Lo} {Hi} {Lo} {Hi} pre = tt
-invPropertyE' {Lo} {Hi} {Lo} {Lo} pre = tt
-invPropertyE' {Lo} {Lo} {Hi} {Hi} pre = tt
-invPropertyE' {Lo} {Lo} {Hi} {Lo} pre = tt
-invPropertyE' {Lo} {Lo} {Lo} {Hi} pre = tt
-invPropertyE' {Lo} {Lo} {Lo} {Lo} pre = tt
-
-invPropertyF : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r1 ≤ adv) ≡ false
-invPropertyF {Hi} {Hi} {Hi} {Hi} ()
-invPropertyF {Hi} {Hi} {Lo} {Hi} ()
-invPropertyF {Hi} {Lo} {Hi} {Hi} ()
-invPropertyF {Hi} {Lo} {Lo} {Hi} ()
-invPropertyF {Hi} {Lo} {Lo} {Lo} ()
-invPropertyF {Lo} {Hi} {Hi} {Hi} ()
-invPropertyF {Lo} {Hi} {Hi} {Lo} ()
-invPropertyF {Lo} {Hi} {Lo} {Hi} ()
-invPropertyF {Lo} {Hi} {Lo} {Lo} ()
-invPropertyF {Lo} {Lo} {Hi} {Hi} ()
-invPropertyF {Lo} {Lo} {Hi} {Lo} ()
-invPropertyF {Lo} {Lo} {Lo} {Hi} ()
-invPropertyF {Lo} {Lo} {Lo} {Lo} ()
-invPropertyF {Hi} {Hi} {Hi} {Lo} refl = refl
-invPropertyF {Hi} {Hi} {Lo} {Lo} refl = refl
-invPropertyF {Hi} {Lo} {Hi} {Lo} refl = refl
-
-invPropertyF' : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> ((r *R r2) ≤ adv) ≡ false
-invPropertyF' {Hi} {Hi} {Hi} {Hi} ()
-invPropertyF' {Hi} {Hi} {Hi} {Lo} refl = refl
-invPropertyF' {Hi} {Hi} {Lo} {Hi} ()
-invPropertyF' {Hi} {Hi} {Lo} {Lo} refl = refl
-invPropertyF' {Hi} {Lo} {Hi} {Hi} ()
-invPropertyF' {Hi} {Lo} {Hi} {Lo} refl = refl
-invPropertyF' {Hi} {Lo} {Lo} {Hi} ()
-invPropertyF' {Hi} {Lo} {Lo} {Lo} ()
-invPropertyF' {Lo} {Hi} {Hi} {Hi} ()
-invPropertyF' {Lo} {Hi} {Hi} {Lo} ()
-invPropertyF' {Lo} {Hi} {Lo} {Hi} ()
-invPropertyF' {Lo} {Hi} {Lo} {Lo} ()
-invPropertyF' {Lo} {Lo} {Hi} {Hi} ()
-invPropertyF' {Lo} {Lo} {Hi} {Lo} ()
-invPropertyF' {Lo} {Lo} {Lo} {Hi} ()
-invPropertyF' {Lo} {Lo} {Lo} {Lo} ()
-
-
-invPropertyF2 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ false
-invPropertyF2 {Hi} {Hi} {Hi} {Lo} pre = refl
-invPropertyF2 {Hi} {Hi} {Lo} {Lo} pre = refl
--- Hi + Lo * Hi <= Lo
--- Hi + Hi <= Lo
--- Hi <= Lo FALSE
-
--- but
--- Lo <= Lo TRUE
-invPropertyF2 {Hi} {Lo} {Hi} {Lo} pre = {!!}
-invPropertyF2 {Hi} {Hi} {Hi} {Hi} ()
-invPropertyF2 {Hi} {Hi} {Lo} {Hi} ()
-invPropertyF2 {Hi} {Lo} {Hi} {Hi} ()
-invPropertyF2 {Hi} {Lo} {Lo} {Hi} ()
-invPropertyF2 {Hi} {Lo} {Lo} {Lo} ()
-invPropertyF2 {Lo} {Hi} {Hi} {Hi} ()
-invPropertyF2 {Lo} {Hi} {Hi} {Lo} ()
-invPropertyF2 {Lo} {Hi} {Lo} {Hi} ()
-invPropertyF2 {Lo} {Hi} {Lo} {Lo} ()
-invPropertyF2 {Lo} {Lo} {Hi} {Hi} ()
-invPropertyF2 {Lo} {Lo} {Hi} {Lo} ()
-invPropertyF2 {Lo} {Lo} {Lo} {Hi} ()
-invPropertyF2 {Lo} {Lo} {Lo} {Lo} ()
-
-invPropertG : {r1 r2 r adv : Semiring}  -> ((r1 +R (r *R r2)) ≤ adv) ≡ true
-                                        -> (r2 ≤ adv) ≡ true
-invPropertG {Hi} {Hi} {Hi} {Hi} pre = refl
-invPropertG {Hi} {Hi} {Lo} {Hi} pre = refl
-invPropertG {Hi} {Lo} {Hi} {Hi} pre = refl
-invPropertG {Hi} {Lo} {Lo} {Hi} pre = refl
-invPropertG {Hi} {Lo} {Lo} {Lo} pre = refl
-invPropertG {Lo} {Hi} {Hi} {Hi} pre = refl
-invPropertG {Lo} {Hi} {Hi} {Lo} pre = {!!}
-invPropertG {Lo} {Hi} {Lo} {Hi} pre = {!!}
-invPropertG {Lo} {Hi} {Lo} {Lo} pre = {!!}
-invPropertG {Lo} {Lo} {Hi} {Hi} pre = {!!}
-invPropertG {Lo} {Lo} {Hi} {Lo} pre = {!!}
-invPropertG {Lo} {Lo} {Lo} {Hi} pre = {!!}
-invPropertG {Lo} {Lo} {Lo} {Lo} pre = {!!}
-
-invPropertyE : {r1 r2 r adv : Semiring} -> boolToSet ((r1 +R (r *R r2)) ≤ adv) -> boolToSet (r1 ≤ adv)
-invPropertyE {Hi} {Hi} {Hi} {Hi} pre = tt
-invPropertyE {Hi} {Hi} {Lo} {Hi} pre = tt
-invPropertyE {Hi} {Lo} {Hi} {Hi} pre = tt
-invPropertyE {Hi} {Lo} {Lo} {Hi} pre = tt
--- not good.
---    Hi + (Lo * Lo) <= Lo
---    Hi + Lo <= Lo
---    Lo <= Lo yes
--- vs.
---    Hi <= Lo  false
-invPropertyE {Hi} {Lo} {Lo} {Lo} pre = {!!}
-invPropertyE {Lo} {Hi} {Hi} {Hi} pre = tt
-invPropertyE {Lo} {Hi} {Hi} {Lo} pre = tt
-invPropertyE {Lo} {Hi} {Lo} {Hi} pre = tt
-invPropertyE {Lo} {Hi} {Lo} {Lo} pre = tt
-invPropertyE {Lo} {Lo} {Hi} {Hi} pre = tt
-invPropertyE {Lo} {Lo} {Hi} {Lo} pre = tt
-invPropertyE {Lo} {Lo} {Lo} {Hi} pre = tt
-invPropertyE {Lo} {Lo} {Lo} {Lo} pre = tt
-
-invPropertyHo : {r1 r2 r adv : Semiring}  -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ true -> (r ≤ adv) ≡ false -> ⊥
-invPropertyHo {Hi} {Lo} {Hi} {Lo} pre1 pre2 pre3 = {!!}
-invPropertyHo {_} {_} {_} {_} () () ()
-
-invPropertH : {r1 r2 r adv : Semiring}  -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ true -> ⊥
-invPropertH {Hi} {Hi} {Hi} {Lo} refl ()
-invPropertH {Hi} {Hi} {Lo} {Lo} refl ()
--- Hi + (Hi * Lo) <= Lo
--- Hi + Hi <= Lo
--- Hi <= Lo  FALSE
-
--- Lo <= Lo  TRUE hm.
-
-invPropertH {Hi} {Lo} {Hi} {Lo} refl refl = {!!}
-invPropertH {Hi} {Hi} {Hi} {Hi} pre pre2 = {!!}
-invPropertH {Hi} {Hi} {Lo} {Hi} pre pre2 = {!!}
-invPropertH {Hi} {Lo} {Hi} {Hi} pre pre2 = {!!}
-invPropertH {Hi} {Lo} {Lo} {Hi} pre pre2 = {!!}
-invPropertH {Hi} {Lo} {Lo} {Lo} pre pre2 = {!!}
-invPropertH {Lo} {Hi} {Hi} {Hi} pre pre2 = {!!}
-invPropertH {Lo} {Hi} {Hi} {Lo} pre pre2 = {!!}
-invPropertH {Lo} {Hi} {Lo} {Hi} pre pre2 = {!!}
-invPropertH {Lo} {Hi} {Lo} {Lo} pre pre2 = {!!}
-invPropertH {Lo} {Lo} {Hi} {Hi} pre pre2 = {!!}
-invPropertH {Lo} {Lo} {Hi} {Lo} pre pre2 = {!!}
-invPropertH {Lo} {Lo} {Lo} {Hi} pre pre2 = {!!}
-invPropertH {Lo} {Lo} {Lo} {Lo} pre pre2 = {!!}
-
-invPropertyHope : {r1 r2 r adv : Semiring} -> boolToSet ((r1 +R (r *R r2)) ≤ adv) -> r ≤ adv ≡ true -> boolToSet (r2 ≤ adv)
-invPropertyHope {Hi} {Hi} {Hi} {Hi} pre1 pre2 = tt
-invPropertyHope {Hi} {Hi} {Lo} {Hi} pre1 pre2 = tt
-invPropertyHope {Hi} {Lo} {Hi} {Hi} pre1 pre2 = tt
-invPropertyHope {Hi} {Lo} {Lo} {Hi} pre1 pre2 = tt
-invPropertyHope {Hi} {Lo} {Lo} {Lo} pre1 pre2 = tt
-invPropertyHope {Lo} {Hi} {Hi} {Hi} pre1 pre2 = tt
-invPropertyHope {Lo} {Hi} {Lo} {Hi} pre1 pre2 = tt
--- Lo + (Lo * Hi) <= Lo
--- Lo + Hi <= Lo
--- Lo <= Lo  TRUE
-
--- Lo <= Lo TRUE
-
--- Hi <= FALSE
-invPropertyHope {Lo} {Hi} {Lo} {Lo} pre1 pre2 = {!!}
-invPropertyHope {Lo} {Lo} {Hi} {Hi} pre1 pre2 = tt
-invPropertyHope {Lo} {Lo} {Lo} {Hi} pre1 pre2 = tt
-invPropertyHope {Lo} {Lo} {Lo} {Lo} pre1 pre2 = tt
-
-invPropertyHope2 : {r1 r2 r adv : Semiring} -> boolToSet ((r1 +R (r *R r2)) ≤ adv) -> boolToSet ((r *R r2) ≤ adv)
-invPropertyHope2 {Hi} {Hi} {Hi} {Hi} tt = tt
-invPropertyHope2 {Hi} {Hi} {Hi} {Lo} ()
-invPropertyHope2 {Hi} {Hi} {Lo} {Hi} tt = tt
-invPropertyHope2 {Hi} {Hi} {Lo} {Lo} ()
-invPropertyHope2 {Hi} {Lo} {Hi} {Hi} tt = tt
-invPropertyHope2 {Hi} {Lo} {Hi} {Lo} ()
-invPropertyHope2 {Hi} {Lo} {Lo} {Hi} tt = tt
-invPropertyHope2 {Hi} {Lo} {Lo} {Lo} tt = tt
-invPropertyHope2 {Lo} {Hi} {Hi} {Hi} tt = tt
--- Lo + (Hi * Lo) <= Lo
--- Lo + Hi <= Lo
--- Lo <= Lo TRUE
--- but
--- Hi <= Lo FALSE
-invPropertyHope2 {Lo} {Hi} {Hi} {Lo} tt = {!!}
-invPropertyHope2 {Lo} {Hi} {Lo} {Hi} tt = {!!}
-invPropertyHope2 {Lo} {Hi} {Lo} {Lo} tt = {!!}
-invPropertyHope2 {Lo} {Lo} {Hi} {Hi} tt = {!!}
-invPropertyHope2 {Lo} {Lo} {Hi} {Lo} tt = {!!}
-invPropertyHope2 {Lo} {Lo} {Lo} {Hi} tt = {!!}
-invPropertyHope2 {Lo} {Lo} {Lo} {Lo} tt = {!!}
-
-infFlo : {r s adv : Semiring} -> ¬ (boolToSet ((r *R s) ≤ adv))
-                           -> boolToSet (s ≤ adv)
-                           -> ⊥
-infFlo {Hi} {Hi} {Hi} narg arg = narg arg
-infFlo {Hi} {Lo} {Hi} narg arg = narg tt
--- Hi * Lo = Hi   <= Lo   false
--- but
---    Lo <= Lo   true
---
-infFlo {Hi} {Lo} {Lo} narg arg = {!!}
-infFlo {Lo} {Hi} {Hi} narg arg = {!!}
-infFlo {Lo} {Lo} {Hi} narg arg = {!!}
-infFlo {Lo} {Lo} {Lo} narg arg = {!!}
 
 data Type : Set where
   FunTy : (A : Type) -> (r : Semiring) -> (B : Type) -> Type -- A r -> B
@@ -543,6 +363,10 @@ multiReduxProducesValues {A} {Promote t} typing = promoteValue t
 multiReduxProducesValues {A} {vtrue} typing = trueValue
 multiReduxProducesValues {A} {vfalse} typing = falseValue
 multiReduxProducesValues {A} {If t t₁ t₂} typing = {!!}
+
+multReduxCongruence : {t1 v : Term} {C : Term -> Term}
+                   -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
+multReduxCongruence = {!!}
 
 preservation : {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
              -> Γ ⊢ t ∶ A
