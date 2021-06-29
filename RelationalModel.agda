@@ -332,6 +332,10 @@ mutual
 
   unaryToBinary : {A : Type} {t : Term} {adv : Semiring}
                 -> [ A ]e t -> ⟦ A ⟧e adv t t
+  unaryToBinary {A} {t} {adv} pre v1 v2 v1redux v2redux
+    rewrite trans (sym v1redux) v2redux = unaryToBinaryV {A} {v2} {adv} (pre v2 v2redux)
+
+{-
                 -- don't forget that via v0redux and v1redux we know v0 = v1
   unaryToBinary {A} {t} {adv} un v0 v1 v0redux v1redux with un v0 v0redux | un v1 v1redux
   ... | unitInterpV     | unitInterpV      = unitInterpBi
@@ -355,41 +359,31 @@ mutual
             ab = body1 v2 (λ v x₁ → proj₁ (binaryImpliesUnaryV (arg v (Promote v3) x₁ refl)))
             ab0 = ab vb1 vb1redux
 
-            ab' = body1 v3 (λ v x₁ → proj₁ (binaryImpliesUnaryV (arg v (Promote v3) {!!} refl)))
-            ab0' = ab vb2 {!vb2redux!}
-
-            ab'' = body1 v3
+            ab' = body1 v3 (λ v x₁ → proj₂ (binaryImpliesUnaryV (arg (Promote v2) v refl x₁)))
+            ab0' = ab' vb2 vb2redux
+            -- not sure that ab0 or ab0' is any good yet.
 
             arg' = arg (Promote v2) (Promote v3) refl refl
             ( o1 , o2 ) = binaryImpliesUnaryV arg'
 
 
-            ih = unaryToBinaryV {B} {vb1} {adv} ab0
+            ih = unaryToBinaryV {B} {vb1} {adv} {!!}
+            -- can we equate vb1 and vb2?
          in {!!}
       ... | boxInterpBiunobs eq .v2 .v3 inner = {!!}
 
-{- =
-        let (a1 , a2) = binaryImpliesUnary arg
-            ab = body1 v2 a1
-        in {!!}
+  unaryToBinary {Box r A₁} {t} {adv} un v0 v1 v0redux v1redux | boxInterpV e1 inner1  | boxInterpV e2 inner2 with r ≤ adv | inspect (\x -> (x ≤ adv)) r
+  unaryToBinary {Box r A₁} {t} {adv} un (Promote v0') (Promote v1') v0redux v1redux | boxInterpV _ inner1 | boxInterpV _ inner2 | false | [ eq ] =
+     boxInterpBiunobs eq v0' v1' (inner1 , inner2)
+  unaryToBinary {Box r A₁} {t} {adv} un (Promote v0') (Promote v1') v0redux v1redux | boxInterpV vee inner1 | boxInterpV _ inner2 | true  | [ eq ]
+   rewrite trans (sym v0redux) v1redux =
+     boxInterpBiobs eq v1' v1' (unaryToBinary {A₁} {v1'} inner2)
+
+  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpTrue  | boolInterpTrue   = boolInterpTrueBi
+  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpTrue  | boolInterpFalse  = ⊥-elim (discrimBool (trans (sym v0redux) v1redux))
+  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpFalse | boolInterpTrue   = ⊥-elim (discrimBool (trans (sym v1redux) v0redux))
+  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpFalse | boolInterpFalse  = boolInterpFalseBi
 -}
-
-
-      equalBodies : e1 ≡ e2
-      equalBodies with trans (sym v0redux) v1redux
-      ... | refl = refl
-
-      equalVars : x ≡ x'
-      equalVars with trans (sym v0redux) v1redux
-      ... | refl = refl
-
-  ... | boxInterpV e1 inner1  | boxInterpV e2 inner2 =
-             boxInterpBiunobs {!!} e1 e2 (inner1 , inner2)
-  ... | boolInterpTrue  | boolInterpTrue   = boolInterpTrueBi
-  ... | boolInterpTrue  | boolInterpFalse  = ⊥-elim (discrimBool (trans (sym v0redux) v1redux))
-  ... | boolInterpFalse | boolInterpTrue   = ⊥-elim (discrimBool (trans (sym v1redux) v0redux))
-  ... | boolInterpFalse | boolInterpFalse  = boolInterpFalseBi
-
 
   binaryImpliesUnaryV : {A : Type} {t1 t2 : Term} {adv : Semiring}
                     -> ⟦ A ⟧v adv t1 t2 -> [ A ]v t1 × [ A ]v t2
@@ -399,7 +393,7 @@ mutual
      leftBody : (v : Term) → [ Box r A ]e (Promote v) → [ B ]e (syntacticSubst v x e1)
      leftBody v arg with arg (Promote v) (valuesDontReduce {Promote v} (promoteValue v))
      ... | boxInterpV .v innerArg =
-       let abc = body v v (unaryToBinary {Box r A} {Promote v} {adv} arg)
+       let abc = body v v ( unaryToBinary {Box r A} {Promote v} {adv} arg)
            abc2 = binaryImpliesUnary {B} {syntacticSubst v x e1} {syntacticSubst v x' e2} {adv} abc
        in proj₁ abc2
 
