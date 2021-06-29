@@ -325,8 +325,34 @@ mutual
   unaryToBinaryV : {A : Type} {t : Term} {adv : Semiring}
                    -> [ A ]v t -> ⟦ A ⟧v adv t t
   unaryToBinaryV {.Unit} {.unit} {adv} unitInterpV = unitInterpBi
-  unaryToBinaryV {.(FunTy _ _ _)} {.(Abs _ e)} {adv} (funInterpV e x) = funInterpBi {!!} {!!} {!!}
-  unaryToBinaryV {.(Box _ _)} {.(Promote e)} {adv} (boxInterpV e x) = {!!}
+  unaryToBinaryV {FunTy A r B} {(Abs x e)} {adv} (funInterpV e bodyInterp) =
+  -- bodyInterp : (v : Term) → [ Box r A ]e (Promote v) → [ B ]e (syntacticSubst v x e)
+  -- goal : (v1 v2 : Term) → ⟦ Box r A ⟧e adv (Promote v1) (Promote v2)
+  --                       → ⟦ B ⟧e adv (syntacticSubst v1 x e) (syntacticSubst v2 x e)
+    funInterpBi e e newInner
+      where
+        -- need, to convert
+        --   ⟦ Box r A ⟧e adv (Promote v1) (Promote v2)
+        -- to
+        --   [ Box r A ]e adv (Promote v)
+
+        newInner : (v1 v2 : Term) → ⟦ Box r A ⟧e adv (Promote v1) (Promote v2)
+                                  → ⟦ B ⟧e adv (syntacticSubst v1 x e) (syntacticSubst v2 x e)
+        newInner v1 v2 binaryArg with r ≤ adv | inspect (\x -> x ≤ adv) r | binaryArg (Promote v1) (Promote v2) (reduxProm {v1}) (reduxProm {v2})
+        ... | true | [ eq ] | boxInterpBiobs   eq' .v1 .v2 inner' =
+            let z = bodyInterp v1 argy
+                az = unaryToBinary {B} {syntacticSubst v1 x e} {adv} z
+            in {!!}
+          where
+            argy : [ Box r A ]e (Promote v1)
+            argy v vredux rewrite trans (sym vredux) (reduxProm {v1}) = let z = binaryImpliesUnaryV {{!!}} {{!!}} {{!!}} {{!!}} (binaryArg (Promote v1) (Promote v2) refl refl)  in proj₁ z
+        ... | true | [ eq ] | boxInterpBiunobs eq' .v1 .v2 inner' = {!!}
+        ... | false | [ eq ] | ac = {!!}
+
+
+  unaryToBinaryV {Box r A} {.(Promote e)} {adv} (boxInterpV e x) with r ≤ adv | inspect (\x -> x ≤ adv) r
+  ... | true  | [ eq ] = boxInterpBiobs eq e e (unaryToBinary {A} {e} {adv} x)
+  ... | false | [ eq ] = boxInterpBiunobs eq e e (x , x)
   unaryToBinaryV {.BoolTy} {.vtrue} {adv} boolInterpTrue = boolInterpTrueBi
   unaryToBinaryV {.BoolTy} {.vfalse} {adv} boolInterpFalse = boolInterpFalseBi
 
@@ -334,56 +360,6 @@ mutual
                 -> [ A ]e t -> ⟦ A ⟧e adv t t
   unaryToBinary {A} {t} {adv} pre v1 v2 v1redux v2redux
     rewrite trans (sym v1redux) v2redux = unaryToBinaryV {A} {v2} {adv} (pre v2 v2redux)
-
-{-
-                -- don't forget that via v0redux and v1redux we know v0 = v1
-  unaryToBinary {A} {t} {adv} un v0 v1 v0redux v1redux with un v0 v0redux | un v1 v1redux
-  ... | unitInterpV     | unitInterpV      = unitInterpBi
-
--- Case for {Fun A' r B} want to derive [ Fun A' r B ]e (Abs x e1) -> [[ Fun A' r B ]]e (Abs x e1)
--- note below x == x' and e1 == e2
-  ... | funInterpV {A'} {B} {r} {x} e1 body1  | funInterpV {_} {_} {_} {x'} e2 body2
-    rewrite absInj2 (trans (sym v0redux) v1redux)
-          | absInj1 (trans (sym v0redux) v1redux) = funInterpBi e2 e2 body'
-   where
-      -- body1 : (v : Term) -> [ Box r A ]e (Promote v) -> [ B ]e (syntacticSubst v x e1)
-      -- body2 : (v : Term) -> [ Box r A ]e (Promote v) -> [ B ]e (syntacticSubst v x e2)
-      -- goal  : ⟦ B ⟧v adv vb1 vb2
-      body' : (v2 v3 : Term) →
-                ⟦ Box r A' ⟧e adv (Promote v2) (Promote v3) →
-                ⟦ B ⟧e adv (syntacticSubst v2 x' e2) (syntacticSubst v3 x' e2)
-      body' v2 v3 arg vb1 vb2 vb1redux vb2redux with arg (Promote v2) (Promote v3) refl refl
-      ... | boxInterpBiobs   eq .v2 .v3 inner =
-         let
-            -- any chance we can equate v2 and v3?
-            ab = body1 v2 (λ v x₁ → proj₁ (binaryImpliesUnaryV (arg v (Promote v3) x₁ refl)))
-            ab0 = ab vb1 vb1redux
-
-            ab' = body1 v3 (λ v x₁ → proj₂ (binaryImpliesUnaryV (arg (Promote v2) v refl x₁)))
-            ab0' = ab' vb2 vb2redux
-            -- not sure that ab0 or ab0' is any good yet.
-
-            arg' = arg (Promote v2) (Promote v3) refl refl
-            ( o1 , o2 ) = binaryImpliesUnaryV arg'
-
-
-            ih = unaryToBinaryV {B} {vb1} {adv} {!!}
-            -- can we equate vb1 and vb2?
-         in {!!}
-      ... | boxInterpBiunobs eq .v2 .v3 inner = {!!}
-
-  unaryToBinary {Box r A₁} {t} {adv} un v0 v1 v0redux v1redux | boxInterpV e1 inner1  | boxInterpV e2 inner2 with r ≤ adv | inspect (\x -> (x ≤ adv)) r
-  unaryToBinary {Box r A₁} {t} {adv} un (Promote v0') (Promote v1') v0redux v1redux | boxInterpV _ inner1 | boxInterpV _ inner2 | false | [ eq ] =
-     boxInterpBiunobs eq v0' v1' (inner1 , inner2)
-  unaryToBinary {Box r A₁} {t} {adv} un (Promote v0') (Promote v1') v0redux v1redux | boxInterpV vee inner1 | boxInterpV _ inner2 | true  | [ eq ]
-   rewrite trans (sym v0redux) v1redux =
-     boxInterpBiobs eq v1' v1' (unaryToBinary {A₁} {v1'} inner2)
-
-  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpTrue  | boolInterpTrue   = boolInterpTrueBi
-  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpTrue  | boolInterpFalse  = ⊥-elim (discrimBool (trans (sym v0redux) v1redux))
-  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpFalse | boolInterpTrue   = ⊥-elim (discrimBool (trans (sym v1redux) v0redux))
-  unaryToBinary {BoolTy} {t} {adv} un v0 v1 v0redux v1redux | boolInterpFalse | boolInterpFalse  = boolInterpFalseBi
--}
 
   binaryImpliesUnaryV : {A : Type} {t1 t2 : Term} {adv : Semiring}
                     -> ⟦ A ⟧v adv t1 t2 -> [ A ]v t1 × [ A ]v t2
