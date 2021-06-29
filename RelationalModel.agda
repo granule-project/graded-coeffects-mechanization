@@ -383,7 +383,8 @@ mutual
       equalVars with trans (sym v0redux) v1redux
       ... | refl = refl
 
-  ... | boxInterpV e1 inner1  | boxInterpV e2 inner2 = {!!}
+  ... | boxInterpV e1 inner1  | boxInterpV e2 inner2 =
+             boxInterpBiunobs {!!} e1 e2 (inner1 , inner2)
   ... | boolInterpTrue  | boolInterpTrue   = boolInterpTrueBi
   ... | boolInterpTrue  | boolInterpFalse  = ⊥-elim (discrimBool (trans (sym v0redux) v1redux))
   ... | boolInterpFalse | boolInterpTrue   = ⊥-elim (discrimBool (trans (sym v1redux) v0redux))
@@ -393,24 +394,30 @@ mutual
   binaryImpliesUnaryV : {A : Type} {t1 t2 : Term} {adv : Semiring}
                     -> ⟦ A ⟧v adv t1 t2 -> [ A ]v t1 × [ A ]v t2
   binaryImpliesUnaryV {FunTy A r B} {Abs x e1} {Abs x' e2} {adv} (funInterpBi e1 e2 body) =
-     let ih = {!!}
-     in  (funInterpV {!!} {!!}) , funInterpV {!!} {!!}
+     (funInterpV e1 leftBody) , (funInterpV e2 rightBody)
    where
-     left : [ FunTy A r B ]v (Abs x e1)
-     left = funInterpV e1 {!!}
-
      leftBody : (v : Term) → [ Box r A ]e (Promote v) → [ B ]e (syntacticSubst v x e1)
-     leftBody v arg = {!!}
+     leftBody v arg with arg (Promote v) (valuesDontReduce {Promote v} (promoteValue v))
+     ... | boxInterpV .v innerArg =
+       let abc = body v v (unaryToBinary {Box r A} {Promote v} {adv} arg)
+           abc2 = binaryImpliesUnary {B} {syntacticSubst v x e1} {syntacticSubst v x' e2} {adv} abc
+       in proj₁ abc2
 
-     right : [ FunTy A r B ]v (Abs x' e2)
-     right = {!!}
+     rightBody : (v : Term) → [ Box r A ]e (Promote v) → [ B ]e (syntacticSubst v x' e2)
+     rightBody v arg with arg (Promote v) (valuesDontReduce {Promote v} (promoteValue v))
+     ... | boxInterpV .v innerArg =
+       let abc = body v v (unaryToBinary {Box r A} {Promote v} {adv} arg)
+           abc2 = binaryImpliesUnary {B} {syntacticSubst v x e1} {syntacticSubst v x' e2} {adv} abc
+       in proj₂ abc2
 
   binaryImpliesUnaryV {Unit} {.unit} {.unit} {adv} unitInterpBi = unitInterpV , unitInterpV
-  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiobs x t1 t2 x₁) = {!!}
-  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiunobs x t1 t2 x₁) = {!!}
+  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiobs x t1 t2 inner)
+   with binaryImpliesUnary {A} {t1} {t2} {adv} inner
+  ... | (fst , snd) = (boxInterpV t1 fst) , (boxInterpV t2 snd)
+  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiunobs x t1 t2 (fst , snd)) =
+    (boxInterpV t1 fst) , (boxInterpV t2 snd)
   binaryImpliesUnaryV {BoolTy} {.vtrue} {.vtrue} {adv} boolInterpTrueBi = boolInterpTrue , boolInterpTrue
   binaryImpliesUnaryV {BoolTy} {.vfalse} {.vfalse} {adv} boolInterpFalseBi = boolInterpFalse , boolInterpFalse
-
 
   binaryImpliesUnary : {A : Type} {t1 t2 : Term} {adv : Semiring}
                     -> ⟦ A ⟧e adv t1 t2 -> [ A ]e t1 × [ A ]e t2
