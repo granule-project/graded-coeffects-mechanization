@@ -444,24 +444,32 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
     fun2 = Abs var2 bod2
     iha = ih1  fun1 fun2 fun1redux fun2redux
 
-    ihn = biFundamentalTheorem {1} {Ext Empty (Grad A r)} {bod1} {B} bodTy1 {t2 ∷ []} {t2 ∷ []} adv
-            (argUp , tt)
+    ihn = biFundamentalTheorem {1} {Ext Empty (Grad A r)} {bod1} {B} bodTy1 {multisubst γ1 t2 ∷ []} {multisubst γ2 t2 ∷ []} adv
+            (argument , tt)
 
-    -- thought: it's possible I don't have to do this induction here because of CBN...
-    -- ih2 = biFundamentalTheorem {sz} {Γ2} {t2} {A} typ2 adv {!!}
-    -- ihb = ih2 {!!} {!!} {!!} {!!}
    in
      ihn v1 v2 {!!} {!!} -- subst₂ (\h1 h2 -> ⟦ τ ⟧v adv h1 h2) {!!} {!!} {!!}
   where
+
     -- thm
     argUp : ⟦ Box r A ⟧e adv (Promote t2) (Promote t2)
     argUp va vb varedux vbredux with r ≤ adv | inspect (\x -> x ≤ adv) r
     ... | false | [ eq ] rewrite sym varedux | sym vbredux = boxInterpBiunobs eq t2 t2 ((utheorem typ2 {!!} , utheorem typ2 {!!}))
-    ... | true  | [ eq ] rewrite sym varedux | sym vbredux = boxInterpBiobs eq t2 t2 {!!}
+    ... | true  | [ eq ] rewrite sym varedux | sym vbredux =
+      let
+        ih2 = biFundamentalTheorem {sz} {Γ2} {t2} {A} typ2 {γ1} {γ2} adv {!splitContext2 contextInterp !}
+      in
+        boxInterpBiobs eq t2 t2 {!!}
+
+    convertVal2 : {r1 r2 : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧v adv (Promote v1) (Promote v2)
+    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with (r *R r2) ≤ adv | inspect (\x -> (x *R r2) ≤ adv) r
+    ... | false | [ eq' ] = boxInterpBiunobs eq' v1 v2 (binaryImpliesUnary arg)
+    ... | true  | [ eq' ] = boxInterpBiobs eq' v1 v2 arg
+    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (invPropertyF' eq) v1 v2 argInterp
 
     convertVal : {r1 r2 : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
     convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤ adv | inspect (\x -> x ≤ adv) r1
-    ... | false | [ eq' ] = boxInterpBiunobs eq' v1 v2 {!!}
+    ... | false | [ eq' ] = boxInterpBiunobs eq' v1 v2 ((binaryImpliesUnary arg))
     ... | true  | [ eq' ] = boxInterpBiobs eq' v1 v2 arg
     convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (invPropertyF eq) v1 v2 argInterp
 
@@ -477,6 +485,26 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
     splitContext1 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext1 {(suc s)} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (arg , rest) =
       convert {r1} {r2} {v1} {v2} {A} arg , splitContext1 {s} {γ1} {γ2} {Γ1} {Γ2} rest
+
+    convert2 : {r1 r2 : Semiring} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧e adv (Promote v1) (Promote v2)
+    convert2 {r1} {r2} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
+      rewrite trans (sym v1redux') (reduxProm {v1})
+            | trans (sym v2redux') (reduxProm {v2}) = convertVal2 {r1} {r2} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
+
+    splitContext2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ r · Γ2 ⟧Γ adv γ1 γ2
+    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} _ = tt
+    splitContext2 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
+    splitContext2 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
+    splitContext2 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
+    splitContext2 {(suc s)} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (arg , rest)
+      rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
+        convert2 {r1} {r2} {v1} {v2} {A} arg , splitContext2 {s} {γ1} {γ2} {Γ1} {Γ2} rest
+
+    argument : ⟦ Box r A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
+    argument = -- rewrite sym (substPresProm {0} {γ1} {t2}) | sym (substPresProm {0} {γ2} {t2}) =
+      let ih2 = biFundamentalTheorem {sz} {r · Γ2} {Promote t2} {Box r A} (pr {Γ' = r · Γ2} {r} typ2 {refl}) {γ1} {γ2} adv (splitContext2 contextInterp)
+      in subst₂ (\h1 h2 -> ⟦ Box r A ⟧e adv h1 h2) (substPresProm {0} {γ1} {t2}) (substPresProm {0} {γ2} {t2}) ih2
+
 
 {-
 
@@ -618,7 +646,7 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
 
     underBox : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
     underBox {_} {_} {_} {Empty}   g = tt
-    underBox {sz} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = convertExp {s} {v1} {v2} {A} ass , underBox {{!!}} {γ1} {γ2} {Γ} g
+    underBox {suc n} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = convertExp {s} {v1} {v2} {A} ass , underBox {n} {γ1} {γ2} {Γ} g
     underBox {_} {[]} {[]} {Ext Γ (Grad A r₁)} ()
     underBox {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
     underBox {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} ()

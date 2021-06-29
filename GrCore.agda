@@ -132,6 +132,25 @@ invPropertyF {Hi} {Hi} {Hi} {Lo} refl = refl
 invPropertyF {Hi} {Hi} {Lo} {Lo} refl = refl
 invPropertyF {Hi} {Lo} {Hi} {Lo} refl = refl
 
+invPropertyF' : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> ((r *R r2) ≤ adv) ≡ false
+invPropertyF' {Hi} {Hi} {Hi} {Hi} ()
+invPropertyF' {Hi} {Hi} {Hi} {Lo} refl = refl
+invPropertyF' {Hi} {Hi} {Lo} {Hi} ()
+invPropertyF' {Hi} {Hi} {Lo} {Lo} refl = refl
+invPropertyF' {Hi} {Lo} {Hi} {Hi} ()
+invPropertyF' {Hi} {Lo} {Hi} {Lo} refl = refl
+invPropertyF' {Hi} {Lo} {Lo} {Hi} ()
+invPropertyF' {Hi} {Lo} {Lo} {Lo} ()
+invPropertyF' {Lo} {Hi} {Hi} {Hi} ()
+invPropertyF' {Lo} {Hi} {Hi} {Lo} ()
+invPropertyF' {Lo} {Hi} {Lo} {Hi} ()
+invPropertyF' {Lo} {Hi} {Lo} {Lo} ()
+invPropertyF' {Lo} {Lo} {Hi} {Hi} ()
+invPropertyF' {Lo} {Lo} {Hi} {Lo} ()
+invPropertyF' {Lo} {Lo} {Lo} {Hi} ()
+invPropertyF' {Lo} {Lo} {Lo} {Lo} ()
+
+
 invPropertyF2 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r2 ≤ adv) ≡ false
 invPropertyF2 {Hi} {Hi} {Hi} {Lo} pre = refl
 invPropertyF2 {Hi} {Hi} {Lo} {Lo} pre = refl
@@ -229,10 +248,40 @@ invPropertyHope {Hi} {Lo} {Lo} {Hi} pre1 pre2 = tt
 invPropertyHope {Hi} {Lo} {Lo} {Lo} pre1 pre2 = tt
 invPropertyHope {Lo} {Hi} {Hi} {Hi} pre1 pre2 = tt
 invPropertyHope {Lo} {Hi} {Lo} {Hi} pre1 pre2 = tt
+-- Lo + (Lo * Hi) <= Lo
+-- Lo + Hi <= Lo
+-- Lo <= Lo  TRUE
+
+-- Lo <= Lo TRUE
+
+-- Hi <= FALSE
 invPropertyHope {Lo} {Hi} {Lo} {Lo} pre1 pre2 = {!!}
 invPropertyHope {Lo} {Lo} {Hi} {Hi} pre1 pre2 = tt
 invPropertyHope {Lo} {Lo} {Lo} {Hi} pre1 pre2 = tt
 invPropertyHope {Lo} {Lo} {Lo} {Lo} pre1 pre2 = tt
+
+invPropertyHope2 : {r1 r2 r adv : Semiring} -> boolToSet ((r1 +R (r *R r2)) ≤ adv) -> boolToSet ((r *R r2) ≤ adv)
+invPropertyHope2 {Hi} {Hi} {Hi} {Hi} tt = tt
+invPropertyHope2 {Hi} {Hi} {Hi} {Lo} ()
+invPropertyHope2 {Hi} {Hi} {Lo} {Hi} tt = tt
+invPropertyHope2 {Hi} {Hi} {Lo} {Lo} ()
+invPropertyHope2 {Hi} {Lo} {Hi} {Hi} tt = tt
+invPropertyHope2 {Hi} {Lo} {Hi} {Lo} ()
+invPropertyHope2 {Hi} {Lo} {Lo} {Hi} tt = tt
+invPropertyHope2 {Hi} {Lo} {Lo} {Lo} tt = tt
+invPropertyHope2 {Lo} {Hi} {Hi} {Hi} tt = tt
+-- Lo + (Hi * Lo) <= Lo
+-- Lo + Hi <= Lo
+-- Lo <= Lo TRUE
+-- but
+-- Hi <= Lo FALSE
+invPropertyHope2 {Lo} {Hi} {Hi} {Lo} tt = {!!}
+invPropertyHope2 {Lo} {Hi} {Lo} {Hi} tt = {!!}
+invPropertyHope2 {Lo} {Hi} {Lo} {Lo} tt = {!!}
+invPropertyHope2 {Lo} {Lo} {Hi} {Hi} tt = {!!}
+invPropertyHope2 {Lo} {Lo} {Hi} {Lo} tt = {!!}
+invPropertyHope2 {Lo} {Lo} {Lo} {Hi} tt = {!!}
+invPropertyHope2 {Lo} {Lo} {Lo} {Lo} tt = {!!}
 
 infFlo : {r s adv : Semiring} -> ¬ (boolToSet ((r *R s) ≤ adv))
                            -> boolToSet (s ≤ adv)
@@ -296,6 +345,10 @@ Empty ++ Empty = Empty
 (Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
 
 postulate
+  -- keeps things simple with the above definition
+  sameTypes : {s : ℕ} {Γ1 Γ2 : Context s} {Γ : Context (suc s)} {A A' : Type} {r1 r2 : Semiring}
+            -> (Ext Γ1 (Grad A r1)) ++ (Ext Γ2 (Grad A' r2)) ≡ Γ -> A ≡ A'
+
   absorptionContext : {s : ℕ} {Γ Γ' : Context s} -> (0r · Γ) ++ Γ' ≡ Γ'
   leftUnitContext : {s : ℕ} {Γ : Context s} -> 1r · Γ ≡ Γ
 
