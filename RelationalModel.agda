@@ -749,17 +749,24 @@ biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {
        v2redux' : multiRedux (If (multisubst γ2 tg) (multisubst γ2 t1) (multisubst γ2 t2))  ≡ v2
        v2redux' = (trans (cong multiRedux (sym (substPresIf {0} {γ2} {tg} {t1} {t2}))) v2redux)
 
+       boolDisc : true ≡ false -> ⊥
+       boolDisc ()
+
        convertHyp : {x y : Term} {r1 r2 : Semiring} {A : Type}
                   -> ⟦ Box ((r *R r1) +R r2) A ⟧e adv (Promote x) (Promote y) -> ⟦ Box r1 A ⟧e adv (Promote x) (Promote y)
-       convertHyp {x} {y} {r1} {r2} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux
-       ... | boxInterpBiobs   eq' t1 t2 inner = {!!}
-       ... | boxInterpBiunobs eq' t1 t2 inner = {!!}
+       convertHyp {x} {y} {r1} {r2} {A} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux | r1 ≤ adv | inspect (\x -> x ≤ adv) r1
+       ... | boxInterpBiobs   eq' t1 t2 inner | true  | [ eq ] = boxInterpBiobs eq t1 t2 inner
+       ... | boxInterpBiobs   eq' t1 t2 inner | false | [ eq ] = boxInterpBiunobs eq t1 t2 (binaryImpliesUnary {A} {t1} {t2} {adv} inner)
+       ... | boxInterpBiunobs eq' t1 t2 inner | true  | [ eq ] = ⊥-elim (boolDisc (trans (sym eq) (propertyConditionalNI eq' used)))
+       ... | boxInterpBiunobs eq' t1 t2 inner | false | [ eq ] = boxInterpBiunobs eq t1 t2 inner
 
        convertHyp2 : {x y : Term} {r1 r2 : Semiring} {A : Type}
                    -> ⟦ Box ((r *R r1) +R r2) A ⟧e adv (Promote x) (Promote y) -> ⟦ Box r2 A ⟧e adv (Promote x) (Promote y)
-       convertHyp2 {x} {y} {r1} {r2} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux
-       ... | boxInterpBiobs   eq' t1 t2 inner = {!!}
-       ... | boxInterpBiunobs eq' t1 t2 inner = {!!}
+       convertHyp2 {x} {y} {r1} {r2} {A} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux | r2 ≤ adv | inspect (\x -> x ≤ adv) r2
+       ... | boxInterpBiobs    eq' t1 t2 inner  | true  | [ eq ] = boxInterpBiobs eq t1 t2 inner
+       ... | boxInterpBiobs    eq' t1 t2 inner  | false | [ eq ] = boxInterpBiunobs eq t1 t2 (binaryImpliesUnary {A} {t1} {t2} {adv} inner)
+       ... | boxInterpBiunobs  eq' t1 t2 inner  | true  | [ eq ] = ⊥-elim (boolDisc (trans (sym eq) (propertyConditionalNI2 eq' used)))
+       ... | boxInterpBiunobs  eq' t1 t2 inner  | false | [ eq ] = boxInterpBiunobs eq t1 t2 inner
 
        convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
        convert {.0} {Empty} {Empty} {γ1} {γ2} g = tt
