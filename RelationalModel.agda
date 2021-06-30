@@ -195,18 +195,12 @@ postulate
    -> syntacticSubst v1' (Γlength Γ1 + 1) (multisubst' 0 γ1 t)
     ≡ multisubst (v1' ∷ γ1) t
 
-
--------------------------------
-
--- 0 · Γ
-
--- lemor : multisubst' 1 xs x ≡ v -> x ≡ v
-
--------------------------------
-
 -------------------------------
 -- Unary fundamental theorem
 
+-- Terminating pragma needed because in the (App t1 t2) case we need to recursve with (Promote t2) which doesn't look
+-- smaller to Agda
+{-# TERMINATING #-}
 utheorem : {s : ℕ} {γ : List Term}
         -> {Γ : Context s} {e : Term} {τ : Type}
         -> Γ ⊢ e ∶ τ
@@ -224,9 +218,61 @@ utheorem {_} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {_} {.Γ} {Γ1}
 
 
 
-utheorem {_} {γ} {Γ} {.(App _ _)} {τ} (app {_} {Γ} {Γ1} {Γ2} {r} typing typing₁) context = {!!}
+utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) context v1 v1redux
+  rewrite pos =
+    let
+      ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst' 0 γ t1} {multisubst' 0 γ t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ} typ1)
+      fun1 = Abs var1 bod1
 
-utheorem {s} {γ} {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {_} {_} {Γ} {Γ1} {Γ2} {Γ'} pos typing {rel}) context v substi rewrite pos | rel =
+      ih1 = utheorem {sz} {γ} {Γ1} {t1} {FunTy A r B} typ1 (convert context)
+      ih1applied = ih1 fun1 fun1redux
+
+      -- Join up the reductions
+      -- multiRedux (App (multisubst' 0 γ t1) (multisubst' 0 γ t2)) ≡ v1
+      aeq1 = trans (cong multiRedux (sym (substPresApp {0} {γ} {t1} {t2}))) v1redux
+      -- multiRedux (App (Abs var1 bod1) (multisubst' 0 γ t2)) ≡ v1
+      aeq2 = trans (sym (multReduxCongruence {multisubst' zero γ t1} {Abs var1 bod1} {\t1' -> App t1' (multisubst' 0 γ t2)} fun1redux)) aeq1
+      --
+      v1reduxerFull = trans (sym (betaVariant1 {bod1} {multisubst' 0 γ t2} {var1})) aeq2
+
+    in extract ih1applied (multisubst' zero γ t2) argument v1 v1reduxerFull
+  where
+    extract : {x : ℕ} {e : Term} -> [ FunTy A r B ]v (Abs x e)
+           -> (forall (v : Term)
+                 -> [ Box r A ]e (Promote v)
+                 -> [ B ]e (syntacticSubst v x e))
+    extract {x} {e} pre with pre
+    ... | funInterpV .e  inner = inner
+
+
+    convertInterp : {A : Type} {r1 r2 : Semiring} {x : Term} -> [ Box (r1 +R (r *R r2)) A ]e (Promote x) -> [ Box r1 A ]e (Promote x)
+    convertInterp {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
+    ... | boxInterpV e inner = boxInterpV e inner
+
+    convert : {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ (r · Γ2) ]Γ γ -> [ Γ1 ]Γ γ
+    convert {.0} {γ} {Empty} {Empty} tt = tt
+    convert {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail) =
+      convertInterp {A} {r1} {r2} {x} head , convert {s} {γ} {Γ1} {Γ2} tail
+
+    convertInterp2 : {A : Type} {r1 r2 : Semiring} {x : Term} -> [ Box (r1 +R (r *R r2)) A ]e (Promote x) -> [ Box (r *R r2) A ]e (Promote x)
+    convertInterp2 {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
+    ... | boxInterpV e inner = boxInterpV e inner
+
+    convert2 : {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ (r · Γ2) ]Γ γ -> [ r · Γ2 ]Γ γ
+    convert2 {.0} {γ} {Empty} {Empty} tt = tt
+    convert2 {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail)
+      rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
+        convertInterp2 {A} {r1} {r2} {x} head , convert2 {s} {γ} {Γ1} {Γ2} tail
+
+    argument : [ Box r A ]e (Promote (multisubst' zero γ t2))
+    argument =
+      let
+        ih2 = utheorem {sz} {γ} {r · Γ2} {Promote t2} {Box r A} (pr {Γ' = r · Γ2} {r} typ2 {refl}) (convert2 context)
+      in
+        subst (\h -> [ Box r A ]e h) (substPresProm {0} {γ} {t2}) ih2
+
+-- # ABS
+utheorem {s} {γ} {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {Γ'} pos typing {rel}) context v substi rewrite pos | rel =
   subst (\h -> [ FunTy A r B ]v h) thm (funInterpV (multisubst γ t) body)
  where
    x = (Γlength Γ1 + 1)
@@ -239,23 +285,25 @@ utheorem {s} {γ} {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {_} {_} {
      in sym (trans (sym substi) qr')
 
    body : (v' : Term) → [ Box r A ]e (Promote v') → [ B ]e (syntacticSubst v' x (multisubst γ t))
-   body v' arg v1 prf =
+   body v' arg v1 v1redux rewrite substitutionResult {s1} {v'} {γ} {t} {Γ1} =
      let
-      ih = utheorem {{!!}} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} typing ( arg  , context)
-     in {!!}
+      ih = utheorem {suc (s1 + s2)} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} typing ( arg  , context)
+     in ih v1 v1redux
 
-
+-- # PROMOTION
 utheorem {s} {γ} {Γ'} {Promote t} {Box r A} (pr {_} {Γ} {Γ'} typing {prf}) context v substi rewrite prf =
    let
-     ih = utheorem {{!!}} {γ} {Γ} {t} {A} typing (underBox context)
+     ih = utheorem {s} {γ} {Γ} {t} {A} typing (underBox context)
    in
      subst (\h -> [ Box r A ]v h) thm (boxInterpV (multisubst γ t) ih)
   where
-    underBox : {sz : ℕ} {r : Semiring} {γ : List Term} {Γ : Context sz} -> [ r · Γ ]Γ γ -> [ Γ ]Γ γ
-    underBox {0} {r} {_} {Empty}   g = tt
-    underBox {sz} {r} {v ∷ γ} {Ext Γ (Grad A s)} (ass , g) = {!!} , underBox {{!!}} {r} {γ} {Γ} g
-    underBox {_} {r} {_} {Ext Γ (Grad A r₁)} g = {!!}
+    convert : {s : Semiring} {v : Term} {A : Type} -> [ Box (r *R s) A ]e (Promote v) -> [ Box s A ]e (Promote v)
+    convert {s} {v} {A} pre v0 v0redux with pre v0 v0redux
+    ... | boxInterpV e inner = boxInterpV e inner
 
+    underBox : {sz : ℕ} {γ : List Term} {Γ : Context sz} -> [ r · Γ ]Γ γ -> [ Γ ]Γ γ
+    underBox {0} {_} {Empty} g = tt
+    underBox {suc sz} {v ∷ γ} {Ext Γ (Grad A s)} (ass , g) = convert ass , underBox {sz} {γ} {Γ} g
 
     thm : Promote (multisubst γ t) ≡ v
     thm =
@@ -263,18 +311,19 @@ utheorem {s} {γ} {Γ'} {Promote t} {Box r A} (pr {_} {Γ} {Γ'} typing {prf}) c
            qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym substi) qr')
 
+-- # Unit
 utheorem {_} {γ} {.(Hi · _)} {.unit} {.Unit} unitConstr context v substi =
   subst (\h -> [ Unit ]v h) thm unitInterpV
   where
     thm : unit ≡ v
     thm = trans (sym (cong multiRedux (substPresUnit {γ} {0}))) substi
 
+-- # BoolTy
 utheorem {_} {γ} {.(Hi · _)} {.vtrue} {.BoolTy} trueConstr context v substi =
  subst (\h -> [ BoolTy ]v h) thm boolInterpTrue
   where
     thm : vtrue ≡ v
     thm = trans (sym (cong multiRedux (substPresTrue {γ} {0}))) substi
-
 
 utheorem {_} {γ} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr context v substi =
  subst (\h -> [ BoolTy ]v h) thm boolInterpFalse
@@ -282,7 +331,8 @@ utheorem {_} {γ} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr context v substi 
     thm : vfalse ≡ v
     thm = trans (sym (cong multiRedux (substPresFalse {γ} {0}))) substi
 
-utheorem {_} {γ} {Γ} {.(If _ _ _)} {τ} (if typing typing₁ typing₂) context = {!!}
+-- # If
+utheorem {_} {γ} {Γ} {.(If _ _ _)} {τ} (if typG typ1 typ2) context = {!!}
 
 -------------------------------
 -- Binary fundamental theorem
