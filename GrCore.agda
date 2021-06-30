@@ -87,6 +87,63 @@ propInvPlusMono2 {Lo} {Lo} {Hi} {Lo} ()
 propInvPlusMono2 {Lo} {Lo} {Lo} {Hi} ()
 propInvPlusMono2 {Lo} {Lo} {Lo} {Lo} ()
 
+{-
+Thing which is certainly false, but it
+demonstrates why you need the r <= 1 condition
+in the if typing
+
+propInvPlusMono3 : {r1 r2 r adv : Semiring}
+               -> (((r *R r1) +R r2) ≤ adv) ≡ false
+               -> (r1 ≤ adv) ≡ true
+propInvPlusMono3 {Hi} {Hi} {Hi} {Lo} refl = {!!}
+propInvPlusMono3 {Hi} {Hi} {Lo} {Lo} pre = {!!}
+propInvPlusMono3 {Lo} {Hi} {Hi} {Lo} pre = {!!}
+
+-}
+
+propertyConditionalNI : {r1 r2 r adv : Semiring}
+                     -> (((r *R r1) +R r2) ≤ adv) ≡ false
+                     -> (r ≤ 1r) ≡ true
+                     -> (r1 ≤ adv) ≡ false
+propertyConditionalNI {Hi} {Hi} {Hi} {Hi} () pre2
+propertyConditionalNI {Hi} {Hi} {Hi} {Lo} refl ()
+propertyConditionalNI {Hi} {Hi} {Lo} {Hi} () pre2
+propertyConditionalNI {Hi} {Hi} {Lo} {Lo} refl refl = refl
+propertyConditionalNI {Hi} {Lo} {Hi} {Hi} () pre2
+propertyConditionalNI {Hi} {Lo} {Hi} {Lo} () pre2
+propertyConditionalNI {Hi} {Lo} {Lo} {Hi} () pre2
+propertyConditionalNI {Hi} {Lo} {Lo} {Lo} () pre2
+propertyConditionalNI {Lo} {Hi} {Hi} {Hi} () pre2
+propertyConditionalNI {Lo} {Hi} {Hi} {Lo} refl ()
+propertyConditionalNI {Lo} {Hi} {Lo} {Hi} () pre2
+propertyConditionalNI {Lo} {Hi} {Lo} {Lo} () pre2
+propertyConditionalNI {Lo} {Lo} {Hi} {Hi} () pre2
+propertyConditionalNI {Lo} {Lo} {Hi} {Lo} () pre2
+propertyConditionalNI {Lo} {Lo} {Lo} {Hi} () pre2
+propertyConditionalNI {Lo} {Lo} {Lo} {Lo} () pre2
+
+propertyConditionalNI2 : {r1 r2 r adv : Semiring}
+                     -> (((r *R r1) +R r2) ≤ adv) ≡ false
+                     -> (r ≤ 1r) ≡ true
+                     -> (r2 ≤ adv) ≡ false
+propertyConditionalNI2 {Lo} {Lo} {Lo} {Lo} () pre2
+propertyConditionalNI2 {Lo} {Lo} {Lo} {Hi} () pre2
+propertyConditionalNI2 {Lo} {Lo} {Hi} {Lo} () pre2
+propertyConditionalNI2 {Lo} {Lo} {Hi} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Lo} {Hi} {Lo} {Lo} pre1 pre2 = refl
+propertyConditionalNI2 {Lo} {Hi} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Lo} {Hi} {Hi} {Lo} pre1 pre2 = refl
+propertyConditionalNI2 {Lo} {Hi} {Hi} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Lo} {Lo} {Lo} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Lo} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Lo} {Hi} {Lo} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Lo} {Hi} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Hi} {Lo} {Lo} pre1 pre2 = refl
+propertyConditionalNI2 {Hi} {Hi} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Hi} {Hi} {Lo} pre1 pre2 = refl
+propertyConditionalNI2 {Hi} {Hi} {Hi} {Hi} pre1 pre2 = pre1
+
+
 propNonMonoTimes1 : {r s adv : Semiring} -> (r ≤ adv) ≡ false -> ((r *R s) ≤ adv) ≡ false
 propNonMonoTimes1 {Hi} {Hi} {Lo}  pre = pre
 propNonMonoTimes1 {Hi} {Lo} {Lo}  pre = refl
