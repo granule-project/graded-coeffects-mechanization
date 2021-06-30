@@ -842,6 +842,50 @@ propInvPlusMono2 {Unused} {Dunno} {r} {adv} inp = inp
 propInvPlusMono2 {Unused} {Unused} {r} {adv} inp = inp
 
 
+-- It seems like this isn't true?
+propNonMonoTimes1 : {r s adv : Level}
+                  -> ¬( _≤_ levelSemiring r adv)
+                  -> ¬( _≤_ levelSemiring (_*R_ levelSemiring r s) adv)
+propNonMonoTimes1 {Public} {Public} {adv} inp = inp
+propNonMonoTimes1 {Public} {Private} {adv} inp = inp
+propNonMonoTimes1 {Public} {Dunno} {adv} inp = inp
+propNonMonoTimes1 {Public} {Unused} {Public} inp ()
+propNonMonoTimes1 {Public} {Unused} {Private} inp _ = inp PrivPub
+propNonMonoTimes1 {Public} {Unused} {Dunno} inp _ = inp DunnoPub
+propNonMonoTimes1 {Public} {Unused} {Unused} inp _ = inp 0Pub
+propNonMonoTimes1 {Private} {Public} {Public} inp = {!!}
+-- Goal: ¬ Order Public Public
+-- ————————————————————————————————————————————————————————————
+-- inp : ¬ Order Public Private
+propNonMonoTimes1 {Private} {Public} {Private} inp _ = inp (Refl Private)
+propNonMonoTimes1 {Private} {Public} {Dunno} inp x = {!!}
+propNonMonoTimes1 {Private} {Public} {Unused} inp x = inp 0Priv
+propNonMonoTimes1 {Private} {Private} {adv} inp = inp
+propNonMonoTimes1 {Private} {Dunno} {Private} inp x = inp (Refl Private)
+propNonMonoTimes1 {Private} {Dunno} {Dunno} inp x = {!!}
+propNonMonoTimes1 {Private} {Dunno} {Unused} inp x = inp 0Priv
+propNonMonoTimes1 {Private} {Unused} {Unused} inp x = inp 0Priv
+propNonMonoTimes1 {Dunno} {s} {adv} inp = {!!}
+propNonMonoTimes1 {Unused} {s} {adv} inp = inp
+
+-- same as above, this might not be true for Level
+propInvTimesMono2 : {r s adv : Level}
+                  -> (_≤_ levelSemiring (_*R_ levelSemiring r s) adv)
+                  -> (_≤_ levelSemiring s adv)
+propInvTimesMono2 {Public} {Public} {adv} inp = inp
+propInvTimesMono2 {Public} {Private} {Public} inp = {!!}
+-- Goal: Order Public Private
+-- ————————————————————————————————————————————————————————————
+-- inp : Order Public Public
+propInvTimesMono2 {Public} {Private} {Private} inp = {!!}
+propInvTimesMono2 {Public} {Private} {Dunno} inp = {!!}
+propInvTimesMono2 {Public} {Private} {Unused} inp = {!!}
+propInvTimesMono2 {Public} {Dunno} {adv} inp = {!!}
+propInvTimesMono2 {Public} {Unused} {adv} inp = {!!}
+propInvTimesMono2 {Private} {s} {adv} inp = {!!}
+propInvTimesMono2 {Dunno} {s} {adv} inp = {!!}
+propInvTimesMono2 {Unused} {s} {adv} inp = {!!}
+
 -- Additional property which would be super useful but doesn't seem to hold for Level
 
 infFlow : {r s adv : Level} -> _≤_ levelSemiring (_*R_ levelSemiring r s) adv -> _≤_ levelSemiring s adv
