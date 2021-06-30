@@ -13,6 +13,7 @@ open import Data.Nat hiding (_≤_)
 open import Function
 open import Data.Maybe
 open import Relation.Nullary
+open import Data.Sum
 
 -- Based on Vineet and Deepak's paper model but without
 -- heaps (as we don't have references) and without step indexing
@@ -165,6 +166,9 @@ substPresAbs {n} {v ∷ γ} {x} {t} with n ≟ x
 ... | yes refl = {!!}
 ... | no ¬p = substPresAbs {n + 1} {γ} {x} {syntacticSubst v n t}
 
+substPresIf : {n : ℕ} {γ : List Term} {tg t1 t2 : Term} -> multisubst' n γ (If tg t1 t2) ≡ If (multisubst' n γ tg) (multisubst' n γ t1) (multisubst' n γ t2)
+substPresIf = {!!}
+
 reduxProm : {v : Term} -> multiRedux (Promote v) ≡ Promote v
 reduxProm {v} = refl
 
@@ -187,6 +191,15 @@ reduxTheoremAppTy : {t1 t2 v : Term} {s : ℕ} {Γ : Context s} {A B : Type} {r 
 reduxTheoremAppTy = {!!}
 
 
+reduxTheoremBool : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> (multiRedux tg ≡ vtrue) ⊎ (multiRedux tg ≡ vfalse)
+reduxTheoremBool = {!!}
+
+reduxTheoremBool1 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
+reduxTheoremBool1 = {!!}
+
+reduxTheoremBool2 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
+reduxTheoremBool2 = {!!}
+
 postulate
  -- This is about the structure of substitutions and relates to abs
  -- there is some simplification here because of the definition of ,, being
@@ -206,15 +219,24 @@ utheorem : {s : ℕ} {γ : List Term}
         -> Γ ⊢ e ∶ τ
         -> [ Γ ]Γ γ
         -> [ τ ]e (multisubst γ e)
-utheorem {_} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {_} {.Γ} {Γ1} {Γ2} pos) context v substi
- with γ | Γ | Γlength Γ1
-... | x ∷ xs | Ext g (Grad A r) | zero = let z = subst (\h -> [ h ]v x) inja {!!} in {!!}
-  where
-    inja : A ≡ τ
-    inja = injGradTy (injExt2 pos)
+utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi
+ with γ |  Γ | Γlength Γ1
+utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi
+  | x ∷ xs | Ext g (Grad A r) | zero with context
+utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi
+  | x ∷ xs | Ext g (Grad A r) | zero | hyp , rest =
+  let z = subst (\h -> [ h ]v x) inja val
+  in {!!}
+    where
+      val : [ A ]v x
+      val with hyp (Promote x) refl
+      ... | boxInterpV .x inner = {!!}
+
+      inja : A ≡ τ
+      inja = injGradTy (injExt2 pos)
 
 
-... | x ∷ a | Ext b x₁ | suc c = {!!}
+utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi | x ∷ a | Ext b x₁ | suc c = {!!}
 
 
 
@@ -332,7 +354,44 @@ utheorem {_} {γ} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr context v substi 
     thm = trans (sym (cong multiRedux (substPresFalse {γ} {0}))) substi
 
 -- # If
-utheorem {_} {γ} {Γ} {.(If _ _ _)} {τ} (if typG typ1 typ2) context = {!!}
+utheorem {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} {t1} {t2} {r} {used} typG typ1 typ2 {res}) context v1 v1redux rewrite sym res =
+    let
+     -- doesn't seem to be used actually here- but more important in the binary case I think
+     ih = utheorem {sz} {γ} {Γ1} {tg} {BoolTy} typG (convert context)
+    in caseBody
+  where
+    v1redux' : multiRedux (If (multisubst γ tg) (multisubst γ t1) (multisubst γ t2))  ≡ v1
+    v1redux' = (trans (cong multiRedux (sym (substPresIf {0} {γ} {tg} {t1} {t2}))) v1redux)
+
+    convertHyp : {x : Term} {r1 r2 : Semiring} {A : Type} -> [ Box ((r *R r1) +R r2) A ]e (Promote x) -> [ Box r1 A ]e (Promote x)
+    convertHyp {x} {r1} {r2} pre v0 v0redux with pre v0 v0redux
+    ... | boxInterpV e inner = boxInterpV e inner
+
+    convertHyp2 : {x : Term} {r1 r2 : Semiring} {A : Type} -> [ Box ((r *R r1) +R r2) A ]e (Promote x) -> [ Box r2 A ]e (Promote x)
+    convertHyp2 {x} {r1} {r2} pre v0 v0redux with pre v0 v0redux
+    ... | boxInterpV e inner = boxInterpV e inner
+
+    convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ : List Term} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
+    convert {.0} {Empty} {Empty} {γ} g = tt
+    convert {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} ()
+    convert {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x ∷ γ} (hd , tl) =
+      convertHyp hd , convert {sz} {Γ1} {Γ2} {γ} tl
+
+    convert2 : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ : List Term} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ2 ]Γ γ
+    convert2 {.0} {Empty} {Empty} {γ} g = tt
+    convert2 {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} ()
+    convert2 {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x ∷ γ} (hd , tl)
+     rewrite sameTypes {sz} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl =
+      convertHyp2 hd , convert2 {sz} {Γ1} {Γ2} {γ} tl
+
+    caseBody : [ B ]v v1
+    caseBody with reduxTheoremBool {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux'
+    ... | inj₁ trueEv  =
+      utheorem {sz} {γ} {Γ2} {t1} {B} typ1 (convert2 context) v1
+         (sym (reduxTheoremBool1 {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux' trueEv))
+    ... | inj₂ falseEv =
+      utheorem {sz} {γ} {Γ2} {t2} {B} typ2 (convert2 context) v1
+         (sym (reduxTheoremBool2 {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux' falseEv))
 
 -------------------------------
 -- Binary fundamental theorem
@@ -679,7 +738,9 @@ biFundamentalTheorem {_} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr {γ1} {γ2
     thm2 : vfalse ≡ v2
     thm2 = trans (sym (cong multiRedux (substPresFalse {γ2} {0}))) v2redux
 
-biFundamentalTheorem {_} {.(_ GrCore.++ _)} {.(If _ _ _)} {τ} (if typ typ₁ typ₂) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {_} {Γ} {If tg t1 t2} {τ} (if {s} {Γ} {Γ1} {Γ2} {B} {r} {used} typG typ1 typ2 {res})
+  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
+  {!!}
 
 lem : {adv : Semiring}
       {A : Type} {v1 v2 : Term}

@@ -274,15 +274,18 @@ data _⊢_∶_ : {s : ℕ} -> Context s -> Term -> Type -> Set where
            (0r · Γ) ⊢ vfalse ∶ BoolTy
 
   if : {s : ℕ}
-       { Γ1 Γ2 : Context s }
+       { Γ Γ1 Γ2 : Context s }
        { B : Type }
        { t1 t2 t3 : Term }
+       { r : Semiring }
+       { used : r ≤ 1r ≡ true }
 
     -> Γ1 ⊢ t1 ∶ BoolTy
     -> Γ2 ⊢ t2 ∶ B
     -> Γ2 ⊢ t3 ∶ B
+    -> { res : ((r · Γ1) ++ Γ2) ≡ Γ }
    ----------------------------------
-    -> (Γ1 ++ Γ2) ⊢ If t1 t2 t3 ∶ B
+    -> Γ ⊢ If t1 t2 t3 ∶ B
 
 
 -- Value predicate
