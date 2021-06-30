@@ -590,6 +590,139 @@ transitive≤ levelSemiring {Unused} {Private} {t} () inp2
 transitive≤ levelSemiring {Unused} {Dunno} {t} () inp2
 transitive≤ levelSemiring {Unused} {Unused} {Unused} inp1 inp2 = Refl Unused
 
+propInvPlusMono1 : {r1 r2 r adv : Level}
+                 -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 (_*R_ levelSemiring r r2)) adv)
+                 -> ¬( _≤_ levelSemiring r1 adv)
+propInvPlusMono1 {Public} {Public} {Public} {adv} inp = inp
+propInvPlusMono1 {Public} {Public} {Private} {adv} inp = inp
+propInvPlusMono1 {Public} {Public} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Public} {Public} {Unused} {adv} inp = inp
+propInvPlusMono1 {Public} {Private} {Public} {adv} inp = inp
+propInvPlusMono1 {Public} {Private} {Private} {adv} inp = inp
+propInvPlusMono1 {Public} {Private} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Public} {Private} {Unused} {adv} inp = inp
+propInvPlusMono1 {Public} {Dunno} {Public} {adv} inp = inp
+propInvPlusMono1 {Public} {Dunno} {Private} {adv} inp = inp
+propInvPlusMono1 {Public} {Dunno} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Public} {Dunno} {Unused} {adv} inp = inp
+propInvPlusMono1 {Public} {Unused} {Public} {adv} inp = inp
+propInvPlusMono1 {Public} {Unused} {Private} {adv} inp = inp
+propInvPlusMono1 {Public} {Unused} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Public} {Unused} {Unused} {adv} inp = inp
+propInvPlusMono1 {Private} {Public} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Private} {Public} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Private} {Public} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Private} {Public} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Private} {Public} {Private} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Private} {Public} {Private} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Private} {Public} {Private} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Private} {Public} {Private} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Private} {Public} {Dunno} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Private} {Public} {Dunno} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Private} {Public} {Dunno} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Private} {Public} {Dunno} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Private} {Public} {Unused} {adv} inp = inp
+propInvPlusMono1 {Private} {Private} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Private} {Private} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Private} {Private} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Private} {Private} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Private} {Private} {Private} {adv} inp = inp
+propInvPlusMono1 {Private} {Private} {Dunno} {Public} inp ()
+propInvPlusMono1 {Private} {Private} {Dunno} {Private} inp _ = inp PrivDunno
+propInvPlusMono1 {Private} {Private} {Dunno} {Dunno} inp _ = inp (Refl Dunno)
+propInvPlusMono1 {Private} {Private} {Dunno} {Unused} inp _ = inp 0Dunno
+propInvPlusMono1 {Private} {Private} {Unused} {adv} inp = inp
+propInvPlusMono1 {Private} {Dunno} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Private} {Dunno} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Private} {Dunno} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Private} {Dunno} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Private} {Dunno} {Private} {Public} inp ()
+propInvPlusMono1 {Private} {Dunno} {Private} {Private} inp _ = inp PrivDunno
+propInvPlusMono1 {Private} {Dunno} {Private} {Dunno} inp _ = inp (Refl Dunno)
+propInvPlusMono1 {Private} {Dunno} {Private} {Unused} inp _ = inp 0Dunno
+propInvPlusMono1 {Private} {Dunno} {Dunno} {Public} inp ()
+propInvPlusMono1 {Private} {Dunno} {Dunno} {Private} inp _ = inp PrivDunno
+propInvPlusMono1 {Private} {Dunno} {Dunno} {Dunno} inp _ = inp (Refl Dunno)
+propInvPlusMono1 {Private} {Dunno} {Dunno} {Unused} inp _ = inp 0Dunno
+propInvPlusMono1 {Private} {Dunno} {Unused} {adv} inp = inp
+propInvPlusMono1 {Private} {Unused} {Public} {adv} inp = inp
+propInvPlusMono1 {Private} {Unused} {Private} {adv} inp = inp
+propInvPlusMono1 {Private} {Unused} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Private} {Unused} {Unused} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Public} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Dunno} {Public} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Dunno} {Public} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Dunno} {Public} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Dunno} {Public} {Private} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Dunno} {Public} {Private} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Dunno} {Public} {Private} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Dunno} {Public} {Private} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Dunno} {Public} {Dunno} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Dunno} {Public} {Dunno} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Dunno} {Public} {Dunno} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Dunno} {Public} {Dunno} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Dunno} {Public} {Unused} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Private} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Dunno} {Private} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Dunno} {Private} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Dunno} {Private} {Private} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Private} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Private} {Unused} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Dunno} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Dunno} {Dunno} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Dunno} {Dunno} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Dunno} {Dunno} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Dunno} {Dunno} {Private} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Dunno} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Dunno} {Unused} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Unused} {Public} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Unused} {Private} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Unused} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Dunno} {Unused} {Unused} {adv} inp = inp
+propInvPlusMono1 {Unused} {Public} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Unused} {Public} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Unused} {Public} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Unused} {Public} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Unused} {Public} {Private} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Unused} {Public} {Private} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Unused} {Public} {Private} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Unused} {Public} {Private} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Unused} {Public} {Dunno} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Unused} {Public} {Dunno} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Unused} {Public} {Dunno} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Unused} {Public} {Dunno} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Unused} {Public} {Unused} {adv} inp = inp
+propInvPlusMono1 {Unused} {Private} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Unused} {Private} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Unused} {Private} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Unused} {Private} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Unused} {Private} {Private} {Public} inp ()
+propInvPlusMono1 {Unused} {Private} {Private} {Private} inp _ = inp (Refl Private)
+propInvPlusMono1 {Unused} {Private} {Private} {Dunno} inp ()
+propInvPlusMono1 {Unused} {Private} {Private} {Unused} inp _ = inp 0Priv
+propInvPlusMono1 {Unused} {Private} {Dunno} {Public} inp ()
+propInvPlusMono1 {Unused} {Private} {Dunno} {Private} inp _ = inp PrivDunno
+propInvPlusMono1 {Unused} {Private} {Dunno} {Dunno} inp _ = inp (Refl Dunno)
+propInvPlusMono1 {Unused} {Private} {Dunno} {Unused} inp _ = inp 0Dunno
+propInvPlusMono1 {Unused} {Private} {Unused} {adv} inp = inp
+propInvPlusMono1 {Unused} {Dunno} {Public} {Public} inp _ = inp (Refl Public)
+propInvPlusMono1 {Unused} {Dunno} {Public} {Private} inp _ = inp PrivPub
+propInvPlusMono1 {Unused} {Dunno} {Public} {Dunno} inp _ = inp DunnoPub
+propInvPlusMono1 {Unused} {Dunno} {Public} {Unused} inp _ = inp 0Pub
+propInvPlusMono1 {Unused} {Dunno} {Private} {Public} inp ()
+propInvPlusMono1 {Unused} {Dunno} {Private} {Private} inp _ = inp PrivDunno
+propInvPlusMono1 {Unused} {Dunno} {Private} {Dunno} inp _ = inp (Refl Dunno)
+propInvPlusMono1 {Unused} {Dunno} {Private} {Unused} inp _ = inp 0Dunno
+propInvPlusMono1 {Unused} {Dunno} {Dunno} {Public} inp ()
+propInvPlusMono1 {Unused} {Dunno} {Dunno} {Private} inp _ = inp PrivDunno
+propInvPlusMono1 {Unused} {Dunno} {Dunno} {Dunno} inp _ = inp (Refl Dunno)
+propInvPlusMono1 {Unused} {Dunno} {Dunno} {Unused} inp _ = inp 0Dunno
+propInvPlusMono1 {Unused} {Dunno} {Unused} {adv} inp = inp
+propInvPlusMono1 {Unused} {Unused} {Public} {adv} inp = inp
+propInvPlusMono1 {Unused} {Unused} {Private} {adv} inp = inp
+propInvPlusMono1 {Unused} {Unused} {Dunno} {adv} inp = inp
+propInvPlusMono1 {Unused} {Unused} {Unused} {adv} inp = inp
+
 -- Additional property which would be super useful but doesn't seem to hold for Level
 
 infFlow : {r s adv : Level} -> _≤_ levelSemiring (_*R_ levelSemiring r s) adv -> _≤_ levelSemiring s adv
