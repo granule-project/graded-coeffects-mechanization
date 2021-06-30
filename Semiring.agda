@@ -5,6 +5,7 @@ open import Data.Bool hiding (_≟_; _≤_)
 open import Data.Empty
 open import Data.Unit hiding (_≟_; _≤_)
 open import Relation.Nullary
+open import Relation.Unary
 
 record Semiring : Set₁ where
   field

@@ -738,9 +738,61 @@ biFundamentalTheorem {_} {.(Hi · _)} {.vfalse} {.BoolTy} falseConstr {γ1} {γ2
     thm2 : vfalse ≡ v2
     thm2 = trans (sym (cong multiRedux (substPresFalse {γ2} {0}))) v2redux
 
-biFundamentalTheorem {_} {Γ} {If tg t1 t2} {τ} (if {s} {Γ} {Γ1} {Γ2} {B} {r} {used} typG typ1 typ2 {res})
-  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
-  {!!}
+biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {.tg} {.t1} {.t2} {r} {used} typG typ1 typ2 {res})
+  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym res =
+     caseBody
+  where
+
+       v1redux' : multiRedux (If (multisubst γ1 tg) (multisubst γ1 t1) (multisubst γ1 t2))  ≡ v1
+       v1redux' = (trans (cong multiRedux (sym (substPresIf {0} {γ1} {tg} {t1} {t2}))) v1redux)
+
+       v2redux' : multiRedux (If (multisubst γ2 tg) (multisubst γ2 t1) (multisubst γ2 t2))  ≡ v2
+       v2redux' = (trans (cong multiRedux (sym (substPresIf {0} {γ2} {tg} {t1} {t2}))) v2redux)
+
+       convertHyp : {x y : Term} {r1 r2 : Semiring} {A : Type}
+                  -> ⟦ Box ((r *R r1) +R r2) A ⟧e adv (Promote x) (Promote y) -> ⟦ Box r1 A ⟧e adv (Promote x) (Promote y)
+       convertHyp {x} {y} {r1} {r2} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux
+       ... | boxInterpBiobs   eq' t1 t2 inner = {!!}
+       ... | boxInterpBiunobs eq' t1 t2 inner = {!!}
+
+       convertHyp2 : {x y : Term} {r1 r2 : Semiring} {A : Type}
+                   -> ⟦ Box ((r *R r1) +R r2) A ⟧e adv (Promote x) (Promote y) -> ⟦ Box r2 A ⟧e adv (Promote x) (Promote y)
+       convertHyp2 {x} {y} {r1} {r2} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux
+       ... | boxInterpBiobs   eq' t1 t2 inner = {!!}
+       ... | boxInterpBiunobs eq' t1 t2 inner = {!!}
+
+       convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
+       convert {.0} {Empty} {Empty} {γ1} {γ2} g = tt
+       convert {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x1 ∷ γ1} {x2 ∷ γ2} (hd , tl) =
+          convertHyp hd , convert {sz} {Γ1} {Γ2} {γ1} {γ2} tl
+
+       convert2 : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ2 ⟧Γ adv γ1 γ2
+       convert2 {.0} {Empty} {Empty} {γ1} {γ2} _ = tt
+       convert2 {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} {[]} ()
+       convert2 {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x1 ∷ γ1} {x2 ∷ γ2} (hd , tl)
+         rewrite sameTypes {sz} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl =
+           convertHyp2 hd , convert2 {sz} {Γ1} {Γ2} {γ1} {γ2} tl
+
+       -- induct on boolean to determine which (pairs of) values are valid
+       ih : ⟦ BoolTy ⟧e adv (multisubst γ1 tg) (multisubst γ2 tg)
+       ih = biFundamentalTheorem {sz} {Γ1} {tg} {BoolTy} typG {γ1} {γ2} adv (convert contextInterp)
+
+      -- induct on the case bodies depending on what values appear
+       caseBody : ⟦ B ⟧v adv v1 v2
+       caseBody with reduxTheoremBool {multisubst γ1 tg} {multisubst γ1 t1} {multisubst γ1 t2} {v1} v1redux'
+                    | reduxTheoremBool {multisubst γ2 tg} {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux'
+       caseBody | inj₁ trueEv1 | inj₁ trueEv2 =
+         biFundamentalTheorem {sz} {Γ2} {t1} {B} typ1 {γ1} {γ2} adv (convert2 contextInterp) v1 v2
+           (sym (reduxTheoremBool1 {multisubst γ1 tg} {multisubst γ1 t1} {multisubst γ1 t2} {v1} v1redux' trueEv1))
+             (sym (reduxTheoremBool1 {multisubst γ2 tg} {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux' trueEv2))
+       caseBody | inj₁ trueEv1  | inj₂ falseEv2 with ih vtrue vfalse trueEv1 falseEv2
+       ... | ()
+       caseBody | inj₂ falseEv1 | inj₁ trueEv2  with ih vfalse vtrue falseEv1 trueEv2
+       ... | ()
+       caseBody | inj₂ falseEv1 | inj₂ falseEv2 =
+         biFundamentalTheorem {sz} {Γ2} {t2} {B} typ2 {γ1} {γ2} adv (convert2 contextInterp) v1 v2
+           (sym (reduxTheoremBool2 {multisubst γ1 tg} {multisubst γ1 t1} {multisubst γ1 t2} {v1} v1redux' falseEv1))
+             (sym (reduxTheoremBool2 {multisubst γ2 tg} {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux' falseEv2))
 
 lem : {adv : Semiring}
       {A : Type} {v1 v2 : Term}

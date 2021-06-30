@@ -48,6 +48,9 @@ boolToSet : Bool -> Set
 boolToSet false = ⊥
 boolToSet true = ⊤
 
+postulate
+  +commR : {r s : Semiring} -> r +R s ≡ s +R r
+
 propInvPlusMono1 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r1 ≤ adv) ≡ false
 propInvPlusMono1 {Hi} {Hi} {Hi} {Hi} ()
 propInvPlusMono1 {Hi} {Hi} {Lo} {Hi} ()
