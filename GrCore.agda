@@ -14,7 +14,6 @@ open import Data.Empty
 open import Data.Unit hiding (_≟_; _≤_)
 
 open import Semiring
--- open import Sec
 
 open Semiring.Semiring {{...}} public
 
@@ -33,20 +32,20 @@ data Assumption {{R : Semiring}} : Set where
   Grad : (A : Type) -> (r : grade) -> Assumption
 
 injGradTy : {{R : Semiring}} {A A' : Type} {r r' : grade} -> Grad A r ≡ Grad A' r' -> A ≡ A'
-injGradTy eq = {!!}
+injGradTy refl = refl
 
 injGradR : {{R : Semiring}} {A A' : Type} {r r' : grade} -> Grad A r ≡ Grad A' r' -> r ≡ r'
-injGradR eq = {!!}
+injGradR refl = refl
 
 data Context {{R : Semiring}} : ℕ -> Set where
   Empty   : Context 0
   Ext     : {n : ℕ} -> Context n -> Assumption -> Context (1 + n)
 
 injExt1 : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> Γ ≡ Γ'
-injExt1 eq = {!!}
+injExt1 refl = refl
 
 injExt2 : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> A ≡ A'
-injExt2 eq = {!!}
+injExt2 refl = refl
 
 -- Disjoint context concatentation
 _,,_ : {{R : Semiring}} {s t : ℕ} -> Context s -> Context t -> Context (s + t)
