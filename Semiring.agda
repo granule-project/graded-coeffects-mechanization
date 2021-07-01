@@ -886,6 +886,35 @@ propInvTimesMono2 {Private} {s} {adv} inp = {!!}
 propInvTimesMono2 {Dunno} {s} {adv} inp = {!!}
 propInvTimesMono2 {Unused} {s} {adv} inp = {!!}
 
+propInvTimesMonoAsym : {r s adv : Level}
+                     -> ¬(_≤_ levelSemiring (_*R_ levelSemiring r s) adv)
+                     -> (_≤_ levelSemiring r adv)
+                     -> ¬(_≤_ levelSemiring s adv)
+propInvTimesMonoAsym {Public} {Public} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public) 
+propInvTimesMonoAsym {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+propInvTimesMonoAsym {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+propInvTimesMonoAsym {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+propInvTimesMonoAsym {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+propInvTimesMonoAsym {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+propInvTimesMonoAsym {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+propInvTimesMonoAsym {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+propInvTimesMonoAsym {Public} {Unused} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Private} {Public} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Private} {Private} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Private} {Dunno} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Private} {Unused} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Dunno} {Public} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+propInvTimesMonoAsym {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+propInvTimesMonoAsym {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+propInvTimesMonoAsym {Dunno} {Dunno} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Dunno} {Unused} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+propInvTimesMonoAsym {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+propInvTimesMonoAsym {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+propInvTimesMonoAsym {Unused} {Unused} {adv} inp1 inp2 = inp1
+
 -- Additional property which would be super useful but doesn't seem to hold for Level
 
 infFlow : {r s adv : Level} -> _≤_ levelSemiring (_*R_ levelSemiring r s) adv -> _≤_ levelSemiring s adv
