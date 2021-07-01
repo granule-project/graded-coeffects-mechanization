@@ -143,22 +143,6 @@ propertyConditionalNI2 {Hi} {Hi} {Lo} {Hi} pre1 pre2 = pre1
 propertyConditionalNI2 {Hi} {Hi} {Hi} {Lo} pre1 pre2 = refl
 propertyConditionalNI2 {Hi} {Hi} {Hi} {Hi} pre1 pre2 = pre1
 
-
-propNonMonoTimes1 : {r s adv : Semiring} -> (r ≤ adv) ≡ false -> ((r *R s) ≤ adv) ≡ false
-propNonMonoTimes1 {Hi} {Hi} {Lo}  pre = pre
-propNonMonoTimes1 {Hi} {Lo} {Lo}  pre = refl
-propNonMonoTimes1 {Lo} {Hi} {Hi} ()
-propNonMonoTimes1 {Lo} {Hi} {Lo} ()
-propNonMonoTimes1 {Lo} {Lo} {Hi} ()
-propNonMonoTimes1 {Lo} {Lo} {Lo} ()
-
-propInvTimesMono2 : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ true -> (s ≤ adv) ≡ true
-propInvTimesMono2 {Hi} {Hi} {Hi} pre = refl
-propInvTimesMono2 {Hi} {Lo} {Hi} pre = refl
-propInvTimesMono2 {Lo} {Hi} {Hi} pre = pre
-propInvTimesMono2 {Lo} {Lo} {Hi} pre = refl
-propInvTimesMono2 {Lo} {Lo} {Lo} pre = refl
-
 propInvTimesMonoAsym : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ false -> (r ≤ adv) ≡ true -> (s ≤ adv) ≡ false
 propInvTimesMonoAsym {Hi} {Hi} {Hi} () pre2
 propInvTimesMonoAsym {Hi} {Hi} {Lo} refl ()
