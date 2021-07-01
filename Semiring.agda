@@ -49,7 +49,7 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
     -- in classical logic this is the same as:   r1 ≤ s  →  r1 + r2 ≤ s
     antisymmetry : {r s : grade R} -> _≤_ R r s -> _≤_ R s r -> r ≡ s
 
-    plusMonoInv : {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
+    plusMono : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
 
     propertyConditionalNI : {r1 r2 r adv : grade R}
                      -> ¬ (_≤_ R (_+R_ R (_*R_ R r r1) r2) adv)
@@ -67,10 +67,15 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
 
 open NonInterferingSemiring
 
+plusMonoInv : {R : Semiring} {R' : NonInterferingSemiring R}
+              {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
+plusMonoInv {R} {R'} {r1} {r2} {s} pre pre0 =
+  pre (plusMono R' {r1} {r2} {s} pre0)
+
 -- # Some derived properties
 plusMonoInv' : {R : Semiring} {R' : NonInterferingSemiring R}
                 -> {r1 r2 s : grade R}
                 -> ¬ (_≤_ R (_+R_ R r1 r2)  s) -> ¬ (_≤_ R r2 s)
 plusMonoInv' {R} {R'} {r1} {r2} {s} pre =
-  plusMonoInv R' {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
+  plusMonoInv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
 

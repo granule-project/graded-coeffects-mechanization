@@ -598,19 +598,16 @@ instance
   antisymmetry levelSemiringNonInterfering {Unused} {Dunno} () pre2
   antisymmetry levelSemiringNonInterfering {Unused} {Unused} (Refl .Unused) pre2 = refl
 
-   -- : {r1 r2 adv : Level}
-   --             -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 r2) adv)
-   --             -> ¬( _≤_ levelSemiring r1 adv)
-  plusMonoInv levelSemiringNonInterfering {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
-  plusMonoInv levelSemiringNonInterfering {Public} {Public} {adv} pre = pre
-  plusMonoInv levelSemiringNonInterfering {Private} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring PrivPub x)
-  plusMonoInv levelSemiringNonInterfering {Dunno} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring DunnoPub x)
-  plusMonoInv levelSemiringNonInterfering {Unused} {Public} {adv} pre = {!!}
-  plusMonoInv levelSemiringNonInterfering {r1} {Private} {adv} pre = {!!}
-  plusMonoInv levelSemiringNonInterfering {Unused} {Dunno} {adv} pre = {!!}
-  plusMonoInv levelSemiringNonInterfering {Public} {Dunno} {adv} pre = pre
-  plusMonoInv levelSemiringNonInterfering {Private} {Dunno} {adv} pre = {!!}
-  plusMonoInv levelSemiringNonInterfering {Dunno} {Dunno} {adv} pre = pre
+  plusMono levelSemiringNonInterfering {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
+  plusMono levelSemiringNonInterfering {Public} {Public} {adv}  pre = pre
+  plusMono levelSemiringNonInterfering {Private} {Public} {adv} pre = transitive≤ levelSemiring PrivPub pre
+  plusMono levelSemiringNonInterfering {Dunno} {Public} {adv}   pre = transitive≤ levelSemiring DunnoPub  pre
+  plusMono levelSemiringNonInterfering {Unused} {Public} {adv} pre = {!!}
+  plusMono levelSemiringNonInterfering {r1} {Private} {adv}    pre = {!!}
+  plusMono levelSemiringNonInterfering {Unused} {Dunno} {adv}  pre = {!!}
+  plusMono levelSemiringNonInterfering {Public} {Dunno} {adv}  pre = pre
+  plusMono levelSemiringNonInterfering {Private} {Dunno} {adv} pre = {!!}
+  plusMono levelSemiringNonInterfering {Dunno} {Dunno} {adv}   pre = pre
 
   propertyConditionalNI levelSemiringNonInterfering {r1} {r2} {r} {adv} = {!!}
 

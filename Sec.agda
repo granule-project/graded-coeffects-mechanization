@@ -102,6 +102,12 @@ data SecOrder : Sec -> Sec -> Set where
 _≤_ : Sec -> Sec -> Set
 _≤_ = SecOrder
 
+orderReified : (r : Sec) -> (s : Sec) -> Dec (SecOrder r s)
+orderReified Hi Hi = yes ReflHi
+orderReified Hi Lo = no (λ ())
+orderReified Lo Hi = yes LoHi
+orderReified Lo Lo = yes ReflLo
+
 monotone* : {r1 r2 s1 s2 : Sec} -> SecOrder r1 r2 -> SecOrder s1 s2 -> SecOrder (r1 *R s1) (r2 *R s2)
 monotone* = {!!}
 
@@ -124,6 +130,7 @@ instance
                 ; _+R_ = _+R_
                 ; _*R_ = _*R_
                 ; _≤_ = SecOrder
+                ; _≤d_ = orderReified
                 ; leftUnit+ = leftUnit+
                 ; rightUnit+ = rightUnit+
                 ; comm+ = comm+
@@ -141,15 +148,15 @@ instance
                 ; transitive≤ = transitive≤
                 }
 
-plusMonoInv : {r1 r2 adv : Sec} -> ¬ (SecOrder (r1 +R r2) adv) -> ¬ (SecOrder r1 adv)
-plusMonoInv {Hi} {Hi} {Hi} pre p = pre p
-plusMonoInv {Hi} {Hi} {Lo} pre p = pre p
-plusMonoInv {Hi} {Lo} {Hi} pre p = pre LoHi
-plusMonoInv {Hi} {Lo} {Lo} pre p = pre ReflLo
-plusMonoInv {Lo} {Hi} {Hi} pre p = pre LoHi
-plusMonoInv {Lo} {Hi} {Lo} pre p = pre ReflLo
-plusMonoInv {Lo} {Lo} {Hi} pre p = pre LoHi
-plusMonoInv {Lo} {Lo} {Lo} pre p = pre ReflLo
+plusMono : {r1 r2 adv : Sec} -> (SecOrder r1 adv) -> (SecOrder (r1 +R r2) adv)
+plusMono {Hi} {Hi} {Hi} ReflHi = ReflHi
+plusMono {Hi} {Hi} {Lo} ()
+plusMono {Hi} {Lo} {Hi} ReflHi = LoHi
+plusMono {Hi} {Lo} {Lo} ()
+plusMono {Lo} {Hi} {Hi} LoHi   = LoHi
+plusMono {Lo} {Hi} {Lo} ReflLo = ReflLo
+plusMono {Lo} {Lo} {Hi} LoHi   = LoHi
+plusMono {Lo} {Lo} {Lo} ReflLo = ReflLo
 
 propertyConditionalNI : {r1 r2 r adv : Sec}
                      -> ¬ (SecOrder ((r *R r1) +R r2) adv)
@@ -197,7 +204,7 @@ antisym {Lo} {Lo} pre1 pre2 = refl
 secSemiringNI : NonInterferingSemiring secSemiring
 secSemiringNI = record
                   { antisymmetry           = antisym
-                  ; plusMonoInv            = plusMonoInv
+                  ; plusMono               = plusMono
                   ; propertyConditionalNI  = propertyConditionalNI
                   ; propertyConditionalNI2 = propertyConditionalNI2
                   ; propInvTimesMonoAsym   = propInvTimesMonoAsym
