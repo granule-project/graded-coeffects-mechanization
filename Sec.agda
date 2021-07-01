@@ -115,8 +115,9 @@ reflexive≤ {Lo} = ReflLo
 transitive≤ : {r s t : Sec} -> SecOrder r s -> SecOrder s t -> SecOrder r t
 transitive≤ {r} {s} {t} = {!!}
 
-secSemiring : Semiring
-secSemiring = record
+instance
+  secSemiring : Semiring
+  secSemiring = record
                 { grade = Sec
                 ; 1R = 1r
                 ; 0R = 0r

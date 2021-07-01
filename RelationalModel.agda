@@ -16,7 +16,6 @@ open import Relation.Nullary
 open import Data.Sum
 
 open import Semiring
-open import Sec hiding (_≤_ ; _+R_ ; _*R_ ; propInvTimesMonoAsym ; propertyConditionalNI; propertyConditionalNI2)
 
 open NonInterferingSemiring {{...}} public
 
@@ -419,29 +418,7 @@ absInj2 refl = refl
 absInj1 : {x y : ℕ} {e1 e2 : Term} -> Abs x e1 ≡ Abs y e2 -> x ≡ y
 absInj1 refl = refl
 
--------------------------------------
--- Theorems that definitely cannot hold
--- (as a remindeer to myself)
-{-
-noUnarySplitToBinary : {{R : Semiring}} {A : Type} {t1 t2 : Term} {adv : Semiring}
-                    -> ([ A ]e t1 × [ A ]e t2 -> ⟦ A ⟧e adv t1 t2)
-                    -> ⊥
-noUnarySplitToBinary theorem =
-   use
-  where
-    left : [ BoolTy ]e vfalse
-    left v0 v0redux rewrite trans (sym v0redux) reduxFalse = boolInterpFalse
 
-    right : [ BoolTy ]e vtrue
-    right v0 v0redux rewrite trans (sym v0redux) reduxTrue = boolInterpTrue
-
-    apply : ⟦ BoolTy ⟧e Lo vfalse vtrue
-    apply = theorem {BoolTy} {vfalse} {vtrue} {Lo} (left , right)
-
-    use : ⊥
-    use with apply vfalse vtrue refl refl
-    ... | ()
--}
 --------------------------------------
 
 mutual
@@ -477,6 +454,20 @@ mutual
   binaryImpliesUnaryG {suc sz} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} (arg , rest)
     with binaryImpliesUnary {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
   ... | ( arg1 , arg2 ) | ( rest1 , rest2 ) = ( (arg1 , rest1) , (arg2 , rest2) )
+
+
+propInvPlusMono1 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
+                -> {r1 r2 r adv : grade}
+                -> ¬((r1 +R (r *R r2)) ≤ adv)
+                -> ¬(r1 ≤ adv)
+propInvPlusMono1 {{R}} {r1} {r2} {r} {adv} pre = plusMonoInv {R} {r1} {r *R r2} {adv} pre
+
+propInvPlusMono2 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
+                -> {r1 r2 r adv : grade}
+                -> ¬((r1 +R (r *R r2)) ≤ adv)
+                -> ¬((r *R r2) ≤ adv)
+propInvPlusMono2 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = plusMonoInv' {R} {R'} {r1} {r *R r2} {adv} pre
+
 
 {-# TERMINATING #-}
 biFundamentalTheorem : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {sz : ℕ}
@@ -531,15 +522,17 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
     ... | funInterpBi .e1 .e2 inner _ _ = inner
 
     convertVal2 : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧v adv (Promote v1) (Promote v2)
-    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with toBool eq | inspect (\x -> (x *R r2) ≤ adv) r
-    ... | false | [ eq' ] = boxInterpBiunobs eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
-    ... | true  | [ eq' ] = boxInterpBiobs eq' v1 v2 arg
+    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with (r1 +R (r *R r2)) ≤d adv | (r *R r2) ≤d adv
+    ... | no eqo  | yes eq' = ⊥-elim (eqo eq)
+    ... | no eqo  | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)    
+    ... | yes eqo | yes eq' = boxInterpBiobs   eq' v1 v2 arg
+    ... | yes eqo | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
     convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (propInvPlusMono2 eq) v1 v2 argInterp
 
     convertVal : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
-    convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤ adv | inspect (\x -> x ≤ adv) r1
-    ... | false | [ eq' ] = boxInterpBiunobs eq' v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
-    ... | true  | [ eq' ] = boxInterpBiobs eq' v1 v2 arg
+    convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
+    ... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
+    ... | yes eqo = boxInterpBiobs eqo v1 v2 arg
     convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (propInvPlusMono1 eq) v1 v2 argInterp
 
     convert : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
@@ -603,8 +596,8 @@ biFundamentalTheorem {sz} {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {
      in sym (trans (sym redux) qr')
 
 -- # PROMOTION
-biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {prf}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux with r ≤ adv | inspect (\x -> x ≤ adv) r
-... | false | [ eq ] rewrite prf =
+biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {prf}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux with r ≤d adv
+... | no eq rewrite prf =
   let
     (uinterp1 , uinterp2) = underBox {sz} {γ1} {γ2} {Γ} contextInterp
     ih1 = utheorem {s} {γ1} {Γ} {t} {A} typ uinterp1
@@ -649,7 +642,7 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
        (l , left) , (r , right)
 
 --------------------------------------------------------
-... | true  | [ eq ] rewrite prf =
+... | yes eq rewrite prf =
   let
     ih = biFundamentalTheorem {sz} {Γ} {t} {A} typ {γ1} {γ2} adv (underBox {sz} {γ1} {γ2} contextInterp)
   in
@@ -658,9 +651,9 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
   where
 
     convertVal : {s : grade} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
-    convertVal {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤ adv | inspect (\x -> x ≤ adv) s
-    ... | true  | [ eq ] = boxInterpBiobs eq v1 v2 interp
-    ... | false | [ eq ] = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {A} {v1} {v2} interp)
+    convertVal {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
+    ... | yes eq = boxInterpBiobs eq v1 v2 interp
+    ... | no eq  = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {A} {v1} {v2} interp)
 
     convertVal {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) = boxInterpBiunobs (propInvTimesMonoAsym x eq) v1 v2 interp
 
@@ -725,19 +718,19 @@ biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {
 
        convertHyp : {x y : Term} {r1 r2 : grade} {A : Type}
                   -> ⟦ Box ((r *R r1) +R r2) A ⟧e adv (Promote x) (Promote y) -> ⟦ Box r1 A ⟧e adv (Promote x) (Promote y)
-       convertHyp {x} {y} {r1} {r2} {A} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux | r1 ≤ adv | inspect (\x -> x ≤ adv) r1
-       ... | boxInterpBiobs   eq' t1 t2 inner | true  | [ eq ] = boxInterpBiobs eq t1 t2 inner
-       ... | boxInterpBiobs   eq' t1 t2 inner | false | [ eq ] = boxInterpBiunobs eq t1 t2 (binaryImpliesUnary {A} {t1} {t2} {adv} inner)
-       ... | boxInterpBiunobs eq' t1 t2 inner | true  | [ eq ] = ⊥-elim (boolDisc (trans (sym eq) (propertyConditionalNI eq' used)))
-       ... | boxInterpBiunobs eq' t1 t2 inner | false | [ eq ] = boxInterpBiunobs eq t1 t2 inner
+       convertHyp {x} {y} {r1} {r2} {A} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux | r1 ≤d adv
+       ... | boxInterpBiobs   eq' t1 t2 inner | yes eq  = boxInterpBiobs eq t1 t2 inner
+       ... | boxInterpBiobs   eq' t1 t2 inner | no eq   = boxInterpBiunobs eq t1 t2 (binaryImpliesUnary {A} {t1} {t2} {adv} inner)
+       ... | boxInterpBiunobs eq' t1 t2 inner | yes eq  = ⊥-elim ((propertyConditionalNI eq' used) eq)
+       ... | boxInterpBiunobs eq' t1 t2 inner | no eq   = boxInterpBiunobs eq t1 t2 inner
 
        convertHyp2 : {x y : Term} {r1 r2 : grade} {A : Type}
                    -> ⟦ Box ((r *R r1) +R r2) A ⟧e adv (Promote x) (Promote y) -> ⟦ Box r2 A ⟧e adv (Promote x) (Promote y)
-       convertHyp2 {x} {y} {r1} {r2} {A} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux | r2 ≤ adv | inspect (\x -> x ≤ adv) r2
-       ... | boxInterpBiobs    eq' t1 t2 inner  | true  | [ eq ] = boxInterpBiobs eq t1 t2 inner
-       ... | boxInterpBiobs    eq' t1 t2 inner  | false | [ eq ] = boxInterpBiunobs eq t1 t2 (binaryImpliesUnary {A} {t1} {t2} {adv} inner)
-       ... | boxInterpBiunobs  eq' t1 t2 inner  | true  | [ eq ] = ⊥-elim (boolDisc (trans (sym eq) (propertyConditionalNI2 eq' used)))
-       ... | boxInterpBiunobs  eq' t1 t2 inner  | false | [ eq ] = boxInterpBiunobs eq t1 t2 inner
+       convertHyp2 {x} {y} {r1} {r2} {A} pre v0 v1 v0redux v1redux with pre v0 v1 v0redux v1redux | r2 ≤d adv
+       ... | boxInterpBiobs    eq' t1 t2 inner  | yes eq  = boxInterpBiobs eq t1 t2 inner
+       ... | boxInterpBiobs    eq' t1 t2 inner  | no eq   = boxInterpBiunobs eq t1 t2 (binaryImpliesUnary {A} {t1} {t2} {adv} inner)
+       ... | boxInterpBiunobs  eq' t1 t2 inner  | yes eq  = ⊥-elim ((propertyConditionalNI2 eq' used) eq)
+       ... | boxInterpBiunobs  eq' t1 t2 inner  | no eq   = boxInterpBiunobs eq t1 t2 inner
 
        convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
        convert {.0} {Empty} {Empty} {γ1} {γ2} g = tt
@@ -782,17 +775,15 @@ lem : {{R : Semiring}} {adv : grade}
 lem {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
   mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
 
-
-boolBinaryValueInterpEquality : (v1 v2 : Term) -> ⟦ BoolTy ⟧v Lo v1 v2 -> v1 ≡ v2
+boolBinaryValueInterpEquality : {{R : Semiring}} {r : grade} (v1 v2 : Term) -> ⟦ BoolTy ⟧v r v1 v2 -> v1 ≡ v2
 boolBinaryValueInterpEquality .vtrue .vtrue boolInterpTrueBi = refl
 boolBinaryValueInterpEquality .vfalse .vfalse boolInterpFalseBi = refl
 
-boolBinaryExprInterpEquality : (v1 v2 : Term)
-                              -> ⟦ BoolTy ⟧e Lo v1 v2
+boolBinaryExprInterpEquality : {{R : Semiring}} {r : grade} (v1 v2 : Term)
+                              -> ⟦ BoolTy ⟧e r v1 v2
                               -> multiRedux v1 ≡ multiRedux v2
 boolBinaryExprInterpEquality t1 t2 prf =
   boolBinaryValueInterpEquality (multiRedux t1) (multiRedux t2) ((prf (multiRedux t1) (multiRedux t2) refl refl))
---
 
 -- Value lemma for promotion
 promoteValueLemma : {{R : Semiring}} {v : Term} {r : grade} {A : Type}
@@ -804,6 +795,72 @@ promoteValueLemma : {{R : Semiring}} {v : Term} {r : grade} {A : Type}
 promoteValueLemma {_} {r} () varValue
 
 promoteValueLemma typing (promoteValue t) = t , refl
+
+-- Non-interference
+nonInterfSpecialised : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {A : Type} {e : Term} {r s : grade} {pre : r ≤ s}
+        -> Ext Empty (Grad A s) ⊢ e ∶ Box r BoolTy
+
+        -> (v1 v2 : Term)
+        -> Empty ⊢ v1 ∶ A
+        -> Empty ⊢ v2 ∶ A
+        -> Value v1
+        -> Value v2
+
+        -> multiRedux (syntacticSubst v1 0 e) == multiRedux (syntacticSubst v2 0 e)
+
+nonInterfSpecialised {{_}} {{_}} {A} {e} {r} {s} {pre} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
+    -- Apply fundamental binary theorem to v1
+    biFundamentalTheorem {zero} {Empty} {Promote v1} {Box s A}
+                  (pr v1typing {refl}) {[]} {[]} r tt (Promote v1) (Promote v1)
+                  (valuesDontReduce {Promote v1} (promoteValue v1))
+                  (valuesDontReduce {Promote v1} (promoteValue v1))
+    -- Apply fundamental binary theorem to v2
+  | biFundamentalTheorem {zero} {Empty} {Promote v2} {Box s A}
+                  (pr v2typing {refl})  {[]} {[]} r tt (Promote v2) (Promote v2)
+                  (valuesDontReduce {Promote v2} (promoteValue v2))
+                  (valuesDontReduce {Promote v2} (promoteValue v2))
+... | boxInterpBiunobs pre1 .v1 .v1 (valv1 , valv1') | boxInterpBiunobs pre2 .v2 .v2 (valv2 , valv2') =
+ let
+   -- Show that substituting v1 and evaluating yields a value
+   -- and since it is a graded modal type then this value is necessarily
+   -- of the form Promote v1''
+   substTy1 = substitution {zero} {zero} {Ext Empty (Grad A s)} {Empty} {Empty} {Empty} {s} typing refl v1typing
+   (v1'' , prf1) = promoteValueLemma {_} {r} {BoolTy} (preservation {zero} {Empty} {Box r BoolTy} {syntacticSubst v1 0 e} substTy1) (multiReduxProducesValues substTy1)
+
+   -- ... same as above but for v2 ... leading to result of Promote v2''
+   substTy2  = substitution {zero} {zero} {Ext Empty (Grad A s)} {Empty} {Empty} {Empty} {s} typing refl v2typing
+   (v2'' , prf2) = promoteValueLemma {_} {r} {BoolTy} (preservation {zero} substTy2) (multiReduxProducesValues substTy2)
+
+   -- Apply fundamental binary theorem on the result with the values coming from syntacitcally substituting
+   -- then evaluating
+   res = biFundamentalTheorem {1} {Ext Empty (Grad A s)} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
+          (inner valv1' valv2' , tt) (Promote v1'') (Promote v2'') prf1 prf2
+
+
+   -- Boolean typed (low) values are equal inside the binary interepration
+   boolTyEq = boolBinaryExprInterpEquality v1'' v2'' (unpack res)
+
+   -- Plug together the equalities
+     -- Promote
+   eq = PromoteEq {v1''} {v2''} (embedReduxCong {v1''} {v2''} boolTyEq)
+   eq2 = transFullBetaEq (embedEq prf1) eq
+
+ in transFullBetaEq eq2 (embedEq (sym prf2))
+   where
+
+     inner : [ A ]e v1 -> [ A ]e v2 -> ⟦ Box s A ⟧e r (Promote v1) (Promote v2)
+     inner av1 av2 v3 v4 v3redux v4redux
+       rewrite trans (sym v3redux) (valuesDontReduce {Promote v1} (promoteValue v1))
+             | trans (sym v4redux) (valuesDontReduce {Promote v2} (promoteValue v2)) =
+       boxInterpBiunobs pre1 v1 v2 (av1 , av2)
+
+     -- Helper to unpback interpretation type
+     unpack : {v1 v2 : Term} -> ⟦ Box r BoolTy ⟧v r (Promote v1) (Promote v2) -> ⟦ BoolTy ⟧e r v1 v2
+     unpack {v1} {v2} (boxInterpBiobs _ .v1 .v2 innerExprInterp) = innerExprInterp
+
+
+{-
+--
 
 
 -- Non-interference
@@ -867,6 +924,8 @@ nonInterfSpecialised {A} {e} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
      -- Helper to unpback interpretation type
      unpack : {v1 v2 : Term} -> ⟦ Box Lo BoolTy ⟧v Lo (Promote v1) (Promote v2) -> ⟦ BoolTy ⟧e Lo v1 v2
      unpack {v1} {v2} (boxInterpBiobs _ .v1 .v2 innerExprInterp) = innerExprInterp
+
+-}
 
 {-
 nonInterf : {A : Type} {li l : Semiring} {e : Term}

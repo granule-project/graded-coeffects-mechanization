@@ -18,15 +18,6 @@ open import Semiring
 
 open Semiring.Semiring {{...}} public
 
-{-
-invProperty : {r s adv : Semiring} -> boolToSet ((r *R s) ≤ adv) -> boolToSet (s ≤ adv)
-invProperty {Hi} {Hi} {Hi} pre = tt
-invProperty {Hi} {Lo} {Hi} pre = tt
-invProperty {Lo} {Hi} {Hi} pre = tt
-invProperty {Lo} {Lo} {Hi} pre = tt
-invProperty {Lo} {Lo} {Lo} pre = tt
--}
-
 data Type {{R : Semiring}} : Set where
   FunTy : (A : Type) -> (r : grade) -> (B : Type) -> Type -- A r -> B
   Unit  : Type
@@ -42,21 +33,20 @@ data Assumption {{R : Semiring}} : Set where
   Grad : (A : Type) -> (r : grade) -> Assumption
 
 injGradTy : {{R : Semiring}} {A A' : Type} {r r' : grade} -> Grad A r ≡ Grad A' r' -> A ≡ A'
-injGradTy refl = refl
-
+injGradTy eq = {!!}
 
 injGradR : {{R : Semiring}} {A A' : Type} {r r' : grade} -> Grad A r ≡ Grad A' r' -> r ≡ r'
-injGradR refl = refl
+injGradR eq = {!!}
 
 data Context {{R : Semiring}} : ℕ -> Set where
   Empty   : Context 0
   Ext     : {n : ℕ} -> Context n -> Assumption -> Context (1 + n)
 
 injExt1 : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> Γ ≡ Γ'
-injExt1 refl = refl
+injExt1 eq = {!!}
 
 injExt2 : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> A ≡ A'
-injExt2 refl = refl
+injExt2 eq = {!!}
 
 -- Disjoint context concatentation
 _,,_ : {{R : Semiring}} {s t : ℕ} -> Context s -> Context t -> Context (s + t)
@@ -229,24 +219,24 @@ redux : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
       -> Γ ⊢ t ∶ A
       -> (Value t) ⊎ ∃ (\t' -> Γ ⊢ t' ∶ A)
 
-redux {s} {Γ} {A} {Var _} (var _) = inj₁ varValue
+redux {{_}} {s} {Γ} {A} {Var _} (var pos) = inj₁ varValue
 
-redux {s} {Γ} {A} {.(App (Abs _ _) _)} (app (abs pos deriv) deriv₁) = {!!}
+redux {{_}} {s} {Γ} {A} {.(App (Abs _ _) _)} (app (abs pos deriv) deriv₁) = {!!}
 
-redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) with redux deriv1
-redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 with redux deriv2
-redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₁ v2 = inj₁ {!!}
+redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) with redux deriv1
+redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 with redux deriv2
+redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₁ v2 = inj₁ {!!}
 
-redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₂ (t2' , deriv2') = inj₂ (App t1 t2' , app deriv1 deriv2')
+redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₂ (t2' , deriv2') = inj₂ (App t1 t2' , app deriv1 deriv2')
 
-redux {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₂ (t1' , deriv1') = inj₂ (App t1' t2 , app deriv1' deriv2)
+redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₂ (t1' , deriv1') = inj₂ (App t1' t2 , app deriv1' deriv2)
 
-redux {s} {Γ} {.(FunTy _ _ _)} {(Abs n t)} (abs pos deriv) with redux deriv
+redux {{_}} {s} {Γ} {.(FunTy _ _ _)} {(Abs n t)} (abs pos deriv) with redux deriv
 ... | inj₁ v = inj₁ {!!}
 ... | inj₂ (t' , deriv') = inj₂ (Abs n t' , abs pos deriv')
 
-redux {s} {Γ} {A} {unit} _ = inj₁ unitValue
-redux {s} {Γ} {A} {t} t1 = {!!}
+redux {{_}} {s} {Γ} {A} {unit} _ = inj₁ unitValue
+redux {{_}} {s} {Γ} {A} {t} t1 = {!!}
 
 untypedRedux : Term -> Maybe Term
 untypedRedux (App (Abs x t) t') = just (syntacticSubst t' x t)
