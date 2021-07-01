@@ -42,6 +42,27 @@ record Semiring : Set₁ where
 
 open Semiring
 
+record NonInteferingSemiring (R : Semiring) : Set₁ where
+  field
+    -- in classical logic this is the same as:   r1 ≤ s  →  r1 + r2 ≤ s
+    plusMonoInv : {r1 r2 s : carrier R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
+
+    propertyConditionalNI : {r1 r2 r adv : carrier R}
+                     -> ¬ (_≤_ R (_+R_ R (_*R_ R r1 r1) r2) adv)
+                     ->   (_≤_ R r (1R R))
+                     -> ¬ (_≤_ R r1 adv)
+    propertyConditionalNI2 : {r1 r2 r adv : carrier R}
+                     -> ¬ (_≤_ R (_+R_ R (_*R_ R r r1) r2) adv)
+                     ->   (_≤_ R r (1R R))
+                     -> ¬ (_≤_ R r2 adv)
+
+    propInvTimesMonoAsym : {r s adv : carrier R}
+                       -> ¬ (_≤_ R (_*R_ R r s) adv)
+                       ->   (_≤_ R r adv)
+                       -> ¬ (_≤_ R s adv)
+
+open NonInteferingSemiring
+
 -- Level elements
 data Level : Set where
   Public  : Level
@@ -592,19 +613,54 @@ transitive≤ levelSemiring {Unused} {Private} {t} () inp2
 transitive≤ levelSemiring {Unused} {Dunno} {t} () inp2
 transitive≤ levelSemiring {Unused} {Unused} {Unused} inp1 inp2 = Refl Unused
 
-plusMonoInv : {r1 r2 adv : Level}
-              -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 r2) adv)
-              -> ¬( _≤_ levelSemiring r1 adv)
-plusMonoInv {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
-plusMonoInv {Public} {Public} {adv} pre = pre
-plusMonoInv {Private} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring PrivPub x)
-plusMonoInv {Dunno} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring DunnoPub x)
-plusMonoInv {Unused} {Public} {adv} pre = {!!}
-plusMonoInv {r1} {Private} {adv} pre = {!!}
-plusMonoInv {Unused} {Dunno} {adv} pre = {!!}
-plusMonoInv {Public} {Dunno} {adv} pre = pre
-plusMonoInv {Private} {Dunno} {adv} pre = {!!}
-plusMonoInv {Dunno} {Dunno} {adv} pre = pre
+levelSemiringNonInterfering : NonInteferingSemiring levelSemiring
+
+ -- : {r1 r2 adv : Level}
+ --             -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 r2) adv)
+ --             -> ¬( _≤_ levelSemiring r1 adv)
+plusMonoInv levelSemiringNonInterfering {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
+plusMonoInv levelSemiringNonInterfering {Public} {Public} {adv} pre = pre
+plusMonoInv levelSemiringNonInterfering {Private} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring PrivPub x)
+plusMonoInv levelSemiringNonInterfering {Dunno} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring DunnoPub x)
+plusMonoInv levelSemiringNonInterfering {Unused} {Public} {adv} pre = {!!}
+plusMonoInv levelSemiringNonInterfering {r1} {Private} {adv} pre = {!!}
+plusMonoInv levelSemiringNonInterfering {Unused} {Dunno} {adv} pre = {!!}
+plusMonoInv levelSemiringNonInterfering {Public} {Dunno} {adv} pre = pre
+plusMonoInv levelSemiringNonInterfering {Private} {Dunno} {adv} pre = {!!}
+plusMonoInv levelSemiringNonInterfering {Dunno} {Dunno} {adv} pre = pre
+
+propertyConditionalNI levelSemiringNonInterfering {r1} {r2} {r} {adv} = {!!}
+
+propertyConditionalNI2 levelSemiringNonInterfering {r1} {r2} {r} {adv} = {!!}
+
+--propInvTimesMonoAsym : {r s adv : Level}
+--                     -> ¬(_≤_ levelSemiring (_*R_ levelSemiring r s) adv)
+--                     -> (_≤_ levelSemiring r adv)
+--                     -> ¬(_≤_ levelSemiring s adv)
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Public} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Unused} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Public} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Private} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Dunno} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Unused} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Public} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Dunno} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Unused} {adv} inp1 inp2 = inp1
+propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Unused} {adv} inp1 inp2 = inp1
 
 
 propInvPlusMono1 : {r1 r2 r adv : Level}
@@ -856,32 +912,3 @@ propInvPlusMono2 {Unused} {Public} {Unused} {adv} inp = inp
 propInvPlusMono2 {Unused} {Private} {r} {adv} inp = inp
 propInvPlusMono2 {Unused} {Dunno} {r} {adv} inp = inp
 propInvPlusMono2 {Unused} {Unused} {r} {adv} inp = inp
-
-propInvTimesMonoAsym : {r s adv : Level}
-                     -> ¬(_≤_ levelSemiring (_*R_ levelSemiring r s) adv)
-                     -> (_≤_ levelSemiring r adv)
-                     -> ¬(_≤_ levelSemiring s adv)
-propInvTimesMonoAsym {Public} {Public} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-propInvTimesMonoAsym {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-propInvTimesMonoAsym {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-propInvTimesMonoAsym {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-propInvTimesMonoAsym {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-propInvTimesMonoAsym {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-propInvTimesMonoAsym {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-propInvTimesMonoAsym {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-propInvTimesMonoAsym {Public} {Unused} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Private} {Public} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Private} {Private} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Private} {Dunno} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Private} {Unused} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Dunno} {Public} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-propInvTimesMonoAsym {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-propInvTimesMonoAsym {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-propInvTimesMonoAsym {Dunno} {Dunno} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Dunno} {Unused} {adv} inp1 inp2 = inp1
-propInvTimesMonoAsym {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-propInvTimesMonoAsym {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-propInvTimesMonoAsym {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-propInvTimesMonoAsym {Unused} {Unused} {adv} inp1 inp2 = inp1
