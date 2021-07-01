@@ -51,7 +51,22 @@ boolToSet true = ⊤
 postulate
   +commR : {r s : Semiring} -> r +R s ≡ s +R r
 
+plusMonoInv : {r1 r2 adv : Semiring} -> (r1 +R r2) ≤ adv ≡ false -> (r1 ≤ adv) ≡ false
+plusMonoInv {Hi} {Hi} {Hi} ()
+plusMonoInv {Hi} {Hi} {Lo} refl = refl
+plusMonoInv {Hi} {Lo} {Hi} ()
+plusMonoInv {Hi} {Lo} {Lo} ()
+plusMonoInv {Lo} {Hi} {Hi} ()
+plusMonoInv {Lo} {Hi} {Lo} ()
+plusMonoInv {Lo} {Lo} {Hi} ()
+plusMonoInv {Lo} {Lo} {Lo} ()
+
+plusMonoInv' : {r1 r2 adv : Semiring} -> (r1 +R r2) ≤ adv ≡ false -> (r2 ≤ adv) ≡ false
+plusMonoInv' {r1} {r2} {adv} pre = plusMonoInv {r2} {r1} {adv} (subst (\h -> h ≤ adv ≡ false) (+commR {r1} {r2}) pre)
+
 propInvPlusMono1 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r1 ≤ adv) ≡ false
+propInvPlusMono1 {r1} {r2} {r} {adv} = plusMonoInv {r1} {r *R r2} {adv}
+{-
 propInvPlusMono1 {Hi} {Hi} {Hi} {Hi} ()
 propInvPlusMono1 {Hi} {Hi} {Lo} {Hi} ()
 propInvPlusMono1 {Hi} {Lo} {Hi} {Hi} ()
@@ -68,8 +83,11 @@ propInvPlusMono1 {Lo} {Lo} {Lo} {Lo} ()
 propInvPlusMono1 {Hi} {Hi} {Hi} {Lo} refl = refl
 propInvPlusMono1 {Hi} {Hi} {Lo} {Lo} refl = refl
 propInvPlusMono1 {Hi} {Lo} {Hi} {Lo} refl = refl
+-}
 
 propInvPlusMono2 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> ((r *R r2) ≤ adv) ≡ false
+propInvPlusMono2 {r1} {r2} {r} {adv} = plusMonoInv' {r1} {r *R r2} {adv}
+{-
 propInvPlusMono2 {Hi} {Hi} {Hi} {Hi} ()
 propInvPlusMono2 {Hi} {Hi} {Hi} {Lo} refl = refl
 propInvPlusMono2 {Hi} {Hi} {Lo} {Hi} ()
@@ -86,6 +104,7 @@ propInvPlusMono2 {Lo} {Lo} {Hi} {Hi} ()
 propInvPlusMono2 {Lo} {Lo} {Hi} {Lo} ()
 propInvPlusMono2 {Lo} {Lo} {Lo} {Hi} ()
 propInvPlusMono2 {Lo} {Lo} {Lo} {Lo} ()
+-}
 
 {-
 Thing which is certainly false, but it

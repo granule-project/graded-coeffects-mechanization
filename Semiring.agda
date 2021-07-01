@@ -590,6 +590,20 @@ transitive≤ levelSemiring {Unused} {Private} {t} () inp2
 transitive≤ levelSemiring {Unused} {Dunno} {t} () inp2
 transitive≤ levelSemiring {Unused} {Unused} {Unused} inp1 inp2 = Refl Unused
 
+plusMonoInv : {r1 r2 adv : Level}
+              -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 r2) adv)
+              -> ¬( _≤_ levelSemiring r1 adv)
+plusMonoInv {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
+plusMonoInv {Public} {Public} {adv} pre = pre
+plusMonoInv {Private} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring PrivPub x)
+plusMonoInv {Dunno} {Public} {adv} pre = λ x → pre (transitive≤ levelSemiring DunnoPub x)
+plusMonoInv {Unused} {Public} {adv} pre = {!!}
+plusMonoInv {r1} {Private} {adv} pre = {!!}
+plusMonoInv {Unused} {Dunno} {adv} pre = {!!}
+plusMonoInv {Public} {Dunno} {adv} pre = pre
+plusMonoInv {Private} {Dunno} {adv} pre = {!!}
+plusMonoInv {Dunno} {Dunno} {adv} pre = pre
+
 
 propInvPlusMono1 : {r1 r2 r adv : Level}
                  -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 (_*R_ levelSemiring r r2)) adv)
