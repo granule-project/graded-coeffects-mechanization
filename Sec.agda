@@ -3,6 +3,9 @@
 module Sec where
 
 open import Relation.Binary.PropositionalEquality
+open import Relation.Nullary
+open import Relation.Unary
+open import Data.Empty
 open import Semiring
 
 data Sec : Set where
@@ -96,6 +99,9 @@ data SecOrder : Sec -> Sec -> Set where
   ReflHi : SecOrder Hi Hi
   LoHi   : SecOrder Lo Hi
 
+_≤_ : Sec -> Sec -> Set
+_≤_ = SecOrder
+
 monotone* : {r1 r2 s1 s2 : Sec} -> SecOrder r1 r2 -> SecOrder s1 s2 -> SecOrder (r1 *R s1) (r2 *R s2)
 monotone* = {!!}
 
@@ -111,7 +117,7 @@ transitive≤ {r} {s} {t} = {!!}
 
 secSemiring : Semiring
 secSemiring = record
-                { carrier = Sec
+                { grade = Sec
                 ; 1R = 1r
                 ; 0R = 0r
                 ; _+R_ = _+R_
@@ -133,3 +139,59 @@ secSemiring = record
                 ; reflexive≤ = reflexive≤
                 ; transitive≤ = transitive≤
                 }
+
+plusMonoInv : {r1 r2 adv : Sec} -> ¬ (SecOrder (r1 +R r2) adv) -> ¬ (SecOrder r1 adv)
+plusMonoInv {Hi} {Hi} {Hi} pre p = pre p
+plusMonoInv {Hi} {Hi} {Lo} pre p = pre p
+plusMonoInv {Hi} {Lo} {Hi} pre p = pre LoHi
+plusMonoInv {Hi} {Lo} {Lo} pre p = pre ReflLo
+plusMonoInv {Lo} {Hi} {Hi} pre p = pre LoHi
+plusMonoInv {Lo} {Hi} {Lo} pre p = pre ReflLo
+plusMonoInv {Lo} {Lo} {Hi} pre p = pre LoHi
+plusMonoInv {Lo} {Lo} {Lo} pre p = pre ReflLo
+
+propertyConditionalNI : {r1 r2 r adv : Sec}
+                     -> ¬ (SecOrder ((r *R r1) +R r2) adv)
+                     ->   (SecOrder r  1r)
+                     -> ¬ (SecOrder r1 adv)
+propertyConditionalNI {Hi} {Hi} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI {Hi} {Hi} {Lo} {Lo} pre1 pre2 = pre1
+propertyConditionalNI {Hi} {Lo} {Lo} {Hi} pre1 pre2 = ⊥-elim (pre1 LoHi)
+propertyConditionalNI {Hi} {Lo} {Lo} {Lo} pre1 pre2 = ⊥-elim (pre1 ReflLo)
+propertyConditionalNI {Lo} {Hi} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI {Lo} {Hi} {Lo} {Lo} pre1 pre2 = pre1
+propertyConditionalNI {Lo} {Lo} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI {Lo} {Lo} {Lo} {Lo} pre1 pre2 = pre1
+
+propertyConditionalNI2 : {r1 r2 r adv : Sec}
+                     -> ¬ (SecOrder ((r *R r1) +R r2) adv)
+                     ->   (SecOrder r 1r)
+                     -> ¬ (SecOrder r2 adv)
+propertyConditionalNI2 {Hi} {Hi} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Hi} {Lo} {Lo} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Lo} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Hi} {Lo} {Lo} {Lo} pre1 pre2 = pre1
+propertyConditionalNI2 {Lo} {Hi} {Lo} {Hi} pre1 pre2 = ⊥-elim (pre1 LoHi)
+propertyConditionalNI2 {Lo} {Hi} {Lo} {Lo} pre1 pre2 = ⊥-elim (pre1 ReflLo)
+propertyConditionalNI2 {Lo} {Lo} {Lo} {Hi} pre1 pre2 = pre1
+propertyConditionalNI2 {Lo} {Lo} {Lo} {Lo} pre1 pre2 = pre1
+
+propInvTimesMonoAsym : {r s adv : Sec}
+                    -> ¬ ((r *R s) ≤ adv)
+                    ->   (r ≤ adv)
+                    -> ¬ (s ≤ adv)
+propInvTimesMonoAsym {Hi} {Hi} {Hi} pre1 pre2 = pre1
+propInvTimesMonoAsym {Hi} {Lo} {Hi} pre1 pre2 = ⊥-elim (pre1 ReflHi)
+propInvTimesMonoAsym {Lo} {Hi} {Hi} pre1 pre2 = ⊥-elim (pre1 ReflHi)
+propInvTimesMonoAsym {Lo} {Hi} {Lo} pre1 pre2 = pre1
+propInvTimesMonoAsym {Lo} {Lo} {Hi} pre1 pre2 = pre1
+propInvTimesMonoAsym {Lo} {Lo} {Lo} pre1 pre2 = pre1
+
+
+secSemiringNI : NonInterferingSemiring secSemiring
+secSemiringNI = record
+                  { plusMonoInv            = plusMonoInv
+                  ; propertyConditionalNI  = propertyConditionalNI
+                  ; propertyConditionalNI2 = propertyConditionalNI2
+                  ; propInvTimesMonoAsym   = propInvTimesMonoAsym
+                  }

@@ -11,57 +11,58 @@ open import Relation.Unary
 
 record Semiring : Set₁ where
   field
-    carrier : Set
-    1R      : carrier
-    0R      : carrier
-    _+R_    : carrier -> carrier -> carrier
-    _*R_    : carrier -> carrier -> carrier
-    _≤_     : carrier -> carrier -> Set
+    grade : Set
+    1R      : grade
+    0R      : grade
+    _+R_    : grade -> grade -> grade
+    _*R_    : grade -> grade -> grade
+    _≤_     : grade -> grade -> Set
 
-    leftUnit+   : {r : carrier} -> 0R +R r ≡ r
-    rightUnit+  : {r : carrier} -> r +R 0R ≡ r
-    comm+       : {r s : carrier} -> r +R s ≡ s +R r
+    toBool : {r s : grade} -> r ≤ s -> Bool
 
-    leftUnit*    : {r : carrier} -> 1R *R r ≡ r
-    rightUnit*   : {r : carrier} -> r *R 1R ≡ r
-    leftAbsorb   : {r : carrier} -> 0R *R r ≡ 0R
-    rightAbsorb  : {r : carrier} -> r *R 0R ≡ 0R
+    leftUnit+   : {r : grade} -> 0R +R r ≡ r
+    rightUnit+  : {r : grade} -> r +R 0R ≡ r
+    comm+       : {r s : grade} -> r +R s ≡ s +R r
 
-    assoc*     : {r s t : carrier} -> (r *R s) *R t ≡ r *R (s *R t)
-    assoc+     : {r s t : carrier} -> (r +R s) +R t ≡ r +R (s +R t)
+    leftUnit*    : {r : grade} -> 1R *R r ≡ r
+    rightUnit*   : {r : grade} -> r *R 1R ≡ r
+    leftAbsorb   : {r : grade} -> 0R *R r ≡ 0R
+    rightAbsorb  : {r : grade} -> r *R 0R ≡ 0R
 
-    distrib1    : {r s t : carrier} -> r *R (s +R t) ≡ (r *R s) +R (r *R t)
-    distrib2    : {r s t : carrier} -> (r +R s) *R t ≡ (r *R t) +R (s *R t)
+    assoc*     : {r s t : grade} -> (r *R s) *R t ≡ r *R (s *R t)
+    assoc+     : {r s t : grade} -> (r +R s) +R t ≡ r +R (s +R t)
 
-    monotone*  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
-    monotone+  : {r1 r2 s1 s2 : carrier} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s1) ≤ (r2 +R s2)
+    distrib1    : {r s t : grade} -> r *R (s +R t) ≡ (r *R s) +R (r *R t)
+    distrib2    : {r s t : grade} -> (r +R s) *R t ≡ (r *R t) +R (s *R t)
 
-    reflexive≤ : {r : carrier} -> r ≤ r
-    transitive≤ : {r s t : carrier} -> r ≤ s -> s ≤ t -> r ≤ t
+    monotone*  : {r1 r2 s1 s2 : grade} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
+    monotone+  : {r1 r2 s1 s2 : grade} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s1) ≤ (r2 +R s2)
 
+    reflexive≤ : {r : grade} -> r ≤ r
+    transitive≤ : {r s t : grade} -> r ≤ s -> s ≤ t -> r ≤ t
 
 open Semiring
 
-record NonInteferingSemiring (R : Semiring) : Set₁ where
+record NonInterferingSemiring (R : Semiring) : Set₁ where
   field
     -- in classical logic this is the same as:   r1 ≤ s  →  r1 + r2 ≤ s
-    plusMonoInv : {r1 r2 s : carrier R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
+    plusMonoInv : {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
 
-    propertyConditionalNI : {r1 r2 r adv : carrier R}
-                     -> ¬ (_≤_ R (_+R_ R (_*R_ R r1 r1) r2) adv)
+    propertyConditionalNI : {r1 r2 r adv : grade R}
+                     -> ¬ (_≤_ R (_+R_ R (_*R_ R r r1) r2) adv)
                      ->   (_≤_ R r (1R R))
                      -> ¬ (_≤_ R r1 adv)
-    propertyConditionalNI2 : {r1 r2 r adv : carrier R}
+    propertyConditionalNI2 : {r1 r2 r adv : grade R}
                      -> ¬ (_≤_ R (_+R_ R (_*R_ R r r1) r2) adv)
                      ->   (_≤_ R r (1R R))
                      -> ¬ (_≤_ R r2 adv)
 
-    propInvTimesMonoAsym : {r s adv : carrier R}
+    propInvTimesMonoAsym : {r s adv : grade R}
                        -> ¬ (_≤_ R (_*R_ R r s) adv)
                        ->   (_≤_ R r adv)
                        -> ¬ (_≤_ R s adv)
 
-open NonInteferingSemiring
+open NonInterferingSemiring
 
 -- Level elements
 data Level : Set where
@@ -69,6 +70,7 @@ data Level : Set where
   Private : Level
   Dunno   : Level
   Unused  : Level
+
 
 -- constructive representation of the ordering
 data Order : Level -> Level -> Set where
@@ -84,8 +86,18 @@ data Order : Level -> Level -> Set where
   Refl : (l : Level) -> Order l l
 
 
+foo : {l j : Level} -> Order l j -> Bool
+foo {.Unused} {.Public} 0Pub = true
+foo {.Unused} {.Private} 0Priv = true
+foo {.Private} {.Public} PrivPub = true
+foo {.Unused} {.Dunno} 0Dunno = true
+foo {.Private} {.Dunno} PrivDunno = true
+foo {.Dunno} {.Public} DunnoPub = true
+foo {l} {.l} (Refl .l) = true
+foo {a} {b} _ = false
+
 levelSemiring : Semiring
-carrier levelSemiring = Level
+grade levelSemiring = Level
 1R levelSemiring      = Private
 0R levelSemiring      = Unused
 
@@ -93,6 +105,9 @@ carrier levelSemiring = Level
 -- the above `Order` data type is defined using Granule's direction
 -- *so we need to flip here*
 _≤_ levelSemiring x y = Order y x
+
+
+toBool levelSemiring = foo
 
 -- unit property
 _+R_ levelSemiring Unused x = x
@@ -613,7 +628,7 @@ transitive≤ levelSemiring {Unused} {Private} {t} () inp2
 transitive≤ levelSemiring {Unused} {Dunno} {t} () inp2
 transitive≤ levelSemiring {Unused} {Unused} {Unused} inp1 inp2 = Refl Unused
 
-levelSemiringNonInterfering : NonInteferingSemiring levelSemiring
+levelSemiringNonInterfering : NonInterferingSemiring levelSemiring
 
  -- : {r1 r2 adv : Level}
  --             -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 r2) adv)

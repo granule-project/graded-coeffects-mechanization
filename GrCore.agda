@@ -13,228 +13,78 @@ open import Data.Maybe
 open import Data.Empty
 open import Data.Unit hiding (_≟_; _≤_)
 
--- Sec
-data Semiring : Set where
-  Hi : Semiring
-  Lo  : Semiring
+open import Semiring
+-- open import Sec
 
-1r : Semiring
-1r = Lo
-
-0r : Semiring
-0r = Hi
-
-_+R_ : Semiring -> Semiring -> Semiring
-Lo +R _  = Lo
-_ +R Lo  = Lo
-Hi +R Hi = Hi
-
-_*R_ : Semiring -> Semiring -> Semiring
-Hi *R _ = Hi
-_ *R Hi = Hi
-Lo *R Lo = Lo
-
-leftUnit : {r : Semiring} -> 1r *R r ≡ r
-leftUnit {Hi} = refl
-leftUnit {Lo} = refl
-
-_≤_ : Semiring -> Semiring -> Bool
-_≤_ Lo Hi = true
-_≤_ Lo Lo = true
-_≤_ Hi Hi = true
-_≤_ Hi Lo = false
-
-boolToSet : Bool -> Set
-boolToSet false = ⊥
-boolToSet true = ⊤
-
-postulate
-  +commR : {r s : Semiring} -> r +R s ≡ s +R r
-
-plusMonoInv : {r1 r2 adv : Semiring} -> (r1 +R r2) ≤ adv ≡ false -> (r1 ≤ adv) ≡ false
-plusMonoInv {Hi} {Hi} {Hi} ()
-plusMonoInv {Hi} {Hi} {Lo} refl = refl
-plusMonoInv {Hi} {Lo} {Hi} ()
-plusMonoInv {Hi} {Lo} {Lo} ()
-plusMonoInv {Lo} {Hi} {Hi} ()
-plusMonoInv {Lo} {Hi} {Lo} ()
-plusMonoInv {Lo} {Lo} {Hi} ()
-plusMonoInv {Lo} {Lo} {Lo} ()
-
-plusMonoInv' : {r1 r2 adv : Semiring} -> (r1 +R r2) ≤ adv ≡ false -> (r2 ≤ adv) ≡ false
-plusMonoInv' {r1} {r2} {adv} pre = plusMonoInv {r2} {r1} {adv} (subst (\h -> h ≤ adv ≡ false) (+commR {r1} {r2}) pre)
-
-propInvPlusMono1 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> (r1 ≤ adv) ≡ false
-propInvPlusMono1 {r1} {r2} {r} {adv} = plusMonoInv {r1} {r *R r2} {adv}
-{-
-propInvPlusMono1 {Hi} {Hi} {Hi} {Hi} ()
-propInvPlusMono1 {Hi} {Hi} {Lo} {Hi} ()
-propInvPlusMono1 {Hi} {Lo} {Hi} {Hi} ()
-propInvPlusMono1 {Hi} {Lo} {Lo} {Hi} ()
-propInvPlusMono1 {Hi} {Lo} {Lo} {Lo} ()
-propInvPlusMono1 {Lo} {Hi} {Hi} {Hi} ()
-propInvPlusMono1 {Lo} {Hi} {Hi} {Lo} ()
-propInvPlusMono1 {Lo} {Hi} {Lo} {Hi} ()
-propInvPlusMono1 {Lo} {Hi} {Lo} {Lo} ()
-propInvPlusMono1 {Lo} {Lo} {Hi} {Hi} ()
-propInvPlusMono1 {Lo} {Lo} {Hi} {Lo} ()
-propInvPlusMono1 {Lo} {Lo} {Lo} {Hi} ()
-propInvPlusMono1 {Lo} {Lo} {Lo} {Lo} ()
-propInvPlusMono1 {Hi} {Hi} {Hi} {Lo} refl = refl
-propInvPlusMono1 {Hi} {Hi} {Lo} {Lo} refl = refl
-propInvPlusMono1 {Hi} {Lo} {Hi} {Lo} refl = refl
--}
-
-propInvPlusMono2 : {r1 r2 r adv : Semiring} -> ((r1 +R (r *R r2)) ≤ adv) ≡ false -> ((r *R r2) ≤ adv) ≡ false
-propInvPlusMono2 {r1} {r2} {r} {adv} = plusMonoInv' {r1} {r *R r2} {adv}
-{-
-propInvPlusMono2 {Hi} {Hi} {Hi} {Hi} ()
-propInvPlusMono2 {Hi} {Hi} {Hi} {Lo} refl = refl
-propInvPlusMono2 {Hi} {Hi} {Lo} {Hi} ()
-propInvPlusMono2 {Hi} {Hi} {Lo} {Lo} refl = refl
-propInvPlusMono2 {Hi} {Lo} {Hi} {Hi} ()
-propInvPlusMono2 {Hi} {Lo} {Hi} {Lo} refl = refl
-propInvPlusMono2 {Hi} {Lo} {Lo} {Hi} ()
-propInvPlusMono2 {Hi} {Lo} {Lo} {Lo} ()
-propInvPlusMono2 {Lo} {Hi} {Hi} {Hi} ()
-propInvPlusMono2 {Lo} {Hi} {Hi} {Lo} ()
-propInvPlusMono2 {Lo} {Hi} {Lo} {Hi} ()
-propInvPlusMono2 {Lo} {Hi} {Lo} {Lo} ()
-propInvPlusMono2 {Lo} {Lo} {Hi} {Hi} ()
-propInvPlusMono2 {Lo} {Lo} {Hi} {Lo} ()
-propInvPlusMono2 {Lo} {Lo} {Lo} {Hi} ()
-propInvPlusMono2 {Lo} {Lo} {Lo} {Lo} ()
--}
+open Semiring.Semiring {{...}} public
 
 {-
-Thing which is certainly false, but it
-demonstrates why you need the r <= 1 condition
-in the if typing
-
-propInvPlusMono3 : {r1 r2 r adv : Semiring}
-               -> (((r *R r1) +R r2) ≤ adv) ≡ false
-               -> (r1 ≤ adv) ≡ true
-propInvPlusMono3 {Hi} {Hi} {Hi} {Lo} refl = {!!}
-propInvPlusMono3 {Hi} {Hi} {Lo} {Lo} pre = {!!}
-propInvPlusMono3 {Lo} {Hi} {Hi} {Lo} pre = {!!}
-
--}
-
-propertyConditionalNI : {r1 r2 r adv : Semiring}
-                     -> (((r *R r1) +R r2) ≤ adv) ≡ false
-                     -> (r ≤ 1r) ≡ true
-                     -> (r1 ≤ adv) ≡ false
-propertyConditionalNI {Hi} {Hi} {Hi} {Hi} () pre2
-propertyConditionalNI {Hi} {Hi} {Hi} {Lo} refl ()
-propertyConditionalNI {Hi} {Hi} {Lo} {Hi} () pre2
-propertyConditionalNI {Hi} {Hi} {Lo} {Lo} refl refl = refl
-propertyConditionalNI {Hi} {Lo} {Hi} {Hi} () pre2
-propertyConditionalNI {Hi} {Lo} {Hi} {Lo} () pre2
-propertyConditionalNI {Hi} {Lo} {Lo} {Hi} () pre2
-propertyConditionalNI {Hi} {Lo} {Lo} {Lo} () pre2
-propertyConditionalNI {Lo} {Hi} {Hi} {Hi} () pre2
-propertyConditionalNI {Lo} {Hi} {Hi} {Lo} refl ()
-propertyConditionalNI {Lo} {Hi} {Lo} {Hi} () pre2
-propertyConditionalNI {Lo} {Hi} {Lo} {Lo} () pre2
-propertyConditionalNI {Lo} {Lo} {Hi} {Hi} () pre2
-propertyConditionalNI {Lo} {Lo} {Hi} {Lo} () pre2
-propertyConditionalNI {Lo} {Lo} {Lo} {Hi} () pre2
-propertyConditionalNI {Lo} {Lo} {Lo} {Lo} () pre2
-
-propertyConditionalNI2 : {r1 r2 r adv : Semiring}
-                     -> (((r *R r1) +R r2) ≤ adv) ≡ false
-                     -> (r ≤ 1r) ≡ true
-                     -> (r2 ≤ adv) ≡ false
-propertyConditionalNI2 {Lo} {Lo} {Lo} {Lo} () pre2
-propertyConditionalNI2 {Lo} {Lo} {Lo} {Hi} () pre2
-propertyConditionalNI2 {Lo} {Lo} {Hi} {Lo} () pre2
-propertyConditionalNI2 {Lo} {Lo} {Hi} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Lo} {Hi} {Lo} {Lo} pre1 pre2 = refl
-propertyConditionalNI2 {Lo} {Hi} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Lo} {Hi} {Hi} {Lo} pre1 pre2 = refl
-propertyConditionalNI2 {Lo} {Hi} {Hi} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Lo} {Lo} {Lo} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Lo} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Lo} {Hi} {Lo} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Lo} {Hi} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Hi} {Lo} {Lo} pre1 pre2 = refl
-propertyConditionalNI2 {Hi} {Hi} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Hi} {Hi} {Lo} pre1 pre2 = refl
-propertyConditionalNI2 {Hi} {Hi} {Hi} {Hi} pre1 pre2 = pre1
-
-propInvTimesMonoAsym : {r s adv : Semiring} -> ((r *R s) ≤ adv) ≡ false -> (r ≤ adv) ≡ true -> (s ≤ adv) ≡ false
-propInvTimesMonoAsym {Hi} {Hi} {Hi} () pre2
-propInvTimesMonoAsym {Hi} {Hi} {Lo} refl ()
-propInvTimesMonoAsym {Hi} {Lo} {Hi} () pre2
-propInvTimesMonoAsym {Hi} {Lo} {Lo} refl ()
-propInvTimesMonoAsym {Lo} {Hi} {Hi} () pre2
-propInvTimesMonoAsym {Lo} {Hi} {Lo} refl refl = refl
-propInvTimesMonoAsym {Lo} {Lo} {Hi} () pre2
-propInvTimesMonoAsym {Lo} {Lo} {Lo} () pre2
-
 invProperty : {r s adv : Semiring} -> boolToSet ((r *R s) ≤ adv) -> boolToSet (s ≤ adv)
 invProperty {Hi} {Hi} {Hi} pre = tt
 invProperty {Hi} {Lo} {Hi} pre = tt
 invProperty {Lo} {Hi} {Hi} pre = tt
 invProperty {Lo} {Lo} {Hi} pre = tt
 invProperty {Lo} {Lo} {Lo} pre = tt
+-}
 
-data Type : Set where
-  FunTy : (A : Type) -> (r : Semiring) -> (B : Type) -> Type -- A r -> B
+data Type {{R : Semiring}} : Set where
+  FunTy : (A : Type) -> (r : grade) -> (B : Type) -> Type -- A r -> B
   Unit  : Type
-  Box   : (r : Semiring) -> Type -> Type
+  Box   : (r : grade) -> Type -> Type
   --------------------------------------------------
   -- Prod  : Type -> Type -> Type
   -- Sum   : Type -> Type -> Type
   BoolTy : Type
 
 
-data Assumption : Set where
+data Assumption {{R : Semiring}} : Set where
 --  Lin : (A : Type)                    -> Assumption A
-  Grad : (A : Type) -> (r : Semiring) -> Assumption
+  Grad : (A : Type) -> (r : grade) -> Assumption
 
-injGradTy : {A A' : Type} {r r' : Semiring} -> Grad A r ≡ Grad A' r' -> A ≡ A'
+injGradTy : {{R : Semiring}} {A A' : Type} {r r' : grade} -> Grad A r ≡ Grad A' r' -> A ≡ A'
 injGradTy refl = refl
 
-injGradR : {A A' : Type} {r r' : Semiring} -> Grad A r ≡ Grad A' r' -> r ≡ r'
+
+injGradR : {{R : Semiring}} {A A' : Type} {r r' : grade} -> Grad A r ≡ Grad A' r' -> r ≡ r'
 injGradR refl = refl
 
-data Context : ℕ -> Set where
+data Context {{R : Semiring}} : ℕ -> Set where
   Empty   : Context 0
   Ext     : {n : ℕ} -> Context n -> Assumption -> Context (1 + n)
 
-injExt1 : {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> Γ ≡ Γ'
+injExt1 : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> Γ ≡ Γ'
 injExt1 refl = refl
 
-injExt2 : {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> A ≡ A'
+injExt2 : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} {A A' : Assumption} -> Ext Γ A ≡ Ext Γ' A' -> A ≡ A'
 injExt2 refl = refl
 
 -- Disjoint context concatentation
-_,,_ : {s t : ℕ} -> Context s -> Context t -> Context (s + t)
+_,,_ : {{R : Semiring}} {s t : ℕ} -> Context s -> Context t -> Context (s + t)
 Empty      ,, G2 = G2
 (Ext G1 a) ,, G2 = Ext (G1 ,, G2) a
 --G1 ,, Empty = G1
 --G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
 
 -- Context scalar multiplication
-_·_ : {s : ℕ} -> Semiring -> Context s -> Context s
+_·_ : {{R : Semiring}} {s : ℕ} -> grade -> Context s -> Context s
 r · Empty = Empty
 r · Ext g (Grad A s) = Ext (r · g) (Grad A (r *R s))
 
 -- Context addition
-_++_ : {s : ℕ} -> Context s -> Context s -> Context s
+_++_ : {{R : Semiring}} {s : ℕ} -> Context s -> Context s -> Context s
 Empty ++ Empty = Empty
 (Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
 
+
 postulate
   -- keeps things simple with the above definition
-  sameTypes : {s : ℕ} {Γ1 Γ2 : Context s} {Γ : Context (suc s)} {A A' : Type} {r1 r2 : Semiring}
+  sameTypes : {{R : Semiring}} {s : ℕ} {Γ1 Γ2 : Context s} {Γ : Context (suc s)} {A A' : Type} {r1 r2 : grade}
             -> (Ext Γ1 (Grad A r1)) ++ (Ext Γ2 (Grad A' r2)) ≡ Γ -> A ≡ A'
 
-  absorptionContext : {s : ℕ} {Γ Γ' : Context s} -> (0r · Γ) ++ Γ' ≡ Γ'
-  leftUnitContext : {s : ℕ} {Γ : Context s} -> 1r · Γ ≡ Γ
+  absorptionContext : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} -> (0R · Γ) ++ Γ' ≡ Γ'
+  leftUnitContext : {{R : Semiring}} {s : ℕ} {Γ : Context s} -> 1R · Γ ≡ Γ
 
-Γlength : {s : ℕ} -> Context s -> ℕ
+Γlength : {{R : Semiring}} {s : ℕ} -> Context s -> ℕ
 Γlength Empty = 0
 Γlength (Ext g a) = 1 + Γlength g
 
@@ -248,6 +98,7 @@ data Term : Set where
   vtrue : Term
   vfalse : Term
   If : Term -> Term -> Term -> Term
+
 
 syntacticSubst : Term -> ℕ -> Term -> Term
 syntacticSubst t x (Var y) with x ≟ y
@@ -264,10 +115,9 @@ syntacticSubst t x vfalse = vfalse
 syntacticSubst t x (If t1 t2 t3) = If (syntacticSubst t x t1) (syntacticSubst t x t2) (syntacticSubst t x t3)
 
 
-
 -------------------------------------------------
 -- Typing
-data _⊢_∶_ : {s : ℕ} -> Context s -> Term -> Type -> Set where
+data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term -> Type -> Set where
 
 --  (x : A) ∈ Γ
 ----------------------------
@@ -278,14 +128,14 @@ data _⊢_∶_ : {s : ℕ} -> Context s -> Term -> Type -> Set where
         { Γ : Context ((1 + s1) + s2) }
         { Γ1 : Context s1 }
         { Γ2 : Context s2 }
-        (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A 1r)) ,, (0r · Γ2)))
+        (pos : Γ ≡ ((Ext (0R · Γ1) (Grad A 1R)) ,, (0R · Γ2)))
     ->  ---------------------
         Γ ⊢ Var (Γlength Γ1) ∶ A
 
 
   app : {s : ℕ}
         { Γ Γ1 Γ2 : Context s }
-        { r : Semiring }
+        { r : grade }
         { A B : Type}
         { t1 t2 : Term }
 
@@ -301,7 +151,7 @@ data _⊢_∶_ : {s : ℕ} -> Context s -> Term -> Type -> Set where
         { Γ1 : Context s1 }
         { Γ2 : Context s2 }
         { Γ' : Context (s1 + s2) }
-        { r : Semiring}
+        { r : grade }
         { A B : Type }
         { t : Term }
 
@@ -314,7 +164,7 @@ data _⊢_∶_ : {s : ℕ} -> Context s -> Term -> Type -> Set where
 
   pr : {s : ℕ}
     -> { Γ Γ' : Context s }
-    -> { r : Semiring }
+    -> { r : grade }
     -> { A : Type }
     -> { t : Term }
 
@@ -326,22 +176,22 @@ data _⊢_∶_ : {s : ℕ} -> Context s -> Term -> Type -> Set where
 
   unitConstr : {s : ℕ} { Γ : Context s }
       -> --------------------------------
-          (0r · Γ) ⊢ unit ∶ Unit
+          (0R · Γ) ⊢ unit ∶ Unit
 
   trueConstr : {s : ℕ} { Γ : Context s }
       -> --------------------------------
-           (0r · Γ) ⊢ vtrue ∶ BoolTy
+          (0R · Γ) ⊢ vtrue ∶ BoolTy
 
   falseConstr : {s : ℕ} { Γ : Context s }
       -> --------------------------------
-           (0r · Γ) ⊢ vfalse ∶ BoolTy
+          (0R · Γ) ⊢ vfalse ∶ BoolTy
 
   if : {s : ℕ}
        { Γ Γ1 Γ2 : Context s }
        { B : Type }
        { t1 t2 t3 : Term }
-       { r : Semiring }
-       { used : r ≤ 1r ≡ true }
+       { r : grade }
+       { used : r ≤ 1R }
 
     -> Γ1 ⊢ t1 ∶ BoolTy
     -> Γ2 ⊢ t2 ∶ B
@@ -361,9 +211,9 @@ data Value : Term -> Set where
   falseValue   : Value vfalse
 
 -- substitution
-substitution : {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : Semiring} {A B : Type} {t1 t2 : Term}
+substitution : {{R : Semiring}} {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : grade} {A B : Type} {t1 t2 : Term}
       -> Γ ⊢ t1 ∶ B
-      -> (pos : Γ ≡ ((Ext (0r · Γ1) (Grad A r)) ,, (0r · Γ3)))
+      -> (pos : Γ ≡ ((Ext (0R · Γ1) (Grad A r)) ,, (0R · Γ3)))
       -> Γ2 ⊢ t2 ∶ A
       -> ((Γ1 ,, Γ3) ++ (r · Γ2)) ⊢ syntacticSubst t2 (Γlength Γ1) t1 ∶ B
 
@@ -375,7 +225,7 @@ substitution {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {t1} {t2} substitutee pos e = {!
 
 
 -- constructive progress
-redux : {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
+redux : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
       -> Γ ⊢ t ∶ A
       -> (Value t) ⊎ ∃ (\t' -> Γ ⊢ t' ∶ A)
 
@@ -416,7 +266,7 @@ multiRedux t with untypedRedux t
 ... | just t' = multiRedux t'
 ... | nothing = t
 
-multiReduxProducesValues : {A : Type} {t : Term} -> Empty ⊢ t ∶ A -> Value (multiRedux t)
+multiReduxProducesValues : {{R : Semiring}} {A : Type} {t : Term} -> Empty ⊢ t ∶ A -> Value (multiRedux t)
 multiReduxProducesValues {A} {Var _} ()
 multiReduxProducesValues {A} {App t1 t2} (app typing1 typing2) = {!!}
 multiReduxProducesValues {FunTy _ _ _} {Abs x t} _
@@ -433,7 +283,7 @@ multReduxCongruence : {t1 v : Term} {C : Term -> Term}
                    -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
 multReduxCongruence = {!!}
 
-preservation : {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
+preservation : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
              -> Γ ⊢ t ∶ A
              -> Γ ⊢ multiRedux t ∶ A
 preservation = {!!}
