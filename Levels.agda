@@ -11,6 +11,47 @@ open import Semiring
 open Semiring.Semiring
 open Semiring.NonInterferingSemiring
 
+-- # Level semiring definition
+
+-- Level elements
+data Level : Set where
+  Public  : Level
+  Private : Level
+  Dunno   : Level
+  Unused  : Level
+
+-- constructive representation of the ordering
+data Order : Level -> Level -> Set where
+  -- central 'line' and its transitivity
+  0Pub    : Order Unused Public
+  0Priv   : Order Unused Private
+  PrivPub : Order Private Public
+  -- dunno branch
+  0Dunno  : Order Unused Dunno
+  PrivDunno : Order Private Dunno
+  DunnoPub  : Order Dunno Public
+  -- reflexive cases
+  Refl : (l : Level) -> Order l l
+
+-- reify the indexed type ordering
+reified : (l : Level) -> (j : Level) -> Dec (Order j l)
+reified Public Public   = yes (Refl Public)
+reified Public Private  = yes PrivPub
+reified Public Dunno    = yes DunnoPub
+reified Public Unused   = yes 0Pub
+reified Private Public  = no (λ ())
+reified Private Private = yes (Refl Private)
+reified Private Dunno   = no (λ ())
+reified Private Unused  = yes 0Priv
+reified Dunno Public    = no (λ ())
+reified Dunno Private   = yes PrivDunno
+reified Dunno Dunno     = yes (Refl Dunno)
+reified Dunno Unused    = yes 0Dunno
+reified Unused Public   = no (λ ())
+reified Unused Private  = no (λ ())
+reified Unused Dunno    = no (λ ())
+reified Unused Unused   = yes (Refl Unused)
+
 instance
   levelSemiring : Semiring
   grade levelSemiring = Level
@@ -545,6 +586,17 @@ instance
 
 instance
   levelSemiringNonInterfering : NonInterferingSemiring levelSemiring
+
+  antisymmetry levelSemiringNonInterfering {Public} {Public} (Refl .Public) pre2 = refl
+  antisymmetry levelSemiringNonInterfering {Private} {Public} () pre2
+  antisymmetry levelSemiringNonInterfering {Private} {Private} (Refl .Private) pre2 = refl
+  antisymmetry levelSemiringNonInterfering {Private} {Dunno} () pre2
+  antisymmetry levelSemiringNonInterfering {Dunno} {Public} () pre2
+  antisymmetry levelSemiringNonInterfering {Dunno} {Dunno} (Refl .Dunno) pre2 = refl
+  antisymmetry levelSemiringNonInterfering {Unused} {Public} () pre2
+  antisymmetry levelSemiringNonInterfering {Unused} {Private} () pre2
+  antisymmetry levelSemiringNonInterfering {Unused} {Dunno} () pre2
+  antisymmetry levelSemiringNonInterfering {Unused} {Unused} (Refl .Unused) pre2 = refl
 
    -- : {r1 r2 adv : Level}
    --             -> ¬( _≤_ levelSemiring (_+R_ levelSemiring r1 r2) adv)

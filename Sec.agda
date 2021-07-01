@@ -188,10 +188,16 @@ propInvTimesMonoAsym {Lo} {Hi} {Lo} pre1 pre2 = pre1
 propInvTimesMonoAsym {Lo} {Lo} {Hi} pre1 pre2 = pre1
 propInvTimesMonoAsym {Lo} {Lo} {Lo} pre1 pre2 = pre1
 
+antisym : {r s : Sec} -> (r ≤ s) -> (s ≤ r) -> r ≡ s
+antisym {Hi} {Hi} pre1 pre2 = refl
+antisym {Hi} {Lo} () pre2
+antisym {Lo} {Hi} LoHi ()
+antisym {Lo} {Lo} pre1 pre2 = refl
 
 secSemiringNI : NonInterferingSemiring secSemiring
 secSemiringNI = record
-                  { plusMonoInv            = plusMonoInv
+                  { antisymmetry           = antisym
+                  ; plusMonoInv            = plusMonoInv
                   ; propertyConditionalNI  = propertyConditionalNI
                   ; propertyConditionalNI2 = propertyConditionalNI2
                   ; propInvTimesMonoAsym   = propInvTimesMonoAsym

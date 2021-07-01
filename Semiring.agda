@@ -47,6 +47,8 @@ open Semiring
 record NonInterferingSemiring (R : Semiring) : Set₁ where
   field
     -- in classical logic this is the same as:   r1 ≤ s  →  r1 + r2 ≤ s
+    antisymmetry : {r s : grade R} -> _≤_ R r s -> _≤_ R s r -> r ≡ s
+
     plusMonoInv : {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
 
     propertyConditionalNI : {r1 r2 r adv : grade R}
@@ -71,45 +73,4 @@ plusMonoInv' : {R : Semiring} {R' : NonInterferingSemiring R}
                 -> ¬ (_≤_ R (_+R_ R r1 r2)  s) -> ¬ (_≤_ R r2 s)
 plusMonoInv' {R} {R'} {r1} {r2} {s} pre =
   plusMonoInv R' {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
-
--- # Level semiring definition
-
--- Level elements
-data Level : Set where
-  Public  : Level
-  Private : Level
-  Dunno   : Level
-  Unused  : Level
-
--- constructive representation of the ordering
-data Order : Level -> Level -> Set where
-  -- central 'line' and its transitivity
-  0Pub    : Order Unused Public
-  0Priv   : Order Unused Private
-  PrivPub : Order Private Public
-  -- dunno branch
-  0Dunno  : Order Unused Dunno
-  PrivDunno : Order Private Dunno
-  DunnoPub  : Order Dunno Public
-  -- reflexive cases
-  Refl : (l : Level) -> Order l l
-
--- reify the indexed type ordering
-reified : (l : Level) -> (j : Level) -> Dec (Order j l)
-reified Public Public   = yes (Refl Public)
-reified Public Private  = yes PrivPub
-reified Public Dunno    = yes DunnoPub
-reified Public Unused   = yes 0Pub
-reified Private Public  = no (λ ())
-reified Private Private = yes (Refl Private)
-reified Private Dunno   = no (λ ())
-reified Private Unused  = yes 0Priv
-reified Dunno Public    = no (λ ())
-reified Dunno Private   = yes PrivDunno
-reified Dunno Dunno     = yes (Refl Dunno)
-reified Dunno Unused    = yes 0Dunno
-reified Unused Public   = no (λ ())
-reified Unused Private  = no (λ ())
-reified Unused Dunno    = no (λ ())
-reified Unused Unused   = yes (Refl Unused)
 
