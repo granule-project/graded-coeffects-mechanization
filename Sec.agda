@@ -86,7 +86,14 @@ comm+ {Lo} {Hi} = refl
 comm+ {Lo} {Lo} = refl
 
 distrib1 : {r s t : Sec} -> r *R (s +R t) ≡ (r *R s) +R (r *R t)
-distrib1 {r} {s} {t} = {!!}
+distrib1 {Hi} {Hi} {Hi} = refl
+distrib1 {Hi} {Hi} {Lo} = refl
+distrib1 {Hi} {Lo} {Hi} = refl
+distrib1 {Hi} {Lo} {Lo} = refl
+distrib1 {Lo} {Hi} {Hi} = refl
+distrib1 {Lo} {Hi} {Lo} = refl
+distrib1 {Lo} {Lo} {Hi} = refl
+distrib1 {Lo} {Lo} {Lo} = refl
 
 distrib2 : {r s t : Sec} -> (r +R s) *R t ≡ (r *R t) +R (s *R t)
 distrib2 {r} {s} {t} =
@@ -109,17 +116,33 @@ orderReified Lo Hi = yes LoHi
 orderReified Lo Lo = yes ReflLo
 
 monotone* : {r1 r2 s1 s2 : Sec} -> SecOrder r1 r2 -> SecOrder s1 s2 -> SecOrder (r1 *R s1) (r2 *R s2)
-monotone* = {!!}
+monotone* ReflLo ReflLo = ReflLo
+monotone* ReflLo ReflHi = ReflHi
+monotone* ReflLo LoHi = LoHi
+monotone* ReflHi ReflLo = ReflHi
+monotone* ReflHi ReflHi = ReflHi
+monotone* ReflHi LoHi = ReflHi
+monotone* LoHi ReflLo = LoHi
+monotone* LoHi ReflHi = ReflHi
+monotone* LoHi LoHi = LoHi
 
 monotone+ : {r1 r2 s1 s2 : Sec} -> SecOrder r1 r2 -> SecOrder s1 s2 -> SecOrder (r1 +R s1) (r2 +R s2)
-monotone+ = {!!}
+monotone+ {.Lo} {.Lo} {.Lo} {.Lo} ReflLo ReflLo = ReflLo
+monotone+ {.Lo} {.Lo} {.Hi} {.Hi} ReflLo ReflHi = ReflLo
+monotone+ {.Lo} {.Lo} {.Lo} {.Hi} ReflLo LoHi   = ReflLo
+monotone+ {.Hi} {.Hi} {s1} {s2} ReflHi pre2 rewrite leftUnit+ {s1} | leftUnit+ {s2} = pre2
+monotone+ {.Lo} {.Hi} {.Lo} {.Lo} LoHi ReflLo   = ReflLo
+monotone+ {.Lo} {.Hi} {.Hi} {.Hi} LoHi ReflHi   = LoHi
+monotone+ {.Lo} {.Hi} {.Lo} {.Hi} LoHi LoHi     = LoHi
 
 reflexive≤ : {r : Sec} -> SecOrder r r
 reflexive≤ {Hi} = ReflHi
 reflexive≤ {Lo} = ReflLo
 
 transitive≤ : {r s t : Sec} -> SecOrder r s -> SecOrder s t -> SecOrder r t
-transitive≤ {r} {s} {t} = {!!}
+transitive≤ {.Lo} {.Lo} {t} ReflLo pre2 = pre2
+transitive≤ {.Hi} {.Hi} {t} ReflHi pre2 = pre2
+transitive≤ {.Lo} {.Hi} {.Hi} LoHi ReflHi = LoHi
 
 instance
   secSemiring : Semiring
