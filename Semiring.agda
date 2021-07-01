@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module Semiring where
 
 open import Relation.Binary.PropositionalEquality
@@ -10,20 +12,20 @@ open import Relation.Unary
 record Semiring : Set₁ where
   field
     carrier : Set
-    1r      : carrier
-    0r      : carrier
+    1R      : carrier
+    0R      : carrier
     _+R_    : carrier -> carrier -> carrier
     _*R_    : carrier -> carrier -> carrier
     _≤_     : carrier -> carrier -> Set
 
-    leftUnit+   : {r : carrier} -> 0r +R r ≡ r
-    rightUnit+  : {r : carrier} -> r +R 0r ≡ r
+    leftUnit+   : {r : carrier} -> 0R +R r ≡ r
+    rightUnit+  : {r : carrier} -> r +R 0R ≡ r
     comm+       : {r s : carrier} -> r +R s ≡ s +R r
 
-    leftUnit*    : {r : carrier} -> 1r *R r ≡ r
-    rightUnit*   : {r : carrier} -> r *R r ≡ r
-    leftAbsorb   : {r : carrier} -> r *R 0r ≡ 0r
-    rightAbsorb  : {r : carrier} -> 0r *R r ≡ 0r
+    leftUnit*    : {r : carrier} -> 1R *R r ≡ r
+    rightUnit*   : {r : carrier} -> r *R 1R ≡ r
+    leftAbsorb   : {r : carrier} -> 0R *R r ≡ 0R
+    rightAbsorb  : {r : carrier} -> r *R 0R ≡ 0R
 
     assoc*     : {r s t : carrier} -> (r *R s) *R t ≡ r *R (s *R t)
     assoc+     : {r s t : carrier} -> (r +R s) +R t ≡ r +R (s +R t)
@@ -63,8 +65,8 @@ data Order : Level -> Level -> Set where
 
 levelSemiring : Semiring
 carrier levelSemiring = Level
-1r levelSemiring      = Private
-0r levelSemiring      = Unused
+1R levelSemiring      = Private
+0R levelSemiring      = Unused
 
 -- remember the ordering in the calculus goes the 'opposite way' to Granule but
 -- the above `Order` data type is defined using Granule's direction
