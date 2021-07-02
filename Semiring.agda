@@ -60,6 +60,9 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
                      ->   (_≤_ R r (1R R))
                      -> ¬ (_≤_ R r2 adv)
 
+    -- this is derivable from monotone* and if * is idempotent (which it is for us)
+    -- or we could take this as the contrpositive which might look more sane:
+    -- (_≤_ R r adv) -> (_≤_ R s adv) -> (_≤_ R (_*R_ R r s) adv)
     propInvTimesMonoAsym : {r s adv : grade R}
                        -> ¬ (_≤_ R (_*R_ R r s) adv)
                        ->   (_≤_ R r adv)
@@ -78,4 +81,3 @@ plusMonoInv' : {R : Semiring} {R' : NonInterferingSemiring R}
                 -> ¬ (_≤_ R (_+R_ R r1 r2)  s) -> ¬ (_≤_ R r2 s)
 plusMonoInv' {R} {R'} {r1} {r2} {s} pre =
   plusMonoInv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
-

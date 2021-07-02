@@ -60,6 +60,16 @@ test = biFundamentalTheorem controlFlowAttackLevel {vtrue ∷ []} {vfalse ∷ []
       ≡ Promote vfalse
    red2 = refl
 
+-- Obviously shouldn't be possible
+testNI : multiRedux (syntacticSubst vtrue 0 (If (Var 0) (Promote vtrue) (Promote vfalse)))
+      == multiRedux (syntacticSubst vfalse 0 (If (Var 0) (Promote vtrue) (Promote vfalse)))
+testNI =
+  nonInterference {BoolTy} {If (Var 0) (Promote vtrue) (Promote vfalse)}
+    {Public} {Private} {PrivPub} {disc} controlFlowAttackLevel vtrue vfalse
+    (trueConstr {_} {Empty}) (falseConstr {_} {Empty}) trueValue falseValue
+ where
+   disc : Public ≢ Private
+   disc ()
 -------------------
 
 

@@ -170,7 +170,8 @@ substPresProm {n} {[]} {t} = refl
 substPresProm {n} {x ∷ γ} {t} = substPresProm {n + 1} {γ} {syntacticSubst x n t}
 
 substPresApp : {n : ℕ} {γ : List Term} {t1 t2 : Term} -> multisubst' n γ (App t1 t2) ≡ App (multisubst' n γ t1) (multisubst' n γ t2)
-substPresApp {n} {γ} {t1} {t2} = {!!}
+substPresApp {n} {[]} {t1} {t2} = refl
+substPresApp {n} {x ∷ γ} {t1} {t2} = substPresApp {n + 1} {γ} {syntacticSubst x n t1} {syntacticSubst x n t2}
 
 substPresAbs : {n : ℕ} {γ : List Term} {x : ℕ} {t : Term} -> multisubst' n γ (Abs x t) ≡ Abs x (multisubst' n γ t)
 substPresAbs {n} {[]} {x} {t} = refl
@@ -179,7 +180,8 @@ substPresAbs {n} {v ∷ γ} {x} {t} with n ≟ x
 ... | no ¬p = substPresAbs {n + 1} {γ} {x} {syntacticSubst v n t}
 
 substPresIf : {n : ℕ} {γ : List Term} {tg t1 t2 : Term} -> multisubst' n γ (If tg t1 t2) ≡ If (multisubst' n γ tg) (multisubst' n γ t1) (multisubst' n γ t2)
-substPresIf = {!!}
+substPresIf {n} {[]} {tg} {t1} {t2} = refl
+substPresIf {n} {x ∷ γ} {tg} {t1} {t2} = substPresIf {n + 1} {γ} {syntacticSubst x n tg} {syntacticSubst x n t1} {syntacticSubst x n t2}
 
 reduxProm : {v : Term} -> multiRedux (Promote v) ≡ Promote v
 reduxProm {v} = refl
@@ -797,7 +799,7 @@ promoteValueLemma {_} {r} () varValue
 promoteValueLemma typing (promoteValue t) = t , refl
 
 -- Non-interference
-nonInterfSpecialised :
+nonInterference :
    {{R : Semiring}} {{R' : NonInterferingSemiring R}}
    {A : Type} {e : Term} {r s : grade} {pre : r ≤ s} {nonEq : r ≢ s}
         -> Ext Empty (Grad A s) ⊢ e ∶ Box r BoolTy
@@ -810,7 +812,7 @@ nonInterfSpecialised :
 
         -> multiRedux (syntacticSubst v1 0 e) == multiRedux (syntacticSubst v2 0 e)
 
-nonInterfSpecialised {{_}} {{_}} {A} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
+nonInterference {{_}} {{_}} {A} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
     -- Apply fundamental binary theorem to v1
     biFundamentalTheorem {zero} {Empty} {Promote v1} {Box s A}
                   (pr v1typing {refl}) {[]} {[]} r tt (Promote v1) (Promote v1)
