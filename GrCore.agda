@@ -114,7 +114,7 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term -> Type -> Set 
 
   var : {s1 s2 : ℕ}
         { A : Type }
-        { Γ : Context ((s1 + 1) + s2) }
+        { Γ : Context ((1 + s1) + s2) }
         { Γ1 : Context s1 }
         { Γ2 : Context s2 }
         (pos : Γ ≡ ((Ext (0R · Γ1) (Grad A 1R)) ,, (0R · Γ2)))
