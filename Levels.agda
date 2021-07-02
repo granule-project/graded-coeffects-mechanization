@@ -586,7 +586,7 @@ instance
 
 instance
   levelSemiringNonInterfering : NonInterferingSemiring levelSemiring
-  oneIsBottom levelSemiringNonInterfering {r} = ?
+  oneIsBottom levelSemiringNonInterfering {r} = {!!}
 
   antisymmetry levelSemiringNonInterfering {Public} {Public} (Refl .Public) pre2 = refl
   antisymmetry levelSemiringNonInterfering {Private} {Public} () pre2
