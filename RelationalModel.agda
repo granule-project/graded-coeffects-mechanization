@@ -244,26 +244,18 @@ utheorem : {{R : Semiring}} {s : ℕ} {γ : List Term}
         -> Γ ⊢ e ∶ τ
         -> [ Γ ]Γ γ
         -> [ τ ]e (multisubst γ e)
-utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi
- with γ |  Γ | Γlength Γ1
-utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi
-  | x ∷ xs | Ext g (Grad A r) | zero with context
-utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi
-  | x ∷ xs | Ext g (Grad A r) | zero | hyp , rest =
-  let z = subst (\h -> [ h ]v x) inja val
-  in {!!}
-    where
-      val : [ A ]v x
-      val with hyp (Promote x) refl
-      ... | boxInterpV .x inner = {!!}
+utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos) context v substi
+ rewrite pos with Γ1 | γ | context
+... | Empty | [] | ()
+... | Empty | x ∷ g | argInterp , restInterp = conc
+  where
+    conc : [ τ ]v v
+    conc with argInterp (Promote x) refl
+    ... | boxInterpV t inner = inner v (isSimultaneous' {v} {t} {g} substi)
 
-      inja : A ≡ τ
-      inja = injGradTy (injExt2 pos)
-
-
-utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {A'} {.Γ} {Γ1} {Γ2} pos) context v substi | x ∷ a | Ext b x₁ | suc c = {!!}
-
-
+... | Ext k x | [] | ()
+-- same as above just moves down the context (bit of fiddly non key stuff)
+... | Ext k x | x₁ ∷ g | argInterp , sndrestInterp = {!!}
 
 utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) context v1 v1redux
   rewrite pos =
@@ -501,7 +493,8 @@ biFundamentalTheorem {{R}} {_} {Γ} {Var .(Γlength Γ1)} {τ} (var {_} {_} {.τ
     ... | boxInterpBiunobs eq .a1 .a2 inner = ⊥-elim (eq oneIsBottom)
 
 -- generalises the above for any variable
-... | Ext G1' a | a1 ∷ γ1' | a2 ∷ γ2' | (argInterp , restInterp) = {!!}
+... | Ext G1' a | a1 ∷ γ1' | a2 ∷ γ2' | (argInterp , restInterp) =
+   {!!}
 
 
 biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos =
