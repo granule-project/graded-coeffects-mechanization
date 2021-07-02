@@ -460,7 +460,7 @@ propInvPlusMono1 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> {r1 r2 r adv : grade}
                 -> ¬((r1 +R (r *R r2)) ≤ adv)
                 -> ¬(r1 ≤ adv)
-propInvPlusMono1 {{R}} {r1} {r2} {r} {adv} pre = plusMonoInv {R} {r1} {r *R r2} {adv} pre
+propInvPlusMono1 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = plusMonoInv {R} {R'} {r1} {r *R r2} {adv} pre
 
 propInvPlusMono2 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> {r1 r2 r adv : grade}
@@ -524,7 +524,7 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
     convertVal2 : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧v adv (Promote v1) (Promote v2)
     convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with (r1 +R (r *R r2)) ≤d adv | (r *R r2) ≤d adv
     ... | no eqo  | yes eq' = ⊥-elim (eqo eq)
-    ... | no eqo  | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)    
+    ... | no eqo  | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
     ... | yes eqo | yes eq' = boxInterpBiobs   eq' v1 v2 arg
     ... | yes eqo | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
     convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (propInvPlusMono2 eq) v1 v2 argInterp
@@ -862,4 +862,3 @@ nonInterfSpecialised {{_}} {{_}} {A} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1ty
      unpack : {v1 v2 : Term} -> ⟦ Box r BoolTy ⟧v r (Promote v1) (Promote v2) -> ⟦ BoolTy ⟧e r v1 v2
      unpack {v1} {v2} (boxInterpBiobs _ .v1 .v2 innerExprInterp) = innerExprInterp
      unpack {v1} {v2} (boxInterpBiunobs eq .v1 .v2 innerExprInterp) = ⊥-elim (eq (reflexive≤ {r}))
-
