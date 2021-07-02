@@ -586,6 +586,7 @@ instance
 
 instance
   levelSemiringNonInterfering : NonInterferingSemiring levelSemiring
+  oneIsBottom levelSemiringNonInterfering {r} = ?
 
   antisymmetry levelSemiringNonInterfering {Public} {Public} (Refl .Public) pre2 = refl
   antisymmetry levelSemiringNonInterfering {Private} {Public} () pre2
@@ -918,4 +919,3 @@ instance
   propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
   propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
   propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Unused} {adv} inp1 inp2 = inp1
-

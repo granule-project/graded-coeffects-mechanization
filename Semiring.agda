@@ -46,6 +46,8 @@ open Semiring
 
 record NonInterferingSemiring (R : Semiring) : Set₁ where
   field
+    oneIsBottom : {r : grade R} -> _≤_ R (1R R) r
+
     -- in classical logic this is the same as:   r1 ≤ s  →  r1 + r2 ≤ s
     antisymmetry : {r s : grade R} -> _≤_ R r s -> _≤_ R s r -> r ≡ s
 

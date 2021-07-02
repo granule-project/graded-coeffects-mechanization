@@ -146,6 +146,16 @@ multisubst' n (t ∷ ts) t' =
 multisubst : List Term -> Term -> Term
 multisubst ts t' = multisubst' 0 ts t'
 
+postulate
+  -- not really but for simplicity
+  isSimultaneous : {t t' : Term} {γ : List Term}
+                 -> multiRedux (multisubst' 1 γ t') ≡ t
+                 -> multiRedux (multisubst' 0 (t' ∷ γ) (Var 0)) ≡ t
+
+  isSimultaneous' : {t t' : Term} {γ : List Term}
+    -> multiRedux (multisubst' 0 (t' ∷ γ) (Var 0)) ≡ t
+    -> multiRedux t' ≡ t
+
 betaVariant1 : {bod t2 : Term} {x : ℕ} -> multiRedux (App (Abs x bod) t2) ≡ multiRedux (syntacticSubst t2 x bod)
 betaVariant1 = {!!}
 
@@ -481,7 +491,17 @@ biFundamentalTheorem : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {sz : 
         -> ⟦ Γ ⟧Γ adv γ1 γ2
         -> ⟦ τ ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
 
-biFundamentalTheorem {_} {Γ} {.(Var (Γlength _))} {τ} (var pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {{R}} {_} {Γ} {Var .(Γlength Γ1)} {τ} (var {_} {_} {.τ} {.Γ} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos with Γ1 | γ1 | γ2 | contextInterp
+... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | (argInterp , _) = conc
+
+  where
+    conc : ⟦ τ ⟧v adv v1 v2
+    conc with argInterp (Promote a1) (Promote a2) refl refl
+    ... | boxInterpBiobs   eq .a1 .a2 inner = inner v1 v2 (isSimultaneous' {v1} {a1} {γ1'} v1redux) (isSimultaneous' {v2} {a2} {γ2'} v2redux)
+    ... | boxInterpBiunobs eq .a1 .a2 inner = ⊥-elim (eq oneIsBottom)
+
+-- generalises the above for any variable
+... | Ext G1' a | a1 ∷ γ1' | a2 ∷ γ2' | (argInterp , restInterp) = {!!}
 
 
 biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos =

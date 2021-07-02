@@ -224,9 +224,14 @@ antisym {Hi} {Lo} () pre2
 antisym {Lo} {Hi} LoHi ()
 antisym {Lo} {Lo} pre1 pre2 = refl
 
+oneIsBot : {r : Sec} -> 1r ≤ r
+oneIsBot {Hi} = LoHi
+oneIsBot {Lo} = ReflLo
+
 secSemiringNI : NonInterferingSemiring secSemiring
 secSemiringNI = record
-                  { antisymmetry           = antisym
+                  { oneIsBottom            = oneIsBot
+                  ; antisymmetry           = antisym
                   ; plusMono               = plusMono
                   ; propertyConditionalNI  = propertyConditionalNI
                   ; propertyConditionalNI2 = propertyConditionalNI2
