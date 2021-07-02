@@ -602,14 +602,169 @@ instance
   plusMono levelSemiringNonInterfering {Public} {Public} {adv}  pre = pre
   plusMono levelSemiringNonInterfering {Private} {Public} {adv} pre = transitive≤ levelSemiring PrivPub pre
   plusMono levelSemiringNonInterfering {Dunno} {Public} {adv}   pre = transitive≤ levelSemiring DunnoPub  pre
-  plusMono levelSemiringNonInterfering {Unused} {Public} {adv} pre = {!!}
-  plusMono levelSemiringNonInterfering {r1} {Private} {adv}    pre = {!!}
-  plusMono levelSemiringNonInterfering {Unused} {Dunno} {adv}  pre = {!!}
+  plusMono levelSemiringNonInterfering {Unused} {Public} {Unused} pre = 0Pub
+  plusMono levelSemiringNonInterfering {Public} {Private} {adv} pre = pre
+  plusMono levelSemiringNonInterfering {Private} {Private} {adv} pre = pre
+  plusMono levelSemiringNonInterfering {Dunno} {Private} {adv} pre = pre
+  plusMono levelSemiringNonInterfering {Unused} {Private} {Unused} pre = 0Priv
+  plusMono levelSemiringNonInterfering {Unused} {Dunno} {Unused} pre = 0Dunno
   plusMono levelSemiringNonInterfering {Public} {Dunno} {adv}  pre = pre
-  plusMono levelSemiringNonInterfering {Private} {Dunno} {adv} pre = {!!}
+  plusMono levelSemiringNonInterfering {Private} {Dunno} {adv} pre = transitive≤ levelSemiring PrivDunno pre
   plusMono levelSemiringNonInterfering {Dunno} {Dunno} {adv}   pre = pre
 
-  propertyConditionalNI levelSemiringNonInterfering {r1} {r2} {r} {adv} = {!!}
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Public} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Private} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Dunno} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Private} {Public} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Private} {Private} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Private} {Dunno} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Dunno} {Public} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Dunno} {Private} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Dunno} {Dunno} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Unused} {Public} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Unused} {Private} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Public} {Unused} {Dunno} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Public} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Private} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Dunno} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Unused} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Private} {adv} inp1 inp2 = inp1
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Dunno} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Dunno} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Dunno} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Public} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Private} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Private} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Private} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Dunno} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Dunno} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Dunno} inp1 inp2 ()
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
+  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
 
   propertyConditionalNI2 levelSemiringNonInterfering {r1} {r2} {r} {adv} = {!!}
 
