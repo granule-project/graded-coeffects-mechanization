@@ -89,6 +89,7 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     default : grade R
     _#_     : grade R -> grade R -> grade R
 
+    -- this is a possibility for type preservation from a few of my sketches
     --substProp : {r : grade R} -> _+R_ R (1R R) r ≡ (1R R) # r
   
     unit#   : {r : grade R}     -> default # r  ≡ r

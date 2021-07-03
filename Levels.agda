@@ -928,6 +928,7 @@ instance
 
   _#_ levelIFstructure Private s = Private
   _#_ levelIFstructure r Private = Private
+  -- some debate here
   _#_ levelIFstructure r s = _+*_ levelSemiring r s
 
   --substProp levelIFstructure {Public} = {!!}
