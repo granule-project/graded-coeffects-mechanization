@@ -10,6 +10,7 @@ open import Semiring
 
 open Semiring.Semiring
 open Semiring.NonInterferingSemiring
+open Semiring.InformationFlowSemiring
 
 -- # Level semiring definition
 
@@ -919,3 +920,41 @@ instance
   propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
   propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
   propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Unused} {adv} inp1 inp2 = inp1
+
+instance
+  levelIFstructure : InformationFlowSemiring levelSemiring
+
+  default levelIFstructure = Dunno
+
+  _#_ levelIFstructure Private s = Private
+  _#_ levelIFstructure r Private = Private
+  _#_ levelIFstructure r s = _+*_ levelSemiring r s
+
+  --substProp levelIFstructure {Public} = {!!}
+  --substProp levelIFstructure {Private} = refl
+  --substProp levelIFstructure {Dunno} = {!!}
+  --substProp levelIFstructure {Unused} = refl
+
+  unit# levelIFstructure {Public}  = refl
+  unit# levelIFstructure {Private} = refl
+  unit# levelIFstructure {Dunno}   = refl
+  unit# levelIFstructure {Unused}  = {!!}
+
+  comm# levelIFstructure {Public} {Public} = refl
+  comm# levelIFstructure {Public} {Private} = refl
+  comm# levelIFstructure {Public} {Dunno} = refl
+  comm# levelIFstructure {Public} {Unused} = refl
+  comm# levelIFstructure {Private} {Public} = refl
+  comm# levelIFstructure {Private} {Private} = refl
+  comm# levelIFstructure {Private} {Dunno} = refl
+  comm# levelIFstructure {Private} {Unused} = refl
+  comm# levelIFstructure {Dunno} {Public} = refl
+  comm# levelIFstructure {Dunno} {Private} = refl
+  comm# levelIFstructure {Dunno} {Dunno} = refl
+  comm# levelIFstructure {Dunno} {Unused} = refl
+  comm# levelIFstructure {Unused} {Public} = refl
+  comm# levelIFstructure {Unused} {Private} = refl
+  comm# levelIFstructure {Unused} {Dunno} = refl
+  comm# levelIFstructure {Unused} {Unused} = refl
+
+  assoc# levelIFstructure {r} {s} {t} = {!!}

@@ -84,12 +84,13 @@ plusMonoInv' : {R : Semiring} {R' : NonInterferingSemiring R}
 plusMonoInv' {R} {R'} {r1} {r2} {s} pre =
   plusMonoInv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
 
-record InformationFlow (R : Semiring) : Set₁ where
+record InformationFlowSemiring (R : Semiring) : Set₁ where
   field
     default : grade R
     _#_     : grade R -> grade R -> grade R
 
-
+    --substProp : {r : grade R} -> _+R_ R (1R R) r ≡ (1R R) # r
+  
     unit#   : {r : grade R}     -> default # r  ≡ r
     comm#   : {r s : grade R}   -> r # s        ≡ s # r
     assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
@@ -97,4 +98,4 @@ record InformationFlow (R : Semiring) : Set₁ where
     -- distributivity rules with other operators?
     -- substitution theorem will tell us if we need these
   
-open InformationFlow
+open InformationFlowSemiring

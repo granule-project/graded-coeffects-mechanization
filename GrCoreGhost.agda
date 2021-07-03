@@ -20,7 +20,7 @@ open import Semiring
 
 -- open Semiring.Semiring {{...}} public
 
-open Semiring.InformationFlow {{...}} public
+open Semiring.InformationFlowSemiring {{...}} public
 
 ContextG : {{ R : Semiring }} -> ℕ -> Set
 -- pair of context and grade for the ghost
@@ -42,7 +42,7 @@ _++g_ : {{R : Semiring}} {s : ℕ} -> ContextG s -> ContextG s -> ContextG s
 Γlengthg (G , _) = Γlength G
 
 -- Typing
-data _⊢_∶_ {{R : Semiring}} {{R' : InformationFlow R}} : {s : ℕ} -> ContextG s -> Term -> Type -> Set where
+data _⊢_∶_ {{R : Semiring}} {{R' : InformationFlowSemiring R}} : {s : ℕ} -> ContextG s -> Term -> Type -> Set where
 
 --  (x : A) ∈ Γ
 ----------------------------
