@@ -97,6 +97,9 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
     idem#   : {r : grade R}     -> r # r        ≡ r
 
+    -- definitely holds for Level and seems needed for the proof.
+    absorb# : {r : grade R} -> r # (1R R) ≡ (1R R)
+
     -- distributivity rules with other operators?
     -- substitution theorem will tell us if we need these
   

@@ -960,7 +960,12 @@ instance
 
   assoc# levelIFstructure {r} {s} {t} = {!!}
 
-  idem# levelIFstructure {Public} = refl
+  idem# levelIFstructure {Public}  = refl
   idem# levelIFstructure {Private} = refl
-  idem# levelIFstructure {Dunno} = refl
-  idem# levelIFstructure {Unused} = refl
+  idem# levelIFstructure {Dunno}   = refl
+  idem# levelIFstructure {Unused}  = refl
+
+  absorb# levelIFstructure {Public}  = refl
+  absorb# levelIFstructure {Private} = refl
+  absorb# levelIFstructure {Dunno}   = refl
+  absorb# levelIFstructure {Unused}  = refl

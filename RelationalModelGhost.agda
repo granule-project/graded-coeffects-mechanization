@@ -20,7 +20,8 @@ open import Data.Sum
 open import Semiring
 
 -- open Semiring.Semiring {{...}} public
-open NonInterferingSemiring {{...}} public
+open NonInterferingSemiring  {{...}} public
+-- open InformationFlowSemiring {{...}} public
 
 open import RelationalModel
 
@@ -138,35 +139,12 @@ biFundamentalTheoremGhost3 : {{R : Semiring}} {{R' : NonInterferingSemiring R}} 
         -> ⟦ Γ , ghost ⟧Γg (adv # ghost) γ1 γ2
         -> ⟦ τ ⟧e          (adv # ghost) (multisubst γ1 e) (multisubst γ2 e)
 
-biFundamentalTheoremGhost3 {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos | injPair1 pos | injPair2 pos | v1redux | v2redux with Γ1 | γ1 | γ2 | contextInterp
+biFundamentalTheoremGhost3 {{R}} {{R'}} {{R''}} {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos | injPair1 pos | injPair2 pos | v1redux | v2redux with Γ1 | γ1 | γ2 | contextInterp
 -- var at head of context (key idea, without out loss of generality as p```r`tosition in context is irrelevant
 -- to rest of the proof)
 ... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | ((argInterp , restInterp) , infoContext) = conc
 
   where
-
-    mutual
-      -- This was an attempt but my understanding was it would not work anyway as
-      -- adv # ghost >= adv is false.
-    
-      convert' : {v1 v2 : Term} {τ : Type} -> (cpre : ghost ≤ (adv # ghost)) -> ⟦ τ ⟧e (adv # ghost) v1 v2 -> ⟦ τ ⟧e adv v1 v2
-      convert' cpre = {!!}
-
-      convert : {v1 v2 : Term} {τ : Type} -> (cpre : ghost ≤ (adv # ghost)) -> ⟦ τ ⟧v (adv # ghost) v1 v2 -> ⟦ τ ⟧v adv v1 v2
-      convert cpre unitInterpBi = {!!}
-      convert cpre (funInterpBi e1 e2 x x₁ x₂) = {!!}
-      convert cpre (boxInterpBiobs {_} {_} {r} eq t1 t2 inner) with r ≤d adv
-      ... | .true  because ofʸ p = let ih = convert' {t1} {t2} cpre inner in boxInterpBiobs p t1 t2 ih
-      ... | .false because ofⁿ ¬p = boxInterpBiunobs ¬p t1 t2 (binaryImpliesUnary inner)
-      convert cpre (boxInterpBiunobs {_} {_} {r} eq t1 t2 inner) with r ≤d adv
-      -- p : r ≤ adv
-      -- eq : r ≤ adv # ghost
-      -- cpre : ghost ≤ adv # ghost
-      ... | .true because ofʸ p = boxInterpBiobs p t1 t2 {!!}
-      ... | .false because ofⁿ ¬p = boxInterpBiunobs ¬p t1 t2 inner
-      convert cpre boolInterpTrueBi = {!!}
-      convert cpre boolInterpFalseBi = {!!}
-     
 
     conc : ⟦ τ ⟧v (adv # 1R) v1 v2
     conc with argInterp (Promote a1) (Promote a2) refl refl
@@ -179,7 +157,8 @@ biFundamentalTheoremGhost3 {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_
         in inner v1 v2 eqa1 eqa2
         -- eq : ¬ (1 ≤ (adv # 1r))
         --ghost = 1
-    ... | boxInterpBiunobs eq .a1 .a2 inner = {!!}
+    ... | boxInterpBiunobs eq .a1 .a2 inner =
+      ⊥-elim (eq (subst (\h -> 1R ≤ h) (sym (absorb# {R} {adv})) (reflexive≤ {1R})))
 
 -- var generalisation here
 ... | _ | _ | _ | _ = {!!}
