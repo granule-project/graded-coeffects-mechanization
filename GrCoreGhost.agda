@@ -20,6 +20,8 @@ open import Semiring
 
 -- open Semiring.Semiring {{...}} public
 
+open Semiring.InformationFlow {{...}} public
+
 ContextG : {{ R : Semiring }} -> ℕ -> Set
 -- pair of context and grade for the ghost
 ContextG sz = Context sz × grade
@@ -40,7 +42,7 @@ _++g_ : {{R : Semiring}} {s : ℕ} -> ContextG s -> ContextG s -> ContextG s
 Γlengthg (G , _) = Γlength G
 
 -- Typing
-data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> ContextG s -> Term -> Type -> Set where
+data _⊢_∶_ {{R : Semiring}} {{R' : InformationFlow R}} : {s : ℕ} -> ContextG s -> Term -> Type -> Set where
 
 --  (x : A) ∈ Γ
 ----------------------------
@@ -111,15 +113,16 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> ContextG s -> Term -> Type -> Set
           (0R · Γ , 1R) ⊢ vfalse ∶ BoolTy
 
   if : {s : ℕ}
-       { Γ Γ1 Γ2 : ContextG s }
+       { Γ Γ1 Γ2 : Context s }
+       { ghost : grade }
        { B : Type }
        { t1 t2 t3 : Term }
        { r : grade }
        { used : r ≤ 1R }
 
-    -> Γ1 ⊢ t1 ∶ BoolTy
-    -> Γ2 ⊢ t2 ∶ B
-    -> Γ2 ⊢ t3 ∶ B
-    -> { res : ((r ·g Γ1) ++g Γ2) ≡ Γ }
+    -> (Γ1 , ghost) ⊢ t1 ∶ BoolTy
+    -> (Γ2 , (r # ghost)) ⊢ t2 ∶ B
+    -> (Γ2 , (r # ghost)) ⊢ t3 ∶ B
+    -> { res : ((r · Γ1) ++ Γ2) ≡ Γ }
    ----------------------------------
-    -> Γ ⊢ If t1 t2 t3 ∶ B
+    -> (Γ , ghost) ⊢ If t1 t2 t3 ∶ B

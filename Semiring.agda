@@ -94,5 +94,7 @@ record InformationFlow (R : Semiring) : Set₁ where
     comm#   : {r s : grade R}   -> r # s        ≡ s # r
     assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
 
-    -- distributivity rules?
+    -- distributivity rules with other operators?
+    -- substitution theorem will tell us if we need these
   
+open InformationFlow
