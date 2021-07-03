@@ -20,7 +20,7 @@ open import Data.Sum
 open import Semiring
 
 -- open Semiring.Semiring {{...}} public
-open NonInterferingSemiring  {{...}} public
+-- open NonInterferingSemiring  {{...}} public
 -- open InformationFlowSemiring {{...}} public
 
 open import RelationalModel
@@ -166,30 +166,30 @@ biFundamentalTheoremGhost3 {{R}} {{R'}} {{R''}} {_} {Γ} {ghost} {.(Var (Γlengt
 biFundamentalTheoremGhost3 {_} {Γ} {ghost} {e} {τ} typing {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
 
-{-
+
 -- Non-interference result for the ghost calculus
 nonInterferenceGhost :
-   {{R : Semiring}} {{R' : NonInterferingSemiring R}}
+   {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}}
    {e : Term} {r s : grade} {pre : r ≤ s} {nonEq : r ≢ s}
         -> (Ext Empty (Grad BoolTy s) , r) ⊢ e ∶ Box r BoolTy
 
         -> (v1 v2 : Term)
-        -> Empty ⊢ v1 ∶ BoolTy
-        -> Empty ⊢ v2 ∶ BoolTy
+        -> (Empty , default) ⊢ v1 ∶ BoolTy
+        -> (Empty , default) ⊢ v2 ∶ BoolTy
         -> Value v1
         -> Value v2
 
         -> multiRedux (syntacticSubst v1 0 e) == multiRedux (syntacticSubst v2 0 e)
 
-nonInterferenceGhost {{_}} {{_}} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
+nonInterferenceGhost {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
     -- Apply fundamental binary theorem to v1
-    biFundamentalTheoremGhost {zero} {Empty} {Promote v1} {Box s BoolTy}
-                  (pr v1typing {refl}) {[]} {[]} r tt (Promote v1) (Promote v1)
+    biFundamentalTheoremGhost3 {zero} {Empty} {?} {Promote v1} {Box s BoolTy}
+                  (pr {_} {?} {?} {?} {?} {?} v1typing {refl}) {[]} {[]} r ? (Promote v1) (Promote v1)
                   (valuesDontReduce {Promote v1} (promoteValue v1))
                   (valuesDontReduce {Promote v1} (promoteValue v1))
     -- Apply fundamental binary theorem to v2
-  | biFundamentalTheoremGhost {zero} {Empty} {Promote v2} {Box s BoolTy}
-                  (pr v2typing {refl})  {[]} {[]} r tt (Promote v2) (Promote v2)
+  | biFundamentalTheoremGhost3 {zero} {Empty} {?} {Promote v2} {Box s BoolTy}
+                  (pr {_} {?} {?} {?} {?} {?} v2typing {refl})  {[]} {[]} r ? (Promote v2) (Promote v2)
                   (valuesDontReduce {Promote v2} (promoteValue v2))
                   (valuesDontReduce {Promote v2} (promoteValue v2))
 ... | boxInterpBiobs pre1 .v1 .v1 inner1 | _                                    = ⊥-elim (nonEq (antisymmetry pre pre1))
@@ -233,4 +233,4 @@ nonInterferenceGhost {{_}} {{_}} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing
      unpack : {v1 v2 : Term} -> ⟦ Box r BoolTy ⟧v r (Promote v1) (Promote v2) -> ⟦ BoolTy ⟧e r v1 v2
      unpack {v1} {v2} (boxInterpBiobs _ .v1 .v2 innerExprInterp) = innerExprInterp
      unpack {v1} {v2} (boxInterpBiunobs eq .v1 .v2 innerExprInterp) = ⊥-elim (eq (reflexive≤ {r}))
--}
+

@@ -587,6 +587,7 @@ instance
 
 instance
   levelSemiringNonInterfering : NonInterferingSemiring levelSemiring
+  -- does not hold for Level which is the key
   oneIsBottom levelSemiringNonInterfering {r} = {!!}
 
   antisymmetry levelSemiringNonInterfering {Public} {Public} (Refl .Public) pre2 = refl
