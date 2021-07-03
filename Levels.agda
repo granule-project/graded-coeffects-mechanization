@@ -929,7 +929,7 @@ instance
   _#_ levelIFstructure Private s = Private
   _#_ levelIFstructure r Private = Private
   -- some debate here
-  _#_ levelIFstructure r s = _+*_ levelSemiring r s
+  _#_ levelIFstructure r s = _*R_ levelSemiring r s
 
   --substProp levelIFstructure {Public} = {!!}
   --substProp levelIFstructure {Private} = refl
@@ -959,3 +959,8 @@ instance
   comm# levelIFstructure {Unused} {Unused} = refl
 
   assoc# levelIFstructure {r} {s} {t} = {!!}
+
+  idem# levelIFstructure {Public} = refl
+  idem# levelIFstructure {Private} = refl
+  idem# levelIFstructure {Dunno} = refl
+  idem# levelIFstructure {Unused} = refl

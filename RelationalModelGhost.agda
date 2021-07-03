@@ -136,11 +136,55 @@ biFundamentalTheoremGhost3 : {{R : Semiring}} {{R' : NonInterferingSemiring R}} 
         -> {γ1 : List Term} {γ2 : List Term}
         -> (adv : grade)
         -> ⟦ Γ , ghost ⟧Γg (adv # ghost) γ1 γ2
-        -> ⟦ τ ⟧e          (adv # ghost) (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+        -> ⟦ τ ⟧e          (adv # ghost) (multisubst γ1 e) (multisubst γ2 e)
 
-biFundamentalTheoremGhost3 {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheoremGhost3 {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos | injPair1 pos | injPair2 pos | v1redux | v2redux with Γ1 | γ1 | γ2 | contextInterp
+-- var at head of context (key idea, without out loss of generality as p```r`tosition in context is irrelevant
+-- to rest of the proof)
+... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | ((argInterp , restInterp) , infoContext) = conc
 
-biFundamentalTheoremGhost3 {_} {Γ} {r} {ghost} {e} {τ} typing {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = ?
+  where
+
+    mutual
+      -- This was an attempt but my understanding was it would not work anyway as
+      -- adv # ghost >= adv is false.
+    
+      convert' : {v1 v2 : Term} {τ : Type} -> (cpre : ghost ≤ (adv # ghost)) -> ⟦ τ ⟧e (adv # ghost) v1 v2 -> ⟦ τ ⟧e adv v1 v2
+      convert' cpre = {!!}
+
+      convert : {v1 v2 : Term} {τ : Type} -> (cpre : ghost ≤ (adv # ghost)) -> ⟦ τ ⟧v (adv # ghost) v1 v2 -> ⟦ τ ⟧v adv v1 v2
+      convert cpre unitInterpBi = {!!}
+      convert cpre (funInterpBi e1 e2 x x₁ x₂) = {!!}
+      convert cpre (boxInterpBiobs {_} {_} {r} eq t1 t2 inner) with r ≤d adv
+      ... | .true  because ofʸ p = let ih = convert' {t1} {t2} cpre inner in boxInterpBiobs p t1 t2 ih
+      ... | .false because ofⁿ ¬p = boxInterpBiunobs ¬p t1 t2 (binaryImpliesUnary inner)
+      convert cpre (boxInterpBiunobs {_} {_} {r} eq t1 t2 inner) with r ≤d adv
+      -- p : r ≤ adv
+      -- eq : r ≤ adv # ghost
+      -- cpre : ghost ≤ adv # ghost
+      ... | .true because ofʸ p = boxInterpBiobs p t1 t2 {!!}
+      ... | .false because ofⁿ ¬p = boxInterpBiunobs ¬p t1 t2 inner
+      convert cpre boolInterpTrueBi = {!!}
+      convert cpre boolInterpFalseBi = {!!}
+     
+
+    conc : ⟦ τ ⟧v (adv # 1R) v1 v2
+    conc with argInterp (Promote a1) (Promote a2) refl refl
+    -- inner     : ⟦ τ ⟧e ((R'' InformationFlowSemiring.# adv) 1R) a1 a2
+    -- eq        : ghost ≤ adv # ghost
+    -- goal      : ⟦ τ ⟧v adv v1 v2
+    ... | boxInterpBiobs   eq .a1 .a2 inner =
+        let eqa1 = isSimultaneous' {v1} {a1} {γ1'} v1redux
+            eqa2 = isSimultaneous' {v2} {a2} {γ2'} v2redux
+        in inner v1 v2 eqa1 eqa2
+        -- eq : ¬ (1 ≤ (adv # 1r))
+        --ghost = 1
+    ... | boxInterpBiunobs eq .a1 .a2 inner = {!!}
+
+-- var generalisation here
+... | _ | _ | _ | _ = {!!}
+
+biFundamentalTheoremGhost3 {_} {Γ} {ghost} {e} {τ} typing {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
 
 {-

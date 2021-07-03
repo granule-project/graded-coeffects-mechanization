@@ -95,6 +95,7 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     unit#   : {r : grade R}     -> default # r  ≡ r
     comm#   : {r s : grade R}   -> r # s        ≡ s # r
     assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
+    idem#   : {r : grade R}     -> r # r        ≡ r
 
     -- distributivity rules with other operators?
     -- substitution theorem will tell us if we need these
