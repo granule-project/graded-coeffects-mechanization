@@ -156,6 +156,9 @@ postulate
     -> multiRedux (multisubst' 0 (t' ∷ γ) (Var 0)) ≡ t
     -> multiRedux t' ≡ t
 
+  isSimultaneous'' : {t : Term} {γ : List Term}
+                 -> multisubst (t ∷ γ) (Var 0) ≡ t
+
 betaVariant1 : {bod t2 : Term} {x : ℕ} -> multiRedux (App (Abs x bod) t2) ≡ multiRedux (syntacticSubst t2 x bod)
 betaVariant1 = {!!}
 

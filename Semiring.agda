@@ -83,3 +83,16 @@ plusMonoInv' : {R : Semiring} {R' : NonInterferingSemiring R}
                 -> ¬ (_≤_ R (_+R_ R r1 r2)  s) -> ¬ (_≤_ R r2 s)
 plusMonoInv' {R} {R'} {r1} {r2} {s} pre =
   plusMonoInv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
+
+record InformationFlow (R : Semiring) : Set₁ where
+  field
+    default : grade R
+    _#_     : grade R -> grade R -> grade R
+
+
+    unit#   : {r : grade R}     -> default # r  ≡ r
+    comm#   : {r s : grade R}   -> r # s        ≡ s # r
+    assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
+
+    -- distributivity rules?
+  

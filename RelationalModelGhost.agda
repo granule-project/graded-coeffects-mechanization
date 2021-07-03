@@ -38,9 +38,61 @@ data InfoContext {{ R : Semiring }} : (r : grade) -> Set where
 ⟦_⟧Γg : {{R : Semiring}} -> {s : ℕ} -> ContextG s -> (adv : grade) -> List Term -> List Term -> Set
 ⟦ (Γ , ghostGrade)   ⟧Γg adv γ1 γ2 = ⟦ Γ ⟧Γ adv γ1 γ2 × InfoContext ghostGrade
 
+injPair1 : {A : Set} {B : Set} {a a' : A} {b b' : B} -> (a , b) ≡ (a' , b') -> a ≡ a'
+injPair1 refl = refl
+
+injPair2 : {A : Set} {B : Set} {a a' : A} {b b' : B} -> (a , b) ≡ (a' , b') -> b ≡ b'
+injPair2 refl = refl
+
+binaryImpliesUnaryGg : {{R : Semiring}} {sz : ℕ} { Γ : Context sz } {adv : grade} {γ1 γ2 : List Term}
+                    -> ⟦ Γ ⟧Γ adv γ1 γ2 -> ([ Γ ]Γ γ1) × ([ Γ ]Γ γ2)
+binaryImpliesUnaryGg {.0} {Empty} {adv} {_} {_} pre = tt , tt
+binaryImpliesUnaryGg {suc sz} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} (arg , rest)
+  with binaryImpliesUnary {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
+... | ( arg1 , arg2 ) | ( rest1 , rest2 ) = ( (arg1 , rest1) , (arg2 , rest2) )
+
+promoteLemma : {t t' t'' : Term} -> Promote t ≡ t' -> Σ Term (\t'' -> Promote t'' ≡ t')
+promoteLemma {t} {t'} {t''} pre = {!!}
+
+{-# TERMINATING #-}
+biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {sz : ℕ}
+          {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
+
+        -> (Γ , ghost) ⊢ e ∶ τ
+        -> {γ1 : List Term} {γ2 : List Term}
+        -> (adv : grade)
+        -> ⟦ Γ , ghost ⟧Γg adv γ1 γ2
+        -> ⟦ Box ghost τ ⟧e adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+
+biFundamentalTheoremGhost {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux
+ rewrite injPair1 pos | sym (injPair2 pos) | sym v1redux | sym v2redux with Γ1 | γ1 | γ2 | contextInterp
+-- var at head of context (key idea, without out loss of generality as position in context is irrelevant
+-- to rest of the proof)
+... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | ((argInterp , restInterp) , infoContext) = conc
+
+  where
+
+    conc : ⟦ Box ghost τ ⟧v adv (Promote (multisubst (a1 ∷ γ1') (Var 0))) (Promote (multisubst (a2 ∷ γ2') (Var 0)))
+    conc with argInterp (Promote a1) (Promote a2) refl refl
+    -- goal : ghost ≤ adv
+    -- eq   : 1 ≤ adv
+    ... | boxInterpBiobs   eq .a1 .a2 inner
+       rewrite injPair2 pos | isSimultaneous'' {a1} {γ1'} | isSimultaneous'' {a2} {γ2'} =
+          boxInterpBiobs eq a1 a2 inner
+
+    ... | boxInterpBiunobs eq .a1 .a2 inner
+       rewrite injPair2 pos | isSimultaneous'' {a1} {γ1'} | isSimultaneous'' {a2} {γ2'} =
+          boxInterpBiunobs eq a1 a2 inner
+
+-- var generalisation here
+... | _ | _ | _ | _ = {!!}
+
+
+biFundamentalTheoremGhost {sz} {Γ} {e} {τ} typ {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+
 -------------------------------
 -- Unary fundamental theorem
-
+{-
 -- Terminating pragma needed because in the (App t1 t2) case we need to recursve with (Promote t2) which doesn't look
 -- smaller to Agda
 {-# TERMINATING #-}
@@ -215,7 +267,7 @@ utheoremg {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} 
       utheoremg {sz} {γ} {Γ2} {t2} {B} typ2 (convert2 context) v1
          (sym (reduxTheoremBool2 {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux' falseEv))
 
-
+-}
 --------------------------------------
 
 {-
