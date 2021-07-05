@@ -166,6 +166,98 @@ biFundamentalTheoremGhost3 {{R}} {{R'}} {{R''}} {_} {Γ} {ghost} {.(Var (Γlengt
 biFundamentalTheoremGhost3 {_} {Γ} {ghost} {e} {τ} typing {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
 
+-- BAD because it requires 1 # adv = adv which is patently false.
+biFundamentalTheoremGhost4 : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
+          {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
+
+        -> (Γ , ghost) ⊢ e ∶ τ
+        -> {γ1 : List Term} {γ2 : List Term}
+        -> (adv : grade)
+        -> ⟦ Γ , ghost ⟧Γg (adv # ghost) γ1 γ2
+        -> ⟦ τ ⟧e          adv (multisubst γ1 e) (multisubst γ2 e)
+
+biFundamentalTheoremGhost4 {{R}} {{R'}} {{R''}} {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos | injPair1 pos | injPair2 pos | v1redux | v2redux with Γ1 | γ1 | γ2 | contextInterp
+-- var at head of context (key idea, without out loss of generality as p```r`tosition in context is irrelevant
+-- to rest of the proof)
+... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | ((argInterp , restInterp) , infoContext) = conc
+
+  where
+
+    conc : ⟦ τ ⟧v adv v1 v2
+    conc with argInterp (Promote a1) (Promote a2) refl refl
+    -- inner     : ⟦ τ ⟧e ((R'' InformationFlowSemiring.# adv) 1R) a1 a2
+    -- eq        : ghost ≤ adv # ghost
+    -- goal      : ⟦ τ ⟧v adv v1 v2
+    ... | boxInterpBiobs   eq .a1 .a2 inner =
+        let eqa1 = isSimultaneous' {v1} {a1} {γ1'} v1redux
+            eqa2 = isSimultaneous' {v2} {a2} {γ2'} v2redux
+        in {!!} -- inner v1 v2 eqa1 eqa2 -- UHOH requires 1 # adv = adv  which is false
+        -- eq : ¬ (1 ≤ (adv # 1r))
+        --ghost = 1
+    ... | boxInterpBiunobs eq .a1 .a2 inner =
+      ⊥-elim (eq (subst (\h -> 1R ≤ h) (sym (absorb# {R} {adv})) (reflexive≤ {1R})))
+
+-- var generalisation here
+... | _ | _ | _ | _ = {!!}
+
+biFundamentalTheoremGhost4 {_} {Γ} {ghost} {e} {τ} typing {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+
+
+biFundamentalTheoremGhost5 : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
+          {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
+
+        -> (Γ , ghost) ⊢ e ∶ τ
+        -> {γ1 : List Term} {γ2 : List Term}
+        -> (adv : grade)
+        -> ⟦ Γ , adv # ghost ⟧Γg adv γ1 γ2
+        -> ⟦ τ ⟧e                (adv # ghost) (multisubst γ1 e) (multisubst γ2 e)
+
+biFundamentalTheoremGhost5 {{R}} {{R'}} {{R''}} {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos | injPair1 pos | injPair2 pos | v1redux | v2redux with Γ1 | γ1 | γ2 | contextInterp
+-- var at head of context (key idea, without out loss of generality as p```r`tosition in context is irrelevant
+-- to rest of the proof)
+... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | ((argInterp , restInterp) , infoContext) = conc
+
+  where
+    convertor : {A : Type} -> ⟦ A ⟧v adv v1 v2 -> ⟦ A ⟧v 1R v1 v2
+    convertor {FunTy A r A₁} (funInterpBi e1 e2 x x₁ x₂) = {!!}
+    convertor {Unit} unitInterpBi = unitInterpBi
+    convertor {Box r A} (boxInterpBiobs preq t1 t2 inner) = {!!}
+    convertor {Box r A} (boxInterpBiunobs x t1 t2 x₁) = {!!}
+    convertor {BoolTy} boolInterpTrueBi = {!!}
+    convertor {BoolTy} boolInterpFalseBi = {!!}
+
+    conc : ⟦ τ ⟧v (adv # 1R) v1 v2
+    conc with argInterp (Promote a1) (Promote a2) refl refl
+    -- inner     : ⟦ τ ⟧e ((R'' InformationFlowSemiring.# adv) 1R) a1 a2
+    -- eq        : ghost ≤ adv # ghost
+    -- goal      : ⟦ τ ⟧v adv v1 v2
+    ... | boxInterpBiobs   eq .a1 .a2 inner =
+        let eqa1 = isSimultaneous' {v1} {a1} {γ1'} v1redux
+            eqa2 = isSimultaneous' {v2} {a2} {γ2'} v2redux
+        in {!!} -- inner v1 v2 eqa1 eqa2 -- UHOH requires 1 # adv = adv  which is false
+        -- eq : ¬ (1 ≤ (adv # 1r))
+        --ghost = 1
+    ... | boxInterpBiunobs eq .a1 .a2 inner = {!!}
+      -- ⊥-elim (eq (subst (\h -> 1R ≤ h) (sym (absorb# {R} {adv})) (reflexive≤ {1R})))
+
+-- var generalisation here
+... | _ | _ | _ | _ = {!!}
+
+biFundamentalTheoremGhost5 {_} {Γ} {ghost} {e} {τ} typing {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+
+informationContextBuilder : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}}
+  {r s adv : grade} -> r ≤ s -> r ≢ s -> InfoContext (s *R default) (r # (s *R default))
+informationContextBuilder {r} {s} {adv} pre neg with  s ≤d r
+informationContextBuilder {r} {s} {adv} pre neg | yes p = ⊥-elim (neg (antisymmetry pre p))
+informationContextBuilder {r} {s} {adv} pre neg | no ¬p with (s *R default) ≤d (r # (s *R default))
+informationContextBuilder {r = r} {s} {adv} pre neg | no ¬p | yes p = Visible p
+informationContextBuilder {r = r} {s} {adv} pre neg | no ¬p | no ¬p₁ = Invisible ¬p₁
+
+informationContextBuilder' : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}}
+  {r s : grade} -> InfoContext (s *R default) (r # (s *R default))
+informationContextBuilder' {r} {s} with (s *R default) ≤d (r # (s *R default))
+... | yes p = Visible p
+... | no ¬p = Invisible ¬p
 
 -- Non-interference result for the ghost calculus
 nonInterferenceGhost :
@@ -185,20 +277,26 @@ nonInterferenceGhost {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2
     -- we can think of r as the adversary
 
     -- Apply fundamental binary theorem to v1
-    biFundamentalTheoremGhost3 {zero} {Empty} {s *R default} {Promote v1} {Box s BoolTy}
+    biFundamentalTheoremGhost5 {zero} {Empty} {s *R default} {Promote v1} {Box s BoolTy}
     --  Invisible {s *R default} {r} {!trans pre (sym (unit# {s})) !}
-                  (pr {_} {(Empty , default)} {Empty , s *R default} {s} {BoolTy} {v1} v1typing {refl}) {[]} {[]} r (tt , Invisible {!!} ) (Promote v1) (Promote v1)
+    -- InfoContext
+    --  ((R Semiring.*R s) (InformationFlowSemiring.default R''))
+    --  ((R'' InformationFlowSemiring.# r)
+    --   ((R Semiring.*R s) (InformationFlowSemiring.default R''))
+
+-- informationContextBuilder' {r} {s}
+                  (pr {_} {(Empty , default)} {Empty , s *R default} {s} {BoolTy} {v1} v1typing {refl}) {[]} {[]} r (tt , {!!}) (Promote v1) (Promote v1)
                   (valuesDontReduce {Promote v1} (promoteValue v1))
                   (valuesDontReduce {Promote v1} (promoteValue v1))
     -- Apply fundamental binary theorem to v2
-  | biFundamentalTheoremGhost3 {zero} {Empty} {s *R default} {Promote v2} {Box s BoolTy}
-                  (pr {_} {(Empty , default )} {Empty , s *R default} {s} {BoolTy} {v2} v2typing {refl})  {[]} {[]} r (tt , Visible {!!}) (Promote v2) (Promote v2)
+  | biFundamentalTheoremGhost5 {zero} {Empty} {s *R default} {Promote v2} {Box s BoolTy}
+                  (pr {_} {(Empty , default )} {Empty , s *R default} {s} {BoolTy} {v2} v2typing {refl})  {[]} {[]} r (tt , {!!}) (Promote v2) (Promote v2)
                   (valuesDontReduce {Promote v2} (promoteValue v2))
                   (valuesDontReduce {Promote v2} (promoteValue v2))
                   -- goal : s ≤ r
                   -- pre : r ≤ s
                   -- pre1 : s ≤ (r # (s * default))
-... | boxInterpBiobs pre1 .v1 .v1 inner1 |  boxInterpBiobs pre2 .v2 .v2 inner2 = ⊥-elim {!!} --(nonEq (antisymmetry pre {!!}))
+... | boxInterpBiobs pre1 .v1 .v1 inner1 |  boxInterpBiobs pre2 .v2 .v2 inner2 = ⊥-elim ((nonEq (antisymmetry pre {!!}))) --(nonEq (antisymmetry pre {!!}))
 ... | boxInterpBiobs pre1 .v1 .v1 inner1 | boxInterpBiunobs pre2 .v2 .v2 inner2 = ⊥-elim (⊥-elim (pre2 pre1))
 ... | boxInterpBiunobs pre1 .v1 .v1 inner1 | boxInterpBiobs pre2 .v2 .v2 inner2 = ⊥-elim (⊥-elim (pre1 pre2))
 ... | boxInterpBiunobs pre1 .v1 .v1 (valv1 , valv1') | boxInterpBiunobs pre2 .v2 .v2 (valv2 , valv2') =
@@ -216,8 +314,10 @@ nonInterferenceGhost {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2
    -- Apply fundamental binary theorem on the result with the values coming from syntacitcally substituting
    -- then evaluating
    inner' = subst (\h -> ⟦ Box s BoolTy ⟧e h (Promote v1) (Promote v2)) (sym (idem# {R} {r})) (inner valv1' valv2')
-   res = biFundamentalTheoremGhost3 {1} {Ext Empty (Grad BoolTy s)} {r} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
-          ((inner' , tt) , Visible {r} {r # r} (subst (\h -> r ≤ h) (sym (idem# {R} {r})) reflexive≤)) (Promote v1'') (Promote v2'') prf1 prf2
+--   res = biFundamentalTheoremGhost5 {1} {Ext Empty (Grad BoolTy s)} {r} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
+--          ((inner' , tt) , Visible {r} {r # r} (subst (\h -> r ≤ h) (sym (idem# {R} {r})) reflexive≤)) (Promote v1'') (Promote v2'') prf1 prf2
+   res = biFundamentalTheoremGhost5 {1} {Ext Empty (Grad BoolTy s)} {r} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
+          ((inner valv1' valv2' , tt) , Visible {r # r} {r} (subst (\h -> h ≤ r) (sym (idem# {R} {r})) reflexive≤)) (Promote v1'') (Promote v2'') prf1 prf2
 
 
    -- Boolean typed (low) values are equal inside the binary interepration
