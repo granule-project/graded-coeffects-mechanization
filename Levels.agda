@@ -940,7 +940,7 @@ instance
   unit# levelIFstructure {Public}  = refl
   unit# levelIFstructure {Private} = refl
   unit# levelIFstructure {Dunno}   = refl
-  unit# levelIFstructure {Unused}  = {!!}
+  unit# levelIFstructure {Unused}  = refl -- <- doesn't hold if *R is actually +R
 
   comm# levelIFstructure {Public} {Public} = refl
   comm# levelIFstructure {Public} {Private} = refl
@@ -970,3 +970,44 @@ instance
   absorb# levelIFstructure {Private} = refl
   absorb# levelIFstructure {Dunno}   = refl
   absorb# levelIFstructure {Unused}  = refl
+
+-- Things below here look like they may be needed to get N.I.
+
+-- r ≤ s -> r ≤ s # default
+-- HOLDS: but this is already derivable from the unit# property
+--jump : {r s : Level} -> Order s r -> Order (_#_ levelIFstructure s Dunno) r
+--jump {.Public} {.Unused} 0Pub = 0Pub
+--jump {.Private} {.Unused} 0Priv = 0Priv
+--jump {.Public} {.Private} PrivPub = PrivPub
+--jump {.Dunno} {.Unused} 0Dunno = 0Dunno
+--jump {.Dunno} {.Private} PrivDunno = PrivDunno
+--jump {.Public} {.Dunno} DunnoPub = DunnoPub
+--jump {.Public} {.Public} (Refl Public) = Refl Public
+--jump {.Private} {.Private} (Refl Private) = Refl Private
+--jump {.Dunno} {.Dunno} (Refl Dunno) = Refl Dunno
+--jump {.Unused} {.Unused} (Refl Unused) = Refl Unused
+
+jump' : {r s : Level} -> Order s r -> Order (_*R_ levelSemiring s Dunno) r
+jump' {Public} {Public} (Refl .Public) = Refl Public
+jump' {Public} {Private} PrivPub = DunnoPub
+jump' {Public} {Dunno} DunnoPub = DunnoPub
+jump' {Public} {Unused} 0Pub = 0Pub
+jump' {Private} {Public} ()
+-- Order Private Private -> Order (Private # Dunno) Private
+-- where Private * Dunno = Dunno (as Private = 1)
+jump' {Private} {Private} (Refl .Private) = {!!}
+jump' {Private} {Dunno} ()
+jump' {Private} {Unused} 0Priv = 0Priv
+jump' {Dunno} {Public} ()
+jump' {Dunno} {Private} PrivDunno = Refl Dunno
+jump' {Dunno} {Dunno} (Refl .Dunno) = Refl Dunno
+jump' {Dunno} {Unused} 0Dunno = 0Dunno
+jump' {Unused} {Public} ()
+jump' {Unused} {Private} ()
+jump' {Unused} {Dunno} ()
+jump' {Unused} {Unused} (Refl .Unused) = Refl Unused
+
+-- just for thinking purposes. the above could also be derived if 1 ≤ Dunno
+-- but this is the wrong way around for us.
+dunno1order : _≤_ levelSemiring (1R levelSemiring) (default levelIFstructure)
+dunno1order = {!!}

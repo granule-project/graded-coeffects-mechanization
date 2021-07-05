@@ -126,3 +126,18 @@ data _⊢_∶_ {{R : Semiring}} {{R' : InformationFlowSemiring R}} : {s : ℕ} -
     -> { res : ((r · Γ1) ++ Γ2) ≡ Γ }
    ----------------------------------
     -> (Γ , ghost) ⊢ If t1 t2 t3 ∶ B
+
+substitutionG : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {ghost1 ghost2 : grade} {r : grade} {A B : Type} {t1 t2 : Term}
+      -> (Γ , ghost1) ⊢ t1 ∶ B
+      -> (pos : Γ ≡ (Ext (0R · Γ1) (Grad A r)) ,, (0R · Γ3))
+      -> (Γ2 , ghost2) ⊢ t2 ∶ A
+      -> (((Γ1 ,, Γ3) ++ (r · Γ2)) , ghost1 +R (r *R ghost2)) ⊢ syntacticSubst t2 (Γlength Γ1) t1 ∶ B
+substitutionG =  {!!}
+
+multiReduxProducesValuesG : {{R : Semiring}} {{R' :  InformationFlowSemiring R}} {A : Type} {t : Term} {r : grade} -> (Empty , r) ⊢ t ∶ A -> Value (multiRedux t)
+multiReduxProducesValuesG = {!!}
+
+preservationG : {{R : Semiring}} {{R' :  InformationFlowSemiring R}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term} {gr : grade}
+             -> (Γ , gr) ⊢ t ∶ A
+             -> (Γ , gr) ⊢ multiRedux t ∶ A
+preservationG = {!!}
