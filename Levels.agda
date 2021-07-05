@@ -1011,3 +1011,59 @@ jump' {Unused} {Unused} (Refl .Unused) = Refl Unused
 -- but this is the wrong way around for us.
 dunno1order : _≤_ levelSemiring (1R levelSemiring) (default levelIFstructure)
 dunno1order = {!!}
+
+thing : {r s : Level} -> _≤_ levelSemiring r s -> r ≢ s -> ¬ _≤_ levelSemiring (_*R_ levelSemiring s (default levelIFstructure)) (_#_ levelIFstructure r (_*R_ levelSemiring s (default levelIFstructure)))
+thing {Public} {Public} (Refl .Public) neq r = ⊥-elim (neq refl)
+thing {Public} {Private} PrivPub neq ()
+thing {Public} {Dunno} DunnoPub neq ()
+thing {Public} {Unused} 0Pub neq (Refl .Unused) = {!!}
+thing {Private} {Public} () neq pre2
+thing {Private} {Private} (Refl .Private) neq PrivDunno = {!!}
+thing {Private} {Dunno} () neq pre2
+thing {Private} {Unused} 0Priv neq ()
+thing {Dunno} {Public} () neq pre2
+thing {Dunno} {Private} PrivDunno neq (Refl .Dunno) = {!!}
+thing {Dunno} {Dunno} (Refl .Dunno) neq (Refl .Dunno) = {!!}
+thing {Dunno} {Unused} 0Dunno neq (Refl .Unused) = {!!}
+thing {Unused} {Public} () neq pre2
+thing {Unused} {Private} () neq pre2
+thing {Unused} {Dunno} () neq pre2
+thing {Unused} {Unused} (Refl .Unused) neq (Refl .Unused) = {!!}
+
+
+thing' : {r s : Level} -> _≤_ levelSemiring r s -> r ≢ s ->  _≤_ levelSemiring (_*R_ levelSemiring s (default levelIFstructure)) (_#_ levelIFstructure r (_*R_ levelSemiring s (default levelIFstructure)))
+thing' {Public} {Public} (Refl .Public) neq = ⊥-elim (neq refl)
+thing' {Public} {Private} PrivPub neq = {!!}
+thing' {Public} {Dunno} DunnoPub neq = {!!}
+thing' {Public} {Unused} 0Pub neq = {!!}
+thing' {Private} {Public} () neq
+thing' {Private} {Private} (Refl .Private) neq = {!!}
+thing' {Private} {Dunno} () neq
+thing' {Private} {Unused} 0Priv neq = {!!}
+thing' {Dunno} {Public} () neq
+thing' {Dunno} {Private} PrivDunno neq = {!!}
+thing' {Dunno} {Dunno} (Refl .Dunno) neq = {!!}
+thing' {Dunno} {Unused} 0Dunno neq = {!!}
+thing' {Unused} {Public} () neq
+thing' {Unused} {Private} () neq
+thing' {Unused} {Dunno} () neq
+thing' {Unused} {Unused} (Refl .Unused) neq = {!!}
+
+uthing : {r s : Level} -> _≤_ levelSemiring r s -> r ≢ s -> _≤_ levelSemiring s (_#_ levelIFstructure r (_*R_ levelSemiring s (default levelIFstructure)))
+                       -> ⊥
+uthing {Public} {Public} (Refl .Public) pre2 (Refl .Public) = {!pre2 refl!}
+uthing {Public} {Private} PrivPub pre2 ()
+uthing {Public} {Dunno} DunnoPub pre2 ()
+uthing {Public} {Unused} 0Pub pre2 (Refl .Unused) = {!!}
+uthing {Private} {Public} () pre2 pre3
+uthing {Private} {Private} (Refl .Private) pre2 (Refl .Private) = {!!}
+uthing {Private} {Dunno} () pre2 pre3
+uthing {Private} {Unused} 0Priv pre2 ()
+uthing {Dunno} {Public} () pre2 pre3
+uthing {Dunno} {Private} PrivDunno pre2 ()
+uthing {Dunno} {Dunno} (Refl .Dunno) pre2 (Refl .Dunno) = {!!}
+uthing {Dunno} {Unused} 0Dunno pre2 (Refl .Unused) = {!!}
+uthing {Unused} {Public} () pre2 pre3
+uthing {Unused} {Private} () pre2 pre3
+uthing {Unused} {Dunno} () pre2 pre3
+uthing {Unused} {Unused} (Refl .Unused) pre2 (Refl .Unused) = {!!}

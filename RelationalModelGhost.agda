@@ -25,19 +25,19 @@ open import Semiring
 
 open import RelationalModel
 
-data InfoContext {{ R : Semiring }} : (r : grade) -> Set where
-  Visible :   {r adv : grade}  -> r ≤ adv -> InfoContext r
-  Invisible : {r adv : grade}  -> adv ≤ r -> InfoContext r
+data InfoContext {{ R : Semiring }} : (r : grade) (adv : grade) -> Set where
+  Visible :   {r adv : grade}  -> r ≤ adv -> InfoContext r adv
+  Invisible : {r adv : grade}  -> ¬ (r ≤ adv) -> InfoContext r adv
 
 -- Contexts
 
 -- unary
 [_]Γg : {{R : Semiring}} -> {s : ℕ} -> ContextG s -> List Term -> Set
-[ (Γ , ghostGrade) ]Γg γ = [ Γ ]Γ γ × InfoContext ghostGrade
+[ (Γ , ghostGrade) ]Γg γ = [ Γ ]Γ γ × ⊤
 
 -- binary
 ⟦_⟧Γg : {{R : Semiring}} -> {s : ℕ} -> ContextG s -> (adv : grade) -> List Term -> List Term -> Set
-⟦ (Γ , ghostGrade)   ⟧Γg adv γ1 γ2 = ⟦ Γ ⟧Γ adv γ1 γ2 × InfoContext ghostGrade
+⟦ (Γ , ghostGrade)   ⟧Γg adv γ1 γ2 = ⟦ Γ ⟧Γ adv γ1 γ2 × InfoContext ghostGrade adv
 
 injPair1 : {A : Set} {B : Set} {a a' : A} {b b' : B} -> (a , b) ≡ (a' , b') -> a ≡ a'
 injPair1 refl = refl
@@ -54,18 +54,6 @@ binaryImpliesUnaryGg {suc sz} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2
 
 promoteLemma : {t t' t'' : Term} -> Promote t ≡ t' -> Σ Term (\t'' -> Promote t'' ≡ t')
 promoteLemma {t} {t'} {t''} pre = {!!}
-
--- Value lemma for promotion
-promoteValueLemmaG : {{R : Semiring}} {{R' :  InformationFlowSemiring R}} {v : Term} {r : grade} {gr : grade} {A : Type}
-
-  -> (Empty , gr) ⊢ v ∶ Box r A
-  -> Value v
-  -> Σ Term (\v' -> v ≡ Promote v')
-
-promoteValueLemmaG {_} {r} () varValue
-
-promoteValueLemmaG typing (promoteValue t) = t , refl
-
 
 -- # IDEA 1
 {-# TERMINATING #-}
@@ -197,41 +185,44 @@ nonInterferenceGhost {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2
     -- we can think of r as the adversary
 
     -- Apply fundamental binary theorem to v1
-    biFundamentalTheoremGhost3 {zero} {Empty} {{!!}} {Promote v1} {Box s BoolTy}
-                  (pr {_} {(Empty , default)} {Empty , s *R default} {s} {BoolTy} {v1} v1typing {refl}) {[]} {[]} r (tt , Invisible {s *R default} {r} {!trans pre (sym (unit# {s})) !}) (Promote v1) (Promote v1)
+    biFundamentalTheoremGhost3 {zero} {Empty} {s *R default} {Promote v1} {Box s BoolTy}
+    --  Invisible {s *R default} {r} {!trans pre (sym (unit# {s})) !}
+                  (pr {_} {(Empty , default)} {Empty , s *R default} {s} {BoolTy} {v1} v1typing {refl}) {[]} {[]} r (tt , Invisible {!!} ) (Promote v1) (Promote v1)
                   (valuesDontReduce {Promote v1} (promoteValue v1))
                   (valuesDontReduce {Promote v1} (promoteValue v1))
     -- Apply fundamental binary theorem to v2
-  | biFundamentalTheoremGhost3 {zero} {Empty} {{!!}} {Promote v2} {Box s BoolTy}
-                  (pr {_} {(Empty , default )} {Empty , s *R default} {s} {BoolTy} {v2} v2typing {refl})  {[]} {[]} r (tt , {!!}) (Promote v2) (Promote v2)
+  | biFundamentalTheoremGhost3 {zero} {Empty} {s *R default} {Promote v2} {Box s BoolTy}
+                  (pr {_} {(Empty , default )} {Empty , s *R default} {s} {BoolTy} {v2} v2typing {refl})  {[]} {[]} r (tt , Visible {!!}) (Promote v2) (Promote v2)
                   (valuesDontReduce {Promote v2} (promoteValue v2))
                   (valuesDontReduce {Promote v2} (promoteValue v2))
                   -- goal : s ≤ r
                   -- pre : r ≤ s
                   -- pre1 : s ≤ (r # (s * default))
-... | boxInterpBiobs pre1 .v1 .v1 inner1 | _                                    = ⊥-elim (nonEq (antisymmetry pre {!!}))
-
-... | boxInterpBiunobs pre1 .v1 .v1 inner1 | boxInterpBiobs pre2 .v2 .v2 inner2 = ⊥-elim (nonEq (antisymmetry pre {!!}))
+... | boxInterpBiobs pre1 .v1 .v1 inner1 |  boxInterpBiobs pre2 .v2 .v2 inner2 = ⊥-elim {!!} --(nonEq (antisymmetry pre {!!}))
+... | boxInterpBiobs pre1 .v1 .v1 inner1 | boxInterpBiunobs pre2 .v2 .v2 inner2 = ⊥-elim (⊥-elim (pre2 pre1))
+... | boxInterpBiunobs pre1 .v1 .v1 inner1 | boxInterpBiobs pre2 .v2 .v2 inner2 = ⊥-elim (⊥-elim (pre1 pre2))
 ... | boxInterpBiunobs pre1 .v1 .v1 (valv1 , valv1') | boxInterpBiunobs pre2 .v2 .v2 (valv2 , valv2') =
  let
    -- Show that substituting v1 and evaluating yields a value
    -- and since it is a graded modal type then this value is necessarily
    -- of the form Promote v1''
-   substTy1 = substitutionG {zero} {zero} {Ext Empty (Grad BoolTy s)} {Empty} {Empty} {Empty} {{!!}} {{!!}} {s} typing refl v1typing -- typing refl v1typing
-   (v1'' , prf1) = promoteValueLemmaG {_} {r} {{!!}} {BoolTy} (preservationG {zero} {Empty} {Box r BoolTy} {syntacticSubst v1 0 e} substTy1) (multiReduxProducesValuesG substTy1) -- substTy1 in the hole here
+   substTy1 = substitutionG {zero} {zero} {Ext Empty (Grad BoolTy s)} {Empty} {Empty} {Empty} {r} {default} {s} typing refl v1typing
+   (v1'' , prf1) = promoteValueLemmaG {_} {r} {r +R (s *R default)} {BoolTy} (preservationG {zero} {Empty} {Box r BoolTy} {syntacticSubst v1 0 e} substTy1) (multiReduxProducesValuesG substTy1)
 
    -- ... same as above but for v2 ... leading to result of Promote v2''
-   substTy2  = substitutionG {zero} {zero} {Ext Empty (Grad BoolTy s)} {Empty} {Empty} {Empty} {{!!}} {{!!}} {s} {!!} refl {!!} -- typing refl v2typing
-   (v2'' , prf2) = promoteValueLemmaG {_} {r} {{!!}} {BoolTy} (preservationG {zero} substTy2) (multiReduxProducesValuesG substTy2)
+   substTy2  = substitutionG {zero} {zero} {Ext Empty (Grad BoolTy s)} {Empty} {Empty} {Empty} {r} {default} {s} typing refl v2typing
+   (v2'' , prf2) = promoteValueLemmaG {_} {r} {r +R (s *R default)} {BoolTy} (preservationG {zero} substTy2) (multiReduxProducesValuesG substTy2)
 
    -- Apply fundamental binary theorem on the result with the values coming from syntacitcally substituting
    -- then evaluating
-   res = biFundamentalTheorem {1} {Ext Empty (Grad BoolTy s)} {e} {Box r BoolTy} {!!} {v1 ∷ []} {v2 ∷ []} r
-          (inner valv1' valv2' , tt) (Promote v1'') (Promote v2'') prf1 prf2
+   inner' = subst (\h -> ⟦ Box s BoolTy ⟧e h (Promote v1) (Promote v2)) (sym (idem# {R} {r})) (inner valv1' valv2')
+   res = biFundamentalTheoremGhost3 {1} {Ext Empty (Grad BoolTy s)} {r} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
+          ((inner' , tt) , Visible {r} {r # r} (subst (\h -> r ≤ h) (sym (idem# {R} {r})) reflexive≤)) (Promote v1'') (Promote v2'') prf1 prf2
 
 
    -- Boolean typed (low) values are equal inside the binary interepration
-   boolTyEq = boolBinaryExprInterpEquality v1'' v2'' (unpack res)
+   res' = subst (\h -> ⟦ Box r BoolTy ⟧v h (Promote v1'') (Promote v2'')) (idem# {R} {r}) res
+   boolTyEq = boolBinaryExprInterpEquality v1'' v2'' (unpack res') -- res
 
    -- Plug together the equalities
      -- Promote
@@ -245,7 +236,7 @@ nonInterferenceGhost {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2
      inner av1 av2 v3 v4 v3redux v4redux
        rewrite trans (sym v3redux) (valuesDontReduce {Promote v1} (promoteValue v1))
              | trans (sym v4redux) (valuesDontReduce {Promote v2} (promoteValue v2)) =
-       boxInterpBiunobs {!!} v1 v2 (av1 , av2)
+       boxInterpBiunobs (antisymmetryAlt {R} {R'} {r} {s} pre nonEq) v1 v2 (av1 , av2)
 
      -- Helper to unpack interpretation type
      unpack : {v1 v2 : Term} -> ⟦ Box r BoolTy ⟧v r (Promote v1) (Promote v2) -> ⟦ BoolTy ⟧e r v1 v2

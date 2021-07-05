@@ -141,3 +141,14 @@ preservationG : {{R : Semiring}} {{R' :  InformationFlowSemiring R}} {s : ℕ} {
              -> (Γ , gr) ⊢ t ∶ A
              -> (Γ , gr) ⊢ multiRedux t ∶ A
 preservationG = {!!}
+
+-- Value lemma for promotion
+promoteValueLemmaG : {{R : Semiring}} {{R' :  InformationFlowSemiring R}} {v : Term} {r : grade} {gr : grade} {A : Type}
+
+  -> (Empty , gr) ⊢ v ∶ Box r A
+  -> Value v
+  -> Σ Term (\v' -> v ≡ Promote v')
+
+promoteValueLemmaG {_} {r} () varValue
+
+promoteValueLemmaG typing (promoteValue t) = t , refl

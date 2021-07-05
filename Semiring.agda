@@ -72,17 +72,22 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
 
 open NonInterferingSemiring
 
+-- # Some derived properties
+
 plusMonoInv : {R : Semiring} {R' : NonInterferingSemiring R}
               {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
 plusMonoInv {R} {R'} {r1} {r2} {s} pre pre0 =
   pre (plusMono R' {r1} {r2} {s} pre0)
 
--- # Some derived properties
 plusMonoInv' : {R : Semiring} {R' : NonInterferingSemiring R}
                 -> {r1 r2 s : grade R}
                 -> ¬ (_≤_ R (_+R_ R r1 r2)  s) -> ¬ (_≤_ R r2 s)
 plusMonoInv' {R} {R'} {r1} {r2} {s} pre =
   plusMonoInv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
+
+-- Derived alternate characterisation of antisymmetry
+antisymmetryAlt : {R : Semiring} {R' : NonInterferingSemiring R} {r s : grade R} -> _≤_ R r s -> r ≢ s -> ¬ (_≤_ R s r)
+antisymmetryAlt {R} {R'} {r} {s} pre1 pre2 pre3 = ⊥-elim (pre2 (antisymmetry R' {r} {s} pre1 pre3))
 
 record InformationFlowSemiring (R : Semiring) : Set₁ where
   field
