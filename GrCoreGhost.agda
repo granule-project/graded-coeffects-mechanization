@@ -34,6 +34,10 @@ _,,g_ : {{R : Semiring}} {s t : ℕ} -> ContextG s -> ContextG t -> ContextG (s 
 _·g_ : {{R : Semiring}} {s : ℕ} -> grade -> ContextG s -> ContextG s
 r ·g (G , r') = (G , r *R r')
 
+_#g_ : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} -> grade -> Context sz -> Context sz
+r #g Empty = Empty
+r #g Ext G (Grad A s) = Ext (r #g G) (Grad A (r # s))
+
 -- Context addition
 _++g_ : {{R : Semiring}} {s : ℕ} -> ContextG s -> ContextG s -> ContextG s
 (G , r) ++g (G' , r') = (G ++ G' , r +R r')
