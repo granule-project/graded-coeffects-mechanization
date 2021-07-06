@@ -32,7 +32,7 @@ _,,g_ : {{R : Semiring}} {s t : ℕ} -> ContextG s -> ContextG t -> ContextG (s 
 
 -- Context scalar multiplication
 _·g_ : {{R : Semiring}} {s : ℕ} -> grade -> ContextG s -> ContextG s
-r ·g (G , r') = (G , r *R r')
+r ·g (G , r') = (r · G , r *R r')
 
 _#g_ : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} -> grade -> Context sz -> Context sz
 r #g Empty = Empty

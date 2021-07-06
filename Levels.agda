@@ -1009,3 +1009,78 @@ instance
   absorb# levelIFstructure {Private} = refl
   absorb# levelIFstructure {Dunno}   = refl
   absorb# levelIFstructure {Unused}  = refl
+
+-- Thing we want to be true but it's not
+uthingA : {g1 g2 adv : Level} -> _≤_ levelSemiring g1 adv
+                               -> (_≤_ levelSemiring (_+R_ levelSemiring g1 g2) adv)
+                               -> (_≤_ levelSemiring g2 adv)
+uthingA {Public} {Public} {Public} (Refl .Public) (Refl .Public) = Refl {!!}
+uthingA {Public} {Public} {Private} PrivPub PrivPub = PrivPub
+uthingA {Public} {Public} {Dunno} DunnoPub DunnoPub = DunnoPub
+uthingA {Public} {Public} {Unused} 0Pub 0Pub = 0Pub
+
+-- (1) Public <= Public yes
+-- (2) Public + Private <= Public
+--   = Public <= Public yes
+-- (3) Private <= Public no inv order
+
+uthingA {Public} {Private} {Public} (Refl .Public) (Refl .Public) = {!!}
+uthingA {Public} {Private} {Private} PrivPub PrivPub = {!!}
+uthingA {Public} {Private} {Dunno} DunnoPub DunnoPub = {!!}
+uthingA {Public} {Private} {Unused} 0Pub 0Pub = {!!}
+uthingA {Public} {Dunno} {Public} (Refl .Public) (Refl .Public) = {!!}
+uthingA {Public} {Dunno} {Private} PrivPub PrivPub = {!!}
+uthingA {Public} {Dunno} {Dunno} DunnoPub DunnoPub = {!!}
+uthingA {Public} {Dunno} {Unused} 0Pub 0Pub = {!!}
+uthingA {Public} {Unused} {Public} (Refl .Public) (Refl .Public) = {!!}
+uthingA {Public} {Unused} {Private} PrivPub PrivPub = {!!}
+uthingA {Public} {Unused} {Dunno} DunnoPub DunnoPub = {!!}
+uthingA {Public} {Unused} {Unused} 0Pub 0Pub = {!!}
+uthingA {Private} {Public} {Public} () pre2
+uthingA {Private} {Public} {Private} (Refl .Private) PrivPub = {!!}
+uthingA {Private} {Public} {Dunno} () pre2
+uthingA {Private} {Public} {Unused} 0Priv 0Pub = {!!}
+uthingA {Private} {Private} {Public} () pre2
+uthingA {Private} {Private} {Private} (Refl .Private) (Refl .Private) = {!!}
+uthingA {Private} {Private} {Dunno} () pre2
+uthingA {Private} {Private} {Unused} 0Priv 0Priv = {!!}
+uthingA {Private} {Dunno} {Public} () pre2
+uthingA {Private} {Dunno} {Private} (Refl .Private) PrivDunno = {!!}
+uthingA {Private} {Dunno} {Dunno} () pre2
+uthingA {Private} {Dunno} {Unused} 0Priv 0Dunno = {!!}
+uthingA {Private} {Unused} {Public} () pre2
+uthingA {Private} {Unused} {Private} (Refl .Private) (Refl .Private) = {!!}
+uthingA {Private} {Unused} {Dunno} () pre2
+uthingA {Private} {Unused} {Unused} 0Priv 0Priv = {!!}
+uthingA {Dunno} {Public} {Public} () pre2
+uthingA {Dunno} {Public} {Private} PrivDunno PrivPub = {!!}
+uthingA {Dunno} {Public} {Dunno} (Refl .Dunno) DunnoPub = {!!}
+uthingA {Dunno} {Public} {Unused} 0Dunno 0Pub = {!!}
+uthingA {Dunno} {Private} {Public} () pre2
+uthingA {Dunno} {Private} {Private} PrivDunno PrivDunno = {!!}
+uthingA {Dunno} {Private} {Dunno} (Refl .Dunno) (Refl .Dunno) = {!!}
+uthingA {Dunno} {Private} {Unused} 0Dunno 0Dunno = {!!}
+uthingA {Dunno} {Dunno} {Public} () pre2
+uthingA {Dunno} {Dunno} {Private} PrivDunno PrivDunno = {!!}
+uthingA {Dunno} {Dunno} {Dunno} (Refl .Dunno) (Refl .Dunno) = {!!}
+uthingA {Dunno} {Dunno} {Unused} 0Dunno 0Dunno = {!!}
+uthingA {Dunno} {Unused} {Public} () pre2
+uthingA {Dunno} {Unused} {Private} PrivDunno PrivDunno = {!!}
+uthingA {Dunno} {Unused} {Dunno} (Refl .Dunno) (Refl .Dunno) = {!!}
+uthingA {Dunno} {Unused} {Unused} 0Dunno 0Dunno = {!!}
+uthingA {Unused} {Public} {Public} () pre2
+uthingA {Unused} {Public} {Private} () pre2
+uthingA {Unused} {Public} {Dunno} () pre2
+uthingA {Unused} {Public} {Unused} (Refl .Unused) 0Pub = {!!}
+uthingA {Unused} {Private} {Public} () pre2
+uthingA {Unused} {Private} {Private} () pre2
+uthingA {Unused} {Private} {Dunno} () pre2
+uthingA {Unused} {Private} {Unused} (Refl .Unused) 0Priv = {!!}
+uthingA {Unused} {Dunno} {Public} () pre2
+uthingA {Unused} {Dunno} {Private} () pre2
+uthingA {Unused} {Dunno} {Dunno} () pre2
+uthingA {Unused} {Dunno} {Unused} (Refl .Unused) 0Dunno = {!!}
+uthingA {Unused} {Unused} {Public} () pre2
+uthingA {Unused} {Unused} {Private} () pre2
+uthingA {Unused} {Unused} {Dunno} () pre2
+uthingA {Unused} {Unused} {Unused} (Refl .Unused) (Refl .Unused) = {!!}
