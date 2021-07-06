@@ -1033,6 +1033,53 @@ uthing {Unused} {Dunno} () pre2 pre3
 uthing {Unused} {Unused} (Refl .Unused) pre2 (Refl .Unused) = {!!}
 -}
 
+athing' : {r s : Level} -> _≤_ levelSemiring r s -> r ≢ s -> _≤_ levelSemiring (_*R_ levelSemiring s (default levelIFstructure)) r
+athing' {Public} {Public} (Refl .Public) neq = ⊥-elim (neq refl)
+athing' {Public} {Private} PrivPub neq = {!!}
+athing' {Public} {Dunno} DunnoPub neq = {!!}
+athing' {Public} {Unused} 0Pub neq = {!!}
+athing' {Private} {Public} () neq
+athing' {Private} {Private} (Refl .Private) neq = {!!}
+athing' {Private} {Dunno} () neq
+athing' {Private} {Unused} 0Priv neq = {!!}
+athing' {Dunno} {Public} () neq
+athing' {Dunno} {Private} PrivDunno neq = {!!}
+athing' {Dunno} {Dunno} (Refl .Dunno) neq = {!!}
+athing' {Dunno} {Unused} 0Dunno neq = {!!}
+athing' {Unused} {Public} () neq
+athing' {Unused} {Private} () neq
+athing' {Unused} {Dunno} () neq
+athing' {Unused} {Unused} (Refl .Unused) neq = {!!}
+
+athing'' : {r s : Level} -> _≤_ levelSemiring r s -> r ≢ s -> _≤_ levelSemiring r (_*R_ levelSemiring s (default levelIFstructure))
+athing'' {Public} {Public} (Refl .Public) neq = Refl {!!}
+athing'' {Public} {Private} PrivPub neq = DunnoPub
+athing'' {Public} {Dunno} DunnoPub neq = DunnoPub
+athing'' {Public} {Unused} 0Pub neq = 0Pub
+athing'' {Private} {Public} () neq
+athing'' {Private} {Private} (Refl .Private) neq = ⊥-elim (neq refl)
+athing'' {Private} {Dunno} () neq
+athing'' {Private} {Unused} 0Priv neq = 0Priv
+athing'' {Dunno} {Public} () neq
+athing'' {Dunno} {Private} PrivDunno neq = Refl {!!}
+athing'' {Dunno} {Dunno} (Refl .Dunno) neq = Refl {!!}
+athing'' {Dunno} {Unused} 0Dunno neq = 0Dunno
+athing'' {Unused} {Public} () neq
+athing'' {Unused} {Private} () neq
+athing'' {Unused} {Dunno} () neq
+athing'' {Unused} {Unused} (Refl .Unused) neq = Refl {!!}
+
+ubub : {r s : Level} -> Order s r -> r ≢ s -> r ≢ (_*R_ levelSemiring s Dunno)
+ubub {Public} {Public} pre0 pre pre1 = pre pre1
+ubub {Dunno} {Private} PrivDunno pre pre1 = {!!}
+ubub {Dunno} {Dunno} pre0 pre pre1 = pre pre1
+ubub {Unused} {Unused} pre0 pre pre1 = pre pre1
+
+abthing : {r s : Level} -> _≤_ levelSemiring r s -> r ≢ s -> _≤_ levelSemiring (_*R_ levelSemiring s (default levelIFstructure)) r -> ⊥
+abthing {r} {s} pre neq swp = (antisymmetryAlt {levelSemiring} {levelSemiringNonInterfering} (athing'' pre neq) {!!}) swp
+
+
+
 athing : {r s : Level} -> _≤_ levelSemiring r s -> r ≢ s -> _≤_ levelSemiring (_*R_ levelSemiring s (default levelIFstructure)) r -> ⊥
 athing {Public} {Public} (Refl .Public) neq (Refl .Public) = neq refl
 athing {Public} {Private} PrivPub neq ()
@@ -1070,4 +1117,22 @@ bthing {Unused} {Public} 0Pub = 0Pub
 bthing {Unused} {Private} 0Dunno = 0Priv
 bthing {Unused} {Dunno} 0Dunno = 0Dunno
 bthing {Unused} {Unused} (Refl .Unused) = Refl {!!}
-                   
+
+
+aathing : {r s : Level} -> _≤_ levelSemiring r s -> ¬ ( _≤_ levelSemiring s r) -> r ≢ s -> _≤_ levelSemiring (_*R_ levelSemiring s (default levelIFstructure)) r -> ⊥
+aathing {Public} {Public} (Refl .Public) pre1 neq (Refl .Public) = neq refl
+aathing {Public} {Private} PrivPub pre1 neq ()
+aathing {Public} {Dunno} DunnoPub pre1 neq ()
+aathing {Public} {Unused} 0Pub pre1 neq ()
+aathing {Private} {Public} () pre1 neq pre2
+aathing {Private} {Private} (Refl .Private) pre1 neq PrivDunno = neq refl
+aathing {Private} {Dunno} () pre1 neq pre2
+aathing {Private} {Unused} 0Priv pre1 neq ()
+aathing {Dunno} {Public} () pre1 neq pre2
+aathing {Dunno} {Private} PrivDunno pre1 neq (Refl .Dunno) = pre1 {!PrivDunno!}
+aathing {Dunno} {Dunno} (Refl .Dunno) pre1 neq (Refl .Dunno) = neq refl
+aathing {Dunno} {Unused} 0Dunno pre1 neq ()
+aathing {Unused} {Public} () pre1 neq pre2
+aathing {Unused} {Private} () pre1 neq pre2
+aathing {Unused} {Dunno} () pre1 neq pre2
+aathing {Unused} {Unused} (Refl .Unused) pre1 neq (Refl .Unused) = neq refl

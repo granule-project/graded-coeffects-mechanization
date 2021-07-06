@@ -99,14 +99,14 @@ biFundamentalTheoremGhost' : {{R : Semiring}} {{R' : NonInterferingSemiring R}} 
         -> (Γ , ghost) ⊢ e ∶ τ
         -> {γ1 : List Term} {γ2 : List Term}
         -> (adv : grade)
-        -> ⟦ Γ , ghost ⟧Γg adv γ1 γ2
+        -> ⟦ Γ ⟧Γ adv γ1 γ2
         -> ⟦ Box ghost τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
 
 biFundamentalTheoremGhost' {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp
  rewrite injPair1 pos | sym (injPair2 pos) with Γ1 | γ1 | γ2 | contextInterp
 -- var at head of context (key idea, without out loss of generality as position in context is irrelevant
 -- to rest of the proof)
-... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | ((argInterp , restInterp) , infoContext) = conc
+... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | (argInterp , restInterp) = conc
 
   where
 
@@ -180,9 +180,9 @@ biFundamentalTheoremGhost2a {{R}} {{R'}} {{R''}} {_} {Γ} {ghost} {.(Var (Γleng
           in {!!}
     -- problematic here as we cannot connect the unobservability of the output to the input
     -- ¬ (1 ≤ (1 # adv)
-    -- 
+    --
     ... | boxInterpBiunobs eq .a1 .a2 inner rewrite leftUnit* {adv} =
-      ⊥-elim (eq (subst (\h -> 1R ≤ h) (trans (sym (absorb# {R} {adv})) (comm# {R} {adv} {1R})) (reflexive≤ {1R}) )) 
+      ⊥-elim (eq (subst (\h -> 1R ≤ h) (trans (sym (absorb# {R} {adv})) (comm# {R} {adv} {1R})) (reflexive≤ {1R}) ))
 
 -- gen for any variable
 ... | _ | _ | _ | _ = {!!}
@@ -212,11 +212,11 @@ biFundamentalTheoremGhost2b {{R}} {{R'}} {{R''}} {_} {Γ} {ghost} {.(Var (Γleng
           in z
     -- problematic here as we cannot connect the unobservability of the output to the input
     -- ¬ (1 ≤ (1 # adv)
-    -- 
+    --
     ... | boxInterpBiunobs eq .a1 .a2 inner rewrite leftUnit* {adv} =
     -- NOPE
      {!!}
-    --  ⊥-elim (eq (subst (\h -> 1R ≤ h) (trans (sym (absorb# {R} {adv})) (comm# {R} {adv} {1R})) (reflexive≤ {1R}) )) 
+    --  ⊥-elim (eq (subst (\h -> 1R ≤ h) (trans (sym (absorb# {R} {adv})) (comm# {R} {adv} {1R})) (reflexive≤ {1R}) ))
 
 -- gen for any variable
 ... | _ | _ | _ | _ = {!!}
@@ -459,14 +459,52 @@ nonInterferenceGhost1 {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v
 
     -- Apply fundamental binary theorem to v1
     biFundamentalTheoremGhost' {zero} {Empty} {s *R default} {Promote v1} {Box s BoolTy}
-                  (pr {_} {(Empty , default)} {Empty , s *R default} {s} {BoolTy} {v1} v1typing {refl}) {[]} {[]} r (tt , {!!})
+                  (pr {_} {(Empty , default)} {Empty , s *R default} {s} {BoolTy} {v1} v1typing {refl}) {[]} {[]} r tt
     -- Apply fundamental binary theorem to v2
   | biFundamentalTheoremGhost' {zero} {Empty} {s *R default} {Promote v2} {Box s BoolTy}
-                  (pr {_} {(Empty , default )} {Empty , s *R default} {s} {BoolTy} {v2} v2typing {refl})  {[]} {[]} r (tt , {!!})
+                  (pr {_} {(Empty , default )} {Empty , s *R default} {s} {BoolTy} {v2} v2typing {refl})  {[]} {[]} r tt
                   -- goal : s ≤ r
                   -- pre : r ≤ s
                   -- pre1 : s ≤ (r # (s * default))
-... | boxInterpBiobs pre1 (Promote .v1) (Promote .v1) inner1 | boxInterpBiobs pre2 (Promote .v2) (Promote .v2) inner2 = ⊥-elim ((nonEq (antisymmetry pre {!!}))) --(nonEq (antisymmetry pre {!!}))
+
+-- Issue appears to be if r = Dunno and s = Private
+-- i.e., we want to take
+--
+--        Empty, default |- v1 : BoolTy
+--        -----------------------------------------
+--        Empty, s * default |- [v1] : [] s BoolTy
+--
+--        Private * default = default (of course because Private = 1)
+--
+--        Empty, default |- v1 : BoolTy
+--        -----------------------------------------
+--        Empty, default |- [v1] : [] Private BoolTy
+
+--        but biFundamentalTheorem' puts a ghost on the output so when we are really considering
+--        (s  * default) <= r here
+
+--        [] (s * default) ([] Private BoolTy)
+
+--        so perhaps we need to unpeel another later...
+
+--        which in this tricky case case is Dunno <= Dunno which is true - but this only means we can see down to the
+--        boxing underneath...
+--
+--         but we have that ¬ (Private <= Dunno) so this should be unobservable here.. what am I missing?
+
+
+... | boxInterpBiobs pre1 (Promote .v1) (Promote .v1) inner1 | boxInterpBiobs pre2 (Promote .v2) (Promote .v2) inner2 =
+  ⊥-elim notPossible
+  where
+    notPossible : ⊥
+    notPossible with inner1 (Promote v1) (Promote v1) refl refl | inner2 (Promote v2) (Promote v2) refl refl
+    ... | boxInterpBiobs   prei1 .v1 .v1 inneri1 | _ = ⊥-elim (antisymmetryAlt {R} {R'} pre nonEq prei1)
+    ... | boxInterpBiunobs prei1 .v1 .v1 inneri1 | boxInterpBiobs   prei2 .v2 .v2 inneri2 = ⊥-elim (antisymmetryAlt {R} {R'} pre nonEq prei2)
+
+--- maybe this okay though and we can work from here similar to the one below....(a bit like old proof)
+    ... | boxInterpBiunobs prei1 .v1 .v1 inneri1 | boxInterpBiunobs prei2 .v2 .v2 inneri2 = {!!}
+
+  -- ⊥-elim ((nonEq (antisymmetry pre {!!}))) --(nonEq (antisymmetry pre {!!}))
 ... | boxInterpBiobs pre1 (Promote .v1) (Promote .v1) inner1 | boxInterpBiunobs pre2 (Promote .v2) (Promote .v2) inner2 = ⊥-elim (⊥-elim (pre2 pre1))
 ... | boxInterpBiunobs pre1 (Promote .v1) (Promote .v1) inner1 | boxInterpBiobs pre2 (Promote .v2) (Promote .v2) inner2 = ⊥-elim (⊥-elim (pre1 pre2))
 ... | boxInterpBiunobs pre1 (Promote .v1) (Promote .v1) (valv1 , valv1') | boxInterpBiunobs pre2 (Promote .v2) (Promote .v2) (valv2 , valv2') =
@@ -483,22 +521,12 @@ nonInterferenceGhost1 {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v
 
    -- Apply fundamental binary theorem on the result with the values coming from syntacitcally substituting
    -- then evaluating
-   inner' = subst (\h -> ⟦ Box s BoolTy ⟧e h (Promote v1) (Promote v2)) (sym (idem# {R} {r})) (inner (extr valv1') (extr valv2')) -- (inner valv1' valv2')
---   res = biFundamentalTheoremGhost5 {1} {Ext Empty (Grad BoolTy s)} {r} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
---          ((inner' , tt) , Visible {r} {r # r} (subst (\h -> r ≤ h) (sym (idem# {R} {r})) reflexive≤)) (Promote v1'') (Promote v2'') prf1 prf2
-   --res = biFundamentalTheoremGhost {1} {Ext Empty (Grad BoolTy s)} {r} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
-   --       ((inner valv1' valv2' , tt) , Visible {r # r} {r} (subst (\h -> h ≤ r) (sym (idem# {R} {r})) reflexive≤)) (Promote v1'') (Promote v2'') prf1 prf2
-
-   inner'' = subst (\h -> ⟦ Box s BoolTy ⟧e h (Promote v1) (Promote v2)) (sym (idem# {R} {r})) {!!}
-
    res = biFundamentalTheoremGhost' {1} {Ext Empty (Grad BoolTy s)} {r} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
-          ((inner (extr valv1') (extr valv2') , tt) , Visible {r} {r} reflexive≤)  -- (subst (\h -> h ≤ r) (sym (idem# {R} {r})) reflexive≤)) 
--- inner valv1' valv2'
+          (inner (extr valv1') (extr valv2') , tt)
 
-   -- Boolean typed (low) values are equal inside the binary interepration
-   res' = subst (\h -> ⟦ Box r BoolTy ⟧v h (Promote v1'') (Promote v2'')) (idem# {R} {r}) {!res!}
-   res0 = unpack res
-   boolTyEq = boolBinaryExprInterpEquality v1'' v2'' {!!} -- (unpack res') -- res
+   -- unpack the result based on the reducability up to promotion
+   res' = unpack (unpack res (Promote v1'') (Promote v2'') prf1 prf2)
+   boolTyEq = boolBinaryExprInterpEquality v1'' v2'' res'
 
    -- Plug together the equalities
      -- Promote
