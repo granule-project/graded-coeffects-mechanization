@@ -126,6 +126,21 @@ biFundamentalTheoremGhost' {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_
 ... | _ | _ | _ | _ = {!!}
 
 
+biFundamentalTheoremGhost' {_} {_} {ghost} {.unit} {.Unit} unitConstr {γ1} {γ2} adv contextInterp with 1R ≤d adv
+... | yes p = boxInterpBiobs p {!!} {!!} ?
+ -- (subst₂ (\h1 h2 -> ⟦ Unit ⟧v adv h1 h2) (sym thm1) (sym thm2) (unitInterpBi {adv}))
+    where
+      thm1 : unit ≡  (multisubst' 0 γ1 unit)
+      thm1 = ? --trans (sym (cong multiRedux (substPresUnit {γ1} {0}))) {!!}
+
+      thm2 : unit ≡ (multisubst' 0 γ2 unit)
+      thm2 = ? -- trans (sym (cong multiRedux (substPresUnit {γ2} {0}))) {!!}
+... | no ¬p = {!!}
+{- =
+  {!!} --
+  --
+-}
+
 biFundamentalTheoremGhost' {sz} {Γ} {e} {τ} typ {γ1} {γ2} adv contextInterp = {!!}
 
 -- # IDEA 2
