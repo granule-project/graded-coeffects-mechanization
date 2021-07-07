@@ -139,6 +139,29 @@ unpackEvidence {s = s} {Γ} {fst , snd} {fst₁ , snd₁} {r} rel = {!!}
 justInj : {A : Set} {a1 a2 : A} -> just a1 ≡ just a2 -> a1 ≡ a2
 justInj {A} {a1} {.a1} refl = refl
 
+-------------------------------
+-- Unary fundamental theorem
+
+-- Terminating pragma needed because in the (App t1 t2) case we need to recursve with (Promote t2) which doesn't look
+-- smaller to Agda
+{-# TERMINATING #-}
+utheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ} {γ : List Term}
+        -> {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
+        -> (Γ , ghost) ⊢ e ∶ τ
+        -> [ Γ ]Γ γ
+        -> [ Box ghost τ ]v (Promote (multisubst γ e))
+utheoremGhost {{R}} {sz} {γ} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {.τ} {.(Γ , ghost)} {Γ1} {Γ2} pos) context  rewrite injPair1 pos with Γ1 | γ | context
+... | Empty | [] | ()
+... | Empty | a ∷ γ' | argInterp , restInterp = conc
+  where
+    conc : [ Box ghost τ ]v (Promote (multisubst (a ∷ γ') (Var 0))) 
+    conc = ?
+
+-- same as above just moves down the context (bit of fiddly non key stuff)
+... | Ext k x | x₁ ∷ g | argInterp , sndrestInterp = {!!}
+
+utheoremGhost {{R}} {sz} {γ} {Γ} {ghost} {e} {τ} typ context = {!!}
+
 biFundamentalTheoremGhost' : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
           {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
 
@@ -354,6 +377,66 @@ biFundamentalTheoremGhost' {_} {_} {ghost} {.unit} {.Unit} unitConstr {γ1} {γ2
   where
     inner : [ Unit ]e unit
     inner v vredux rewrite sym (trans (valuesDontReduce {unit} unitValue) vredux) = unitInterpV
+
+
+-- # PROMOTION
+biFundamentalTheoremGhost' {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterp rewrite prf with r ≤d adv | ghost ≤d adv
+... | no ¬req | yes geq = boxInterpBiobs geq (multisubst γ1 (Promote t)) (multisubst γ2 (Promote t)) conclusion
+  where 
+
+    thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
+    thm {v} {γ} redux =
+       let qr = cong multiRedux (substPresProm {0} {γ} {t})
+           qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
+       in sym (trans (sym redux) qr')
+
+    binaryToUnaryVal : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]v (Promote v1)) × ([ Box s A ]v (Promote v2))
+    binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiobs eq' .v1 .v2 ainterp) =
+      let (a , b) = binaryImpliesUnary {A} {v1} {v2} {adv} ainterp in (boxInterpV v1 a , boxInterpV v2 b)
+
+    binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 (left , right)) = (boxInterpV v1 left) , (boxInterpV v2 right)
+
+    binaryToUnaryExp : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ([ Box s A ]e (Promote v1)) × ([ Box s A ]e (Promote v2))
+    binaryToUnaryExp {s} {v1} {v2} {A} arg1 = (left , right)
+      where
+        left : [ Box s A ]e (Promote v1)
+        left v0 redux rewrite trans (sym redux) (reduxProm {v1}) with binaryToUnaryVal {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
+        ... | (left' , right') = left'
+
+        right : [ Box s A ]e (Promote v2)
+        right v0 redux rewrite trans (sym redux) (reduxProm {v2}) with binaryToUnaryVal {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
+        ... | (left' , right') = right'
+
+    underBox : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> [ Γ ]Γ γ1 × [ Γ ]Γ γ2
+    underBox {_} {_} {_} {Empty} g = (tt , tt)
+    underBox {_} {[]} {[]} {Ext Γ (Grad A r)} ()
+    underBox {_} {[]} {x ∷ γ2} {Ext Γ (Grad A r)} ()
+    underBox {_} {x ∷ γ1} {[]} {Ext Γ (Grad A r)} ()
+    underBox {suc sz} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A r')} (arg , g) =
+     let
+      (left , right) = underBox {sz} {γ1} {γ2} {Γ} g
+      (l , r) = binaryToUnaryExp arg
+     in
+       (l , left) , (r , right)
+
+    conclusion : ⟦ Box r A ⟧e adv (multisubst' 0 γ1 (Promote t)) (multisubst' 0 γ2 (Promote t))
+    conclusion = {!let ih1 = utheorem {sz} {γ1} {?} {t} {A} typ in ?!}
+     {- let
+	(uinterp1 , uinterp2) = underBox {sz} {γ1} {γ2} {Γ} contextInterp
+	ih1 = utheorem {s} {γ1} {Γ} {t} {A} typ uinterp1
+	ih2 = utheorem {s} {γ2} {Γ} {t} {A} typ uinterp2
+      in ? -}
+
+
+... | no ¬req | no ¬geq = {!!}
+
+... | yes eq | yes geq =   {!!}
+
+... | yes eq | no ¬geq =   {!!}
+
+
+
+
 
 
 biFundamentalTheoremGhost' {sz} {Γ} {e} {τ} typ {γ1} {γ2} adv contextInterp = {!!}
