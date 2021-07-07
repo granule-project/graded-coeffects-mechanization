@@ -16,6 +16,7 @@ open import Function
 open import Data.Maybe
 open import Relation.Nullary
 open import Data.Sum
+open import Data.Maybe.Properties
 
 open import Semiring
 
@@ -64,7 +65,7 @@ reduxTheoremAppTyG = {!!}
 
 
 promoteLemma : {t t' t'' : Term} -> Promote t ≡ t' -> Σ Term (\t'' -> Promote t'' ≡ t')
-promoteLemma {t} {t'} {t''} pre = {!!}
+promoteLemma {t} {t'} {t''} pre = t , pre
 
 {-
 -- # IDEA 1
@@ -118,6 +119,25 @@ unpackUnobs : {{R : Semiring}} {A : Type} {v1 v2 : Term} {r adv : grade}
 unpackUnobs {A} {v1} {v2} {r} {adv} pre (boxInterpBiobs eq .v1 .v2 innerExprInterp) = ⊥-elim (pre eq)
 unpackUnobs {A} {v1} {v2} {r} {adv} pre (boxInterpBiunobs eq .v1 .v2 innerExprInterp) = innerExprInterp
 
+unpackEvidence : {{R : Semiring}}
+                 {s : ℕ}
+                 { Γ Γ1 Γ2 : ContextG s }
+                 {r : grade}
+                 (rel : just Γ ≡ (Γ1 ++g (r ·g Γ2)))
+               -> Σ grade (\ghost ->
+                    Σ (Context s × grade) (\(Γ1' , g1) ->
+                      Σ (Context s × grade) (\(Γ2' , g2) ->
+                        (Γ ≡ (Γ1' ++ (r · Γ2') , ghost))
+                      × (Γ1 ≡ (Γ1' , g1))
+                      × (Γ2 ≡ (Γ2' , g2))
+                      × (just ghost ≡ partialJoin g1 (r *R g2))
+                    )
+                   )
+                  )
+unpackEvidence {s = s} {Γ} {fst , snd} {fst₁ , snd₁} {r} rel = {!!}
+
+justInj : {A : Set} {a1 a2 : A} -> just a1 ≡ just a2 -> a1 ≡ a2
+justInj {A} {a1} {.a1} refl = refl
 
 biFundamentalTheoremGhost' : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
           {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
@@ -152,7 +172,8 @@ biFundamentalTheoremGhost' {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_
 ... | _ | _ | _ | _ = {!!}
 
 
-biFundamentalTheoremGhost' {sz} {Γ} {ghost} {App t1 t2} {.B} (app {.sz} {Γ , ghost} {Γ1 , g1} {Γ2 , g2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp rewrite injPair1 pos = main
+biFundamentalTheoremGhost' {sz} {Γ} {ghost} {App t1 t2} {.B} (app {.sz} {Γ , ghost} {Γ1 , g1} {Γ2 , g2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp with unpackEvidence pos
+biFundamentalTheoremGhost' {sz = sz} {Γ} {ghost} {App t1 t2} {.B} (app {.sz} {Γ , ghost} {Γ1 , g1} {Γ2 , g2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp | ghosto , ((G1' , g1o) ,  ((G2' , g2o) ,  outer , left , right , gj)) rewrite injPair1 outer | sym (injPair2 outer) | sym (injPair1 left)| sym (injPair2 left) | sym (injPair1 right) | sym (injPair2 right) = main
   where
 -- ———————————————————————————————————————————————
     extract : {x y : ℕ} {e1 e2 : Term} -> ⟦ FunTy A r B ⟧v adv (Abs x e1) (Abs y e2)
@@ -161,6 +182,13 @@ biFundamentalTheoremGhost' {sz} {Γ} {ghost} {App t1 t2} {.B} (app {.sz} {Γ , g
                  -> ⟦ B ⟧e adv (syntacticSubst v1 x e1) (syntacticSubst v2 y e2))
     extract {x} {y} {e1} {e2} pre with pre
     ... | funInterpBi .e1 .e2 inner _ _ = inner
+
+    extractUn : {x : ℕ} {e1 : Term} -> [ FunTy A r B ]v (Abs x e1)
+           -> (forall (v1 : Term)
+                 -> [ Box r A ]e (Promote v1)
+                 -> [ B ]e (syntacticSubst v1 x e1))
+    extractUn {x} {e1} pre with pre
+    ... | funInterpV .e1 inner = inner
 
     convertVal2 : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧v adv (Promote v1) (Promote v2)
     convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with (r1 +R (r *R r2)) ≤d adv | (r *R r2) ≤d adv
@@ -242,11 +270,75 @@ biFundamentalTheoremGhost' {sz} {Γ} {ghost} {App t1 t2} {.B} (app {.sz} {Γ , g
 
             in foo
 
-    main | yes p | boxInterpBiobs eq1 .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) inner | boxInterpBiunobs eq2 .(multisubst' 0 γ1 (Promote t2)) .(multisubst' 0 γ2 (Promote t2)) argInner = {!!}
+    main | yes p | _ | boxInterpBiunobs eq2 .(multisubst' 0 γ1 (Promote t2)) .(multisubst' 0 γ2 (Promote t2)) argInner =
+     ⊥-elim (eq2 (joinMonoInv1 {g1} {r *R g2} {adv} {ghost} gj p))
 
-    main | yes p | boxInterpBiunobs eq .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) inner  | b = {!!}
-    main | no ¬p | b1 | b2  = {!!}
+    main | yes p | boxInterpBiunobs eq .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) inner  | _ =
+     ⊥-elim (eq (joinMonoInv2 {g1} {r *R g2} {adv} {ghost} gj p))
 
+    main | no ¬p | boxInterpBiobs eq1 .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) inner1 | boxInterpBiobs eq2 .(multisubst' 0 γ1 (Promote t2)) .(multisubst' 0 γ2 (Promote t2)) inner2 =
+      ⊥-elim (¬p (partialJoinMono eq1 eq2 gj (partialJoinIdem {adv})))
+
+    main | no ¬p | left | right =
+      boxInterpBiunobs ¬p (multisubst' zero γ1 (App t1 t2)) (multisubst' zero γ2 (App t1 t2)) ((obsMain1 , obsMain2))
+        where
+          leftb  : ⟦ Box g1 (FunTy A r B) ⟧v adv (Promote (multisubst' 0 γ1 t1)) (Promote (multisubst' 0 γ2 t1))
+          leftb = biFundamentalTheoremGhost' {sz} {Γ1} {g1} {t1} {FunTy A r B} typ1 {γ1} {γ2} adv (splitContext1 contextInterp)
+
+          rightb  : ⟦ Box (r *R g2) (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t2))) (Promote (multisubst' 0 γ2 (Promote t2)))
+          rightb = biFundamentalTheoremGhost' {sz} {r · Γ2} {r *R g2} {Promote t2} {Box r A} (pr {Γ' = (r · Γ2 , r *R g2)} {r} typ2 {refl}) {γ1} {γ2} adv (splitContext2 contextInterp)
+
+          inner1 : [ FunTy A r B ]e (multisubst' 0 γ1 t1) × [ FunTy A r B ]e (multisubst' 0 γ2 t1)
+          inner1 with leftb
+          ... | boxInterpBiobs _ .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) inner =
+                     binaryImpliesUnary { A = FunTy A r B } {multisubst γ1 t1} {multisubst γ2 t1} inner
+          ... | boxInterpBiunobs _ .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) (inner11 , inner12) =
+                     (inner11 , inner12)
+
+          inner2 : [ Box r A ]e (multisubst' 0 γ1 (Promote t2)) × [ Box r A ]e (multisubst' 0 γ2 (Promote t2))
+          inner2 with rightb
+          ... | boxInterpBiobs _ .(multisubst' 0 γ1 (Promote t2)) .(multisubst' 0 γ2 (Promote t2)) inner =
+                     binaryImpliesUnary { A = Box r A } {multisubst γ1 (Promote t2)} {multisubst γ2 (Promote t2)} inner
+          ... | boxInterpBiunobs _ .(multisubst' 0 γ1 (Promote t2)) .(multisubst' 0 γ2 (Promote t2)) (inner21 , inner22) =
+                     (inner21 , inner22)
+
+          obsMain1 : [ B ]e (multisubst' zero γ1 (App t1 t2))
+          obsMain1 v1 v1redux  =
+            let
+              ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTyG {multisubst' 0 γ1 t1} {multisubst' 0 γ1 t2} {v1} {0} {Empty} {A} {B} {r} {g1} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ1} {t1} {t2}) v1redux) (multiSubstTyG {sz} {Γ1 , g1} {t1} {FunTy A r B} {γ1} typ1)
+              fun1 = Abs var1 bod1
+
+              ih1applied1 = (proj₁ inner1) fun1 fun1redux
+
+              -- Join up the reductions
+              -- multiRedux (App (multisubst' 0 γ1 t1) (multisubst' 0 γ1 t2)) ≡ v1
+              aeq1 = trans (cong multiRedux (sym (substPresApp {0} {γ1} {t1} {t2}))) v1redux
+              aeq2 = trans (sym (multReduxCongruence {multisubst' zero γ1 t1} {Abs var1 bod1} {\t1' -> App t1' (multisubst' 0 γ1 t2)} fun1redux)) aeq1
+              v1reduxerFull = trans (sym (betaVariant1 {bod1} {multisubst' 0 γ1 t2} {var1})) aeq2
+
+              -- Goal: [ Box r A ]e (Promote (multisubst γ1 t2))
+              -- [ Box r A ]e (multisubst' 0 γ1 (Promote t2))
+            in
+              extractUn ih1applied1 (multisubst γ1 t2) (subst (\h -> [ Box r A ]e h) (substPresProm {0} {γ1} {t2}) (proj₁ inner2)) v1 v1reduxerFull
+
+          obsMain2 : [ B ]e (multisubst' zero γ2 (App t1 t2))
+          obsMain2 v2 v2redux =
+            let
+              ((var2 , bod2) , (fun2redux , bodTy2)) = reduxTheoremAppTyG {multisubst' 0 γ2 t1} {multisubst' 0 γ2 t2} {v2} {0} {Empty} {A} {B} {r} {g1} (subst (\r -> multiRedux r ≡ v2) (substPresApp {0} {γ2} {t1} {t2}) v2redux) (multiSubstTyG {sz} {Γ1 , g1} {t1} {FunTy A r B} {γ2} typ1)
+              fun2 = Abs var2 bod2
+
+              ih1applied2 = (proj₂ inner1) fun2 fun2redux
+
+              -- Join up the reductions
+              -- multiRedux (App (multisubst' 0 γ1 t1) (multisubst' 0 γ1 t2)) ≡ v1
+              beq1 = trans (cong multiRedux (sym (substPresApp {0} {γ2} {t1} {t2}))) v2redux
+              -- multiRedux (App (Abs var1 bod2) (multisubst' 0 γ2 t2)) ≡ v2
+              beq2 = trans (sym (multReduxCongruence {multisubst' zero γ2 t1} {Abs var2 bod2} {\t1' -> App t1' (multisubst' 0 γ2 t2)} fun2redux)) beq1
+              --
+              v2reduxerFull = trans (sym (betaVariant1 {bod2} {multisubst' 0 γ2 t2} {var2})) beq2
+
+            in
+              extractUn ih1applied2 (multisubst γ2 t2) (subst (\h -> [ Box r A ]e h) (substPresProm {0} {γ2} {t2}) (proj₂ inner2)) v2 v2reduxerFull
 
 biFundamentalTheoremGhost' {_} {_} {ghost} {.unit} {.Unit} unitConstr {γ1} {γ2} adv contextInterp rewrite substPresUnit {γ1} {0} | substPresUnit {γ2} {0} with 1R ≤d adv
 ... | yes p = boxInterpBiobs p unit unit inner

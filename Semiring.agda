@@ -9,6 +9,8 @@ open import Data.Unit hiding (_≟_; _≤_)
 open import Relation.Nullary
 open import Relation.Unary
 open import Relation.Nullary.Decidable
+open import Data.Maybe
+open import Data.Maybe.Properties
 
 record Semiring : Set₁ where
   field
@@ -19,6 +21,7 @@ record Semiring : Set₁ where
     _*R_    : grade -> grade -> grade
     _≤_     : grade -> grade -> Set
 
+    -- Decideable ordering and equality
     _≤d_  : (r : grade) -> (s : grade) -> Dec (r ≤ s)
 
     leftUnit+   : {r : grade} -> 0R +R r ≡ r
@@ -43,6 +46,44 @@ record Semiring : Set₁ where
     transitive≤ : {r s t : grade} -> r ≤ s -> s ≤ t -> r ≤ t
 
 open Semiring
+
+partialJoin : {{ R : Semiring }} -> grade R -> grade R -> Maybe (grade R)
+partialJoin {{R}} r s with _≤d_ R r s | _≤d_ R s r
+... | yes _ | _     = just s
+... | no  _ | yes _ = just r
+... | no _  | no  _ = nothing
+
+partialJoinMono : {{ R : Semiring }} {r1 r2 : grade R} {s1 s2 : grade R} {r r' : grade R}
+                -> _≤_ R r1 r2
+                -> _≤_ R s1 s2
+                -> just r ≡ partialJoin r1 s1
+                -> just r' ≡ partialJoin r2 s2
+                -> _≤_ R r r'
+partialJoinMono {{R}} {r1} {r2} {s1} {s2} {r} {r'} pre1 pre2 eq1 eq2
+  with _≤d_ R r1 s1 | _≤d_ R s1 r1 | _≤d_ R r2 s2 | _≤d_ R s2 r2
+... | yes p1 | yes p2 | yes p3 | yes p4 rewrite just-injective eq1 | just-injective eq2 = pre2
+... | yes p1 | yes p2 | yes p3 | no ¬p4 rewrite just-injective eq1 | just-injective eq2 = pre2
+... | yes p1 | yes p2 | no ¬p3 | yes p4 rewrite just-injective eq1 | just-injective eq2 = transitive≤ R p2 pre1
+... | yes p1 | no ¬p2 | yes p3 | yes p4 rewrite just-injective eq1 | just-injective eq2 = pre2
+... | yes p1 | no ¬p2 | yes p3 | no ¬p4 rewrite just-injective eq1 | just-injective eq2 = pre2
+... | yes p1 | no ¬p2 | no ¬p3 | yes p4 rewrite just-injective eq1 | just-injective eq2 = transitive≤ R pre2 p4
+... | no ¬p1 | yes p2 | yes p3 | yes p4 rewrite just-injective eq1 | just-injective eq2 = transitive≤ R pre1 p3
+... | no ¬p1 | yes p2 | yes p3 | no ¬p4 rewrite just-injective eq1 | just-injective eq2 = transitive≤ R pre1 p3
+... | no ¬p1 | yes p2 | no ¬p3 | yes p4 rewrite just-injective eq1 | just-injective eq2 = pre1
+
+partialJoinIdem : {{ R : Semiring }} {r : grade R}
+                -> just r ≡ partialJoin r r
+partialJoinIdem {{R}} {r} with _≤d_ R r r
+... | yes p = refl
+... | no ¬p = ⊥-elim (¬p (reflexive≤ R {r}))
+
+urhu : {{ R : Semiring }} {r1 r2 adv r : grade R}
+     -> _≤_ R r1 adv
+     -> ¬ (_≤_ R r2 adv)
+     -> just r ≡ partialJoin r1 r2
+     -> _≤_ R r adv
+urhu {{R}} {r1} {r2} {adv} {r} pre1 npre2 eq with _≤d_ R r1 r2 | _≤d_ R r2 r1
+... | a1 | a2 = {!!}
 
 record NonInterferingSemiring (R : Semiring) : Set₁ where
   field
@@ -71,6 +112,30 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
                        -> ¬ (_≤_ R s adv)
 
 open NonInterferingSemiring
+
+
+joinMonoInv1 : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
+               {r1 r2 adv r' : grade R}
+     -> just r' ≡ partialJoin {{R}} r1 r2
+     -> _≤_ R r'  adv
+     -> _≤_ R r2 adv
+joinMonoInv1 {{R}} {r1} {r2} {adv} {r'} ev pre with _≤d_ R r1 r2 | _≤d_ R r2 r1
+... | yes eq | yes eq' rewrite sym (just-injective ev) = pre
+... | yes p1 | no ¬p2 rewrite sym (just-injective ev) = pre
+... | no ¬p1 | yes p2 = transitive≤ R (subst (\h -> _≤_ R r2 h) (sym (just-injective ev)) p2) pre
+joinMonoInv1 {{R}} {r1} {r2} {adv} {r'} () pre | no ¬p1 | no ¬p2
+
+joinMonoInv2 : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
+               {r1 r2 adv r' : grade R}
+     -> just r' ≡ partialJoin {{R}} r1 r2
+     -> _≤_ R r'  adv
+     -> _≤_ R r1 adv
+joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} ev pre with _≤d_ R r1 r2 | _≤d_ R r2 r1
+... | yes eq | yes eq' rewrite sym (trans (just-injective ev) (antisymmetry R' eq' eq)) = pre
+... | yes p1 | no ¬p2 = transitive≤ R (subst (\h -> _≤_ R r1 h) (sym (just-injective ev)) p1) pre
+... | no ¬p1 | yes p2 rewrite sym (just-injective ev) = pre
+joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} () pre | no ¬p1 | no ¬p2
+
 
 -- # Some derived properties
 
