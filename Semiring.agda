@@ -170,6 +170,8 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     -- definitely holds for Level and seems needed for the proof.
     absorb# : {r : grade R} -> r # (1R R) ≡ (1R R)
 
+    idem* : {r : grade R} -> _*R_ R r r ≡ r
+
     -- distributivity rules with other operators?
     -- substitution theorem will tell us if we need these
 
