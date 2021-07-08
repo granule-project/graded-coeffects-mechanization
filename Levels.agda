@@ -1015,7 +1015,7 @@ instance
 
 ohah'' : {r g adv : Level}
     -> _≤_ levelSemiring r adv
-    -> _≤_ levelSemiring (_+R_ levelSemiring r g) adv
+    -> _≤_ levelSemiring (_*R_ levelSemiring r g) adv
     -> ¬ _≤_ levelSemiring g adv
     -> ⊥
 ohah'' {Public} {Public} {Public} (Refl .Public) (Refl .Public) npre = npre (Refl Public)
