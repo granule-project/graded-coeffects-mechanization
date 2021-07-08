@@ -1012,3 +1012,143 @@ instance
   absorb# levelIFstructure {Private} = refl
   absorb# levelIFstructure {Dunno}   = refl
   absorb# levelIFstructure {Unused}  = refl
+
+ohah'' : {r g adv : Level}
+    -> _≤_ levelSemiring r adv
+    -> _≤_ levelSemiring (_+R_ levelSemiring r g) adv
+    -> ¬ _≤_ levelSemiring g adv
+    -> ⊥
+ohah'' {Public} {Public} {Public} (Refl .Public) (Refl .Public) npre = npre (Refl Public)
+ohah'' {Public} {Public} {Private} PrivPub PrivPub npre = npre (PrivPub)
+ohah'' {Public} {Public} {Dunno} DunnoPub DunnoPub npre = npre (DunnoPub)
+ohah'' {Public} {Public} {Unused} 0Pub 0Pub npre = npre (0Pub)
+ohah'' {Public} {Private} {Public} (Refl .Public) (Refl .Public) npre = {!!}
+ohah'' {Public} {Private} {Private} PrivPub PrivPub npre = {!!}
+ohah'' {Public} {Private} {Dunno} DunnoPub DunnoPub npre = {!!}
+ohah'' {Public} {Private} {Unused} 0Pub 0Pub npre = {!!}
+ohah'' {Public} {Dunno} {Public} (Refl .Public) (Refl .Public) npre = {!!}
+ohah'' {Public} {Dunno} {Private} PrivPub PrivPub npre = {!!}
+ohah'' {Public} {Dunno} {Dunno} DunnoPub DunnoPub npre = {!!}
+ohah'' {Public} {Dunno} {Unused} 0Pub 0Pub npre = {!!}
+ohah'' {Public} {Unused} {Public} (Refl .Public) (Refl .Public) npre = {!!}
+ohah'' {Public} {Unused} {Private} PrivPub PrivPub npre = {!!}
+ohah'' {Public} {Unused} {Dunno} DunnoPub DunnoPub npre = {!!}
+ohah'' {Public} {Unused} {Unused} 0Pub 0Pub npre = {!!}
+ohah'' {Private} {Public} {Public} () pre2 npre
+ohah'' {Private} {Public} {Private} (Refl .Private) PrivPub npre = {!!}
+ohah'' {Private} {Public} {Dunno} () pre2 npre
+ohah'' {Private} {Public} {Unused} 0Priv 0Pub npre = {!!}
+ohah'' {Private} {Private} {Public} () pre2 npre
+ohah'' {Private} {Private} {Private} (Refl .Private) (Refl .Private) npre = {!!}
+ohah'' {Private} {Private} {Dunno} () pre2 npre
+ohah'' {Private} {Private} {Unused} 0Priv 0Priv npre = {!!}
+ohah'' {Private} {Dunno} {Public} () pre2 npre
+ohah'' {Private} {Dunno} {Private} (Refl .Private) PrivDunno npre = {!!}
+ohah'' {Private} {Dunno} {Dunno} () pre2 npre
+ohah'' {Private} {Dunno} {Unused} 0Priv 0Dunno npre = {!!}
+ohah'' {Private} {Unused} {Public} () pre2 npre
+ohah'' {Private} {Unused} {Private} (Refl .Private) (Refl .Private) npre = {!!}
+ohah'' {Private} {Unused} {Dunno} () pre2 npre
+ohah'' {Private} {Unused} {Unused} 0Priv 0Priv npre = {!!}
+ohah'' {Dunno} {Public} {Public} () pre2 npre
+ohah'' {Dunno} {Public} {Private} PrivDunno PrivPub npre = {!!}
+ohah'' {Dunno} {Public} {Dunno} (Refl .Dunno) DunnoPub npre = {!!}
+ohah'' {Dunno} {Public} {Unused} 0Dunno 0Pub npre = {!!}
+ohah'' {Dunno} {Private} {Public} () pre2 npre
+ohah'' {Dunno} {Private} {Private} PrivDunno PrivDunno npre = {!!}
+ohah'' {Dunno} {Private} {Dunno} (Refl .Dunno) (Refl .Dunno) npre = {!!}
+ohah'' {Dunno} {Private} {Unused} 0Dunno 0Dunno npre = {!!}
+ohah'' {Dunno} {Dunno} {Public} () pre2 npre
+ohah'' {Dunno} {Dunno} {Private} PrivDunno PrivDunno npre = {!!}
+ohah'' {Dunno} {Dunno} {Dunno} (Refl .Dunno) (Refl .Dunno) npre = {!!}
+ohah'' {Dunno} {Dunno} {Unused} 0Dunno 0Dunno npre = {!!}
+ohah'' {Dunno} {Unused} {Public} () pre2 npre
+ohah'' {Dunno} {Unused} {Private} PrivDunno PrivDunno npre = {!!}
+ohah'' {Dunno} {Unused} {Dunno} (Refl .Dunno) (Refl .Dunno) npre = {!!}
+ohah'' {Dunno} {Unused} {Unused} 0Dunno 0Dunno npre = {!!}
+ohah'' {Unused} {Public} {Public} () pre2 npre
+ohah'' {Unused} {Public} {Private} () pre2 npre
+ohah'' {Unused} {Public} {Dunno} () pre2 npre
+ohah'' {Unused} {Public} {Unused} (Refl .Unused) 0Pub npre = {!!}
+ohah'' {Unused} {Private} {Public} () pre2 npre
+ohah'' {Unused} {Private} {Private} () pre2 npre
+ohah'' {Unused} {Private} {Dunno} () pre2 npre
+ohah'' {Unused} {Private} {Unused} (Refl .Unused) 0Priv npre = {!!}
+ohah'' {Unused} {Dunno} {Public} () pre2 npre
+ohah'' {Unused} {Dunno} {Private} () pre2 npre
+ohah'' {Unused} {Dunno} {Dunno} () pre2 npre
+ohah'' {Unused} {Dunno} {Unused} (Refl .Unused) 0Dunno npre = {!!}
+ohah'' {Unused} {Unused} {Public} () pre2 npre
+ohah'' {Unused} {Unused} {Private} () pre2 npre
+ohah'' {Unused} {Unused} {Dunno} () pre2 npre
+ohah'' {Unused} {Unused} {Unused} (Refl .Unused) (Refl .Unused) npre = {!!}
+
+
+ohah : {r g adv : Level}
+    -> _≤_ levelSemiring r adv
+    -> _≤_ levelSemiring (_*R_ levelSemiring r g) adv
+    -> _≤_ levelSemiring g adv
+ohah {Public} {Public} {Public} (Refl .Public) (Refl .Public) = Refl {!!}
+ohah {Public} {Public} {Private} PrivPub PrivPub = PrivPub
+ohah {Public} {Public} {Dunno} DunnoPub DunnoPub = DunnoPub
+ohah {Public} {Public} {Unused} 0Pub 0Pub = 0Pub
+ohah {Public} {Private} {Public} (Refl .Public) (Refl .Public) = {!!}
+ohah {Public} {Private} {Private} PrivPub PrivPub = Refl {!!}
+ohah {Public} {Private} {Dunno} DunnoPub DunnoPub = {!!}
+ohah {Public} {Private} {Unused} 0Pub 0Pub = 0Priv
+ohah {Public} {Dunno} {Public} (Refl .Public) (Refl .Public) = {!!}
+ohah {Public} {Dunno} {Private} PrivPub PrivPub = PrivDunno
+ohah {Public} {Dunno} {Dunno} DunnoPub DunnoPub = Refl {!!}
+ohah {Public} {Dunno} {Unused} 0Pub 0Pub = {!!}
+ohah {Public} {Unused} {Public} (Refl .Public) ()
+ohah {Public} {Unused} {Private} PrivPub ()
+ohah {Public} {Unused} {Dunno} DunnoPub ()
+ohah {Public} {Unused} {Unused} 0Pub (Refl .Unused) = {!!}
+ohah {Private} {Public} {Public} () pre2
+ohah {Private} {Public} {Private} (Refl .Private) PrivPub = {!!}
+ohah {Private} {Public} {Dunno} () pre2
+ohah {Private} {Public} {Unused} 0Priv 0Pub = {!!}
+ohah {Private} {Private} {Public} () pre2
+ohah {Private} {Private} {Private} (Refl .Private) (Refl .Private) = {!!}
+ohah {Private} {Private} {Dunno} () pre2
+ohah {Private} {Private} {Unused} 0Priv 0Priv = {!!}
+ohah {Private} {Dunno} {Public} () pre2
+ohah {Private} {Dunno} {Private} (Refl .Private) PrivDunno = {!!}
+ohah {Private} {Dunno} {Dunno} () pre2
+ohah {Private} {Dunno} {Unused} 0Priv 0Dunno = {!!}
+ohah {Private} {Unused} {Public} () pre2
+ohah {Private} {Unused} {Private} (Refl .Private) ()
+ohah {Private} {Unused} {Dunno} () pre2
+ohah {Private} {Unused} {Unused} 0Priv (Refl .Unused) = {!!}
+ohah {Dunno} {Public} {Public} () pre2
+ohah {Dunno} {Public} {Private} PrivDunno PrivPub = {!!}
+ohah {Dunno} {Public} {Dunno} (Refl .Dunno) DunnoPub = {!!}
+ohah {Dunno} {Public} {Unused} 0Dunno 0Pub = {!!}
+ohah {Dunno} {Private} {Public} () pre2
+ohah {Dunno} {Private} {Private} PrivDunno PrivDunno = {!!}
+ohah {Dunno} {Private} {Dunno} (Refl .Dunno) (Refl .Dunno) = {!!}
+ohah {Dunno} {Private} {Unused} 0Dunno 0Dunno = {!!}
+ohah {Dunno} {Dunno} {Public} () pre2
+ohah {Dunno} {Dunno} {Private} PrivDunno PrivDunno = {!!}
+ohah {Dunno} {Dunno} {Dunno} (Refl .Dunno) (Refl .Dunno) = {!!}
+ohah {Dunno} {Dunno} {Unused} 0Dunno 0Dunno = {!!}
+ohah {Dunno} {Unused} {Public} () pre2
+ohah {Dunno} {Unused} {Private} PrivDunno ()
+ohah {Dunno} {Unused} {Dunno} (Refl .Dunno) ()
+ohah {Dunno} {Unused} {Unused} 0Dunno (Refl .Unused) = {!!}
+ohah {Unused} {Public} {Public} () pre2
+ohah {Unused} {Public} {Private} () pre2
+ohah {Unused} {Public} {Dunno} () pre2
+ohah {Unused} {Public} {Unused} (Refl .Unused) (Refl .Unused) = {!!}
+ohah {Unused} {Private} {Public} () pre2
+ohah {Unused} {Private} {Private} () pre2
+ohah {Unused} {Private} {Dunno} () pre2
+ohah {Unused} {Private} {Unused} (Refl .Unused) (Refl .Unused) = {!!}
+ohah {Unused} {Dunno} {Public} () pre2
+ohah {Unused} {Dunno} {Private} () pre2
+ohah {Unused} {Dunno} {Dunno} () pre2
+ohah {Unused} {Dunno} {Unused} (Refl .Unused) (Refl .Unused) = {!!}
+ohah {Unused} {Unused} {Public} () pre2
+ohah {Unused} {Unused} {Private} () pre2
+ohah {Unused} {Unused} {Dunno} () pre2
+ohah {Unused} {Unused} {Unused} (Refl .Unused) (Refl .Unused) = {!!}

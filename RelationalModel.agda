@@ -228,6 +228,12 @@ reduxTheoremBool1 = {!!}
 reduxTheoremBool2 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
 reduxTheoremBool2 = {!!}
 
+reduxAndSubstCombinedProm : {v t : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
+reduxAndSubstCombinedProm {v} {t} {γ} redux =
+       let qr = cong multiRedux (substPresProm {0} {γ} {t})
+           qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
+       in sym (trans (sym redux) qr')
+
 postulate
  -- This is about the structure of substitutions and relates to abs
  -- there is some simplification here because of the definition of ,, being
@@ -621,14 +627,11 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
     ih1 = utheorem {s} {γ1} {Γ} {t} {A} typ uinterp1
     ih2 = utheorem {s} {γ2} {Γ} {t} {A} typ uinterp2
   in
-   subst₂ (\h1 h2 -> ⟦ Box r A ⟧v adv h1 h2) (thm {v1} {γ1} v1redux) (thm {v2} {γ2} v2redux)
-             (boxInterpBiunobs eq (multisubst γ1 t) (multisubst γ2 t) (ih1 , ih2))
+   subst₂ (\h1 h2 -> ⟦ Box r A ⟧v adv h1 h2)
+     (reduxAndSubstCombinedProm {v1} {t} {γ1} v1redux)
+     (reduxAndSubstCombinedProm {v2} {t} {γ2} v2redux)
+     (boxInterpBiunobs eq (multisubst γ1 t) (multisubst γ2 t) (ih1 , ih2))
   where
-    thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
-    thm {v} {γ} redux =
-       let qr = cong multiRedux (substPresProm {0} {γ} {t})
-           qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
-       in sym (trans (sym redux) qr')
 
     binaryToUnaryVal : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]v (Promote v1)) × ([ Box s A ]v (Promote v2))
     binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiobs eq' .v1 .v2 ainterp) =
