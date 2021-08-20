@@ -497,8 +497,15 @@ biFundamentalTheorem {{R}} {_} {Γ} {Var .(Γlength Γ1)} {τ} (var {_} {_} {.τ
 
   where
     conc : ⟦ τ ⟧v adv v1 v2
+    -- due to the typing of the variable rule, the promotion here for values going into
+    -- the input is at grade 1
+    -- then either we have:
+    --    * 1 <= adv i.e., adversary is allowed to see this
+    --    * e.g., Pub <= Priv  (adversary is Private) or Pub <= Pub (advesary is Public)
     conc with argInterp (Promote a1) (Promote a2) refl refl
     ... | boxInterpBiobs   eq .a1 .a2 inner = inner v1 v2 (isSimultaneous' {v1} {a1} {γ1'} v1redux) (isSimultaneous' {v2} {a2} {γ2'} v2redux)
+        --    * ¬ (1 <= adv) i.e.., adversary cannot see this.
+        -- however, since ∀ r . 1 <= r (e.g., for Sec) then this is cannot be the case.
     ... | boxInterpBiunobs eq .a1 .a2 inner = ⊥-elim (eq oneIsBottom)
 
 -- generalises the above for any variable

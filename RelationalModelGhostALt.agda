@@ -237,8 +237,8 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
             let ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (invisible geq' (underBox2 {sz} {γ1} {γ2} contextInterp))
                 --ih0 = unpackObs {!!} ih
                 ih' = (unpackUnobs geq' ih)
-                --in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) ih0
-                in boxInterpBiunobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ih' -- boxInterpBiobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ? (unpackUnobs geq' ih)
+                in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) ?
+                --in boxInterpBiunobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ih' -- boxInterpBiobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ? (unpackUnobs geq' ih)
 
 
 ... | no ¬req = main
@@ -335,3 +335,20 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
 biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp = {!!}
 
 biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp = {!!}
+
+
+nonInterferenceGhostAlt :
+   {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}}
+   {e : Term} {r s : grade} {pre : r ≤ s} {nonEq : r ≢ s}
+        -> (Ext Empty (Grad BoolTy s) , r) ⊢ e ∶ Box r BoolTy
+
+        -> (v1 v2 : Term)
+        -> (Empty , default) ⊢ v1 ∶ BoolTy
+        -> (Empty , default) ⊢ v2 ∶ BoolTy
+        -> Value v1
+        -> Value v2
+
+        -> multiRedux (syntacticSubst v1 0 e) == multiRedux (syntacticSubst v2 0 e)
+
+nonInterferenceGhostAlt {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
+ {!!}
