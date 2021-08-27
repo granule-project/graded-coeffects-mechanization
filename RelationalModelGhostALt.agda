@@ -151,8 +151,24 @@ biFundamentalTheoremGhost {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_}
 
 biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG rewrite prf
   with contextInterpG
+{-
+  G, ghost g' |- t : A
+------------------------------
+  G, ghost g |- [t] : Box r A
+
+ where g = r * g'
+
+ model is then
+   Box g ⟦ G ⟧ -> Box g (Box r ⟦ A ⟧)
+-}
 biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
 ... | yes eq =  main
+{-
+  We now know that
+  eq0 : g ≤ adv
+  eq : r ≤ adv
+  Therefore the adversary can observer under the box(es) down to the value of t
+-}
   where
 
     main : ⟦ Box ghost (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t))) (Promote (multisubst' 0 γ2 (Promote t)))
@@ -237,7 +253,7 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
             let ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (invisible geq' (underBox2 {sz} {γ1} {γ2} contextInterp))
                 --ih0 = unpackObs {!!} ih
                 ih' = (unpackUnobs geq' ih)
-                in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) ?
+                in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) {!!}
                 --in boxInterpBiunobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ih' -- boxInterpBiobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ? (unpackUnobs geq' ih)
 
 
