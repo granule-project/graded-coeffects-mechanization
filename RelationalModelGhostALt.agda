@@ -111,6 +111,20 @@ utheoremG : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {s : ℕ} {γ : 
         -> [ τ ]e (multisubst γ e)
 utheoremG = {!!}
 
+intermediate : {{R : Semiring}} {sz : ℕ}
+            {Γ : Context sz}
+            {r s adv : grade}
+            {γ1 γ2 : List Term}
+            {τ : Type}
+            {e : Term}
+            -> ⟦ s · Γ ⟧Γ adv γ1 γ2
+            -> (s ≤ adv)
+            -> ⟦ Box r τ ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
+            -> ¬ (r ≤ adv)
+            -> ⟦ Box (r *R s) τ ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
+intermediate = {!!}
+
+
 biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
           {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
 
