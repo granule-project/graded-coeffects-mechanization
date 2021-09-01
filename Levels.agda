@@ -24,7 +24,7 @@ data Level : Set where
   Dunno   : Level
   Unused  : Level
 
--- constructive representation of the ordering
+-- constructive representation of the ordering (using Granule ordering)
 data Order : Level -> Level -> Set where
   -- central 'line' and its transitivity
   0Pub    : Order Unused Public
@@ -1013,13 +1013,39 @@ instance
   absorb# levelIFstructure {Dunno}   = refl
   absorb# levelIFstructure {Unused}  = refl
 
+  idem* levelIFstructure {Public} = refl
+  idem* levelIFstructure {Private} = refl
+  idem* levelIFstructure {Dunno} = refl
+  idem* levelIFstructure {Unused} = refl
+
+
+hm : {s g adv : Level}
+   -> _≤_ levelSemiring s adv
+   -> _≤_ levelSemiring (_*R_ levelSemiring g s) adv
+hm {.Public} {Public} {.Unused} 0Pub = 0Pub
+hm {.Public} {Private} {.Unused} 0Pub = 0Pub
+hm {.Public} {Dunno} {.Unused} 0Pub = 0Pub
+hm {.Public} {Unused} {.Unused} 0Pub = Refl Unused
+hm {.Private} {Public} {.Unused} 0Priv = 0Pub
+hm {.Private} {Private} {.Unused} 0Priv = 0Priv
+hm {.Private} {Dunno} {.Unused} 0Priv = 0Dunno
+hm {.Private} {Unused} {.Unused} 0Priv = Refl Unused
+hm {.Public} {Public} {.Private} PrivPub = PrivPub
+hm {.Public} {Private} {.Private} PrivPub = PrivPub
+hm {.Public} {Dunno} {.Private} PrivPub = PrivPub
+hm {.Public} {Unused} {.Private} PrivPub = {!!}
+hm {.Dunno} {g} {.Unused} 0Dunno = {!!}
+hm {.Dunno} {g} {.Private} PrivDunno = {!!}
+hm {.Public} {g} {.Dunno} DunnoPub = {!!}
+hm {s} {g} {.s} (Refl .s) = {!!}
+
 ohah'' : {r g adv : Level}
     -> _≤_ levelSemiring r adv
     -> _≤_ levelSemiring (_*R_ levelSemiring r g) adv
     -> ¬ _≤_ levelSemiring g adv
     -> ⊥
 ohah'' {Private} {Public} {Public} () pre2 npre3
-ohah'' {Public} {Private} {Public} (Refl .Public) (Refl .Public) npre3 = {!!}
+ohah'' {Public} {Private} {Public} (Refl .Public) (Refl .Public) npre3 = npre3 {!!}
 ohah'' {a} {b} {c} pre1 pre2 npre3 = {!!}
 
 

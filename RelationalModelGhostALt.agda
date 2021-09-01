@@ -138,16 +138,27 @@ delta {{R}} {adv} {r} {s} {t1} {t2} {τ} inp v1 v2 v1redux v2redux with s ≤d a
 
 intermediate : {{R : Semiring}} {sz : ℕ}
             {Γ : Context sz}
-            {r s adv : grade}
+            {ghost s adv : grade}
             {γ1 γ2 : List Term}
             {τ : Type}
             {e : Term}
             -> ⟦ s · Γ ⟧Γ adv γ1 γ2
             -> (s ≤ adv)
-            -> ⟦ Box r τ ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
-            -> ¬ (r ≤ adv)
-            -> ⟦ Box (r *R s) τ ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
-intermediate = {!!}
+            -> ⟦ Box ghost τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+            -> ¬ (ghost ≤ adv)
+            -> ⟦ Box (ghost *R s) τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+intermediate {{R}} {Γ} {sz} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2
+ with (ghost *R s) ≤d adv
+{-
+  But what if s = Public, g = Private, adv = Public
+  then we have s ≤ adv (Public ≤ Public) yes
+             ¬ (ghost ≤ adv) meaning ¬ (Private ≤ Public) yes
+             (ghost *R s) = Public * Private = Public
+        therefore (ghost *R s) ≤ Public is Public ≤ Public which is true.
+ therefore adversary cannot see inside Box ghost τ but should be able to see inside Box (ghost *R s).
+-}
+... | yes p = {!!}
+... | no ¬p = {!!}
 
 
 biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
@@ -200,12 +211,18 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
  model is then
    Box g ⟦ G ⟧ -> Box g (Box r ⟦ A ⟧)
 -}
-biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
-... | yes eq rewrite injPair2 prf =
+biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
+... | yes eq rewrite injPair2 prf | idem* {R} {r} =
   let
-    ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} {!!} {{!!}} {{!!}} adv {!!}
+    ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv {!!}
+    ih0 = subst (\h -> ⟦ Box ghost' A ⟧v adv h (Promote (multisubst γ2 t)))
+             (sym (substPresProm {zero} {γ1} {t})) ih
+    ih1 = subst (\h -> ⟦ Box ghost' A ⟧v adv (multisubst γ1 (Promote t)) h)
+             (sym (substPresProm {zero} {γ2} {t})) ih0
+    az = intermediate {sz} {Γ} {ghost'} {r} {adv} {γ1} {γ2} {A} {Promote t} contextInterp eq {!ih!} {!!}
+    az2 = congidm {multisubst' zero γ1 (Promote t)} {multisubst' zero γ2 (Promote t)} {!!}
   in
-    {!!} -- delta (intermediate contextInterp eq {!ih!} {!!}) {!!} {!!} {!!} {!!}
+    {!z2!}
 
 
 -- Previous implementation:
@@ -217,6 +234,8 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
   Therefore the adversary can observer under the box(es) down to the value of t
 -}
   where
+    congidm : {t1 t2 : Term} -> ⟦ Box (ghost' *R r) A ⟧v adv t1 t2 -> ⟦ Box (r *R ghost') (Box r A) ⟧v adv t1 t2
+    congidm = {!!}
 
     main : ⟦ Box ghost (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t))) (Promote (multisubst' 0 γ2 (Promote t)))
     main rewrite injPair2 prf = boxInterpBiobs eq0 (multisubst γ1 (Promote t))  (multisubst γ2 (Promote t)) conclusion
@@ -286,7 +305,9 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
         ... | yes geq' =
            let ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (visible geq' (underBox {sz} {γ1} {γ2} contextInterp))
            in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) (unpackObs geq' ih)
-        ... | no geq' rewrite sym (injPair2 prf) =
+        ... | no geq' rewrite sym (injPair2 prf) = {!!}
+
+{-
 
 -- (trans (monotone* {!!} {!!}) (idem* {adv}))
            -- eq : r ≤ adv
@@ -303,6 +324,7 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
                 in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) {!!}
                 --in boxInterpBiunobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ih' -- boxInterpBiobs {!!} (multisubst' zero γ1 t) (multisubst' zero γ2 t) ? (unpackUnobs geq' ih)
 
+-}
 
 ... | no ¬req = main
   where
