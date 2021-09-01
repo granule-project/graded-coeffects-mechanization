@@ -111,6 +111,31 @@ utheoremG : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {s : ℕ} {γ : 
         -> [ τ ]e (multisubst γ e)
 utheoremG = {!!}
 
+multireduxPromoteLemma :
+  {{ R : Semiring }}
+  {adv r : grade}
+  {τ : Type}
+  {t1 t2 : Term}
+  -> ⟦ Box r τ ⟧e adv t1 t2
+  -> Σ (Term × Term) (\(v1 , v2) -> multiRedux t1 ≡ Promote v1 × multiRedux t2 ≡ Promote v2)
+multireduxPromoteLemma = {!!}
+
+delta : {{R : Semiring}}
+        {adv r s : grade}
+        {t1 t2 : Term}
+        {τ : Type}
+      -> ⟦ Box (s *R r) τ ⟧e adv t1 t2
+      -> ⟦ Box s (Box r τ) ⟧e adv t1 t2
+delta {{R}} {adv} {r} {s} {t1} {t2} {τ} inp v1 v2 v1redux v2redux with s ≤d adv | r ≤d adv | (s *R r) ≤d adv
+... | yes p1 | yes p2 | yes p3 = {!boxInterpBiobs!}
+... | yes p1 | yes p2 | no ¬p3 = {!!}
+... | yes p1 | no ¬p2 | yes p3 = {!!}
+... | yes p1 | no ¬p2 | no ¬p3 = {!!}
+... | no ¬p1 | yes p2 | yes p3 = {!!}
+... | no ¬p1 | yes p2 | no ¬p3 = {!!}
+... | no ¬p1 | no ¬p2 | yes p3 = {!!}
+... | no ¬p1 | no ¬p2 | no ¬p3 = {!!}
+
 intermediate : {{R : Semiring}} {sz : ℕ}
             {Γ : Context sz}
             {r s adv : grade}
@@ -176,7 +201,15 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
    Box g ⟦ G ⟧ -> Box g (Box r ⟦ A ⟧)
 -}
 biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
-... | yes eq =  main
+... | yes eq rewrite injPair2 prf =
+  let
+    ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} {!!} {{!!}} {{!!}} adv {!!}
+  in
+    {!!} -- delta (intermediate contextInterp eq {!ih!} {!!}) {!!} {!!} {!!} {!!}
+
+
+-- Previous implementation:
+-- main
 {-
   We now know that
   eq0 : g ≤ adv
