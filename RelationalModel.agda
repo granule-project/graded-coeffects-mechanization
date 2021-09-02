@@ -127,7 +127,8 @@ mutual
 
 -- binary
 ⟦_⟧Γ : {{R : Semiring}} -> {s : ℕ} -> Context s -> (adv : grade) -> List Term -> List Term -> Set
-⟦ Empty   ⟧Γ adv _ _  = ⊤
+⟦ Empty   ⟧Γ adv [] []  = ⊤
+⟦ Empty   ⟧Γ adv _ _  = ⊥
 ⟦ Ext _ _ ⟧Γ adv _ [] = ⊥
 ⟦ Ext _ _ ⟧Γ adv [] _ = ⊥
 ⟦ Ext g (Grad A r) ⟧Γ adv (t1 ∷ ts1) (t2 ∷ ts2) =
@@ -572,7 +573,8 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
             | trans (sym v2redux') (reduxProm {v2}) = convertVal {r1} {r2} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
 
     splitContext1 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-    splitContext1 {0} {γ1} {γ2} {Empty} {Empty} _ = tt
+    splitContext1 {0} {[]} {[]} {Empty} {Empty} _ = tt
+    splitContext1 {0} {γ1} {γ2} {Empty} {Empty} p = ?
     splitContext1 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext1 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext1 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
@@ -585,7 +587,8 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
             | trans (sym v2redux') (reduxProm {v2}) = convertVal2 {r1} {r2} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
 
     splitContext2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ r · Γ2 ⟧Γ adv γ1 γ2
-    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} _ = tt
+    splitContext2 {0} {[]} {[]} {Empty} {Empty} _ = tt
+    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} p = ?
     splitContext2 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext2 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext2 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
@@ -690,7 +693,7 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
        convertVal  {s} {v1} {v2} {A} (arg1 (Promote v1) (Promote v2) refl refl)
 
     underBox : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
-    underBox {_} {_} {_} {Empty}   g = tt
+    underBox {_} {[]} {[]} {Empty}   g = tt
     underBox {suc n} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = convertExp {s} {v1} {v2} {A} ass , underBox {n} {γ1} {γ2} {Γ} g
     underBox {_} {[]} {[]} {Ext Γ (Grad A r₁)} ()
     underBox {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
@@ -761,12 +764,13 @@ biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {
        ... | boxInterpBiunobs  eq' t1 t2 inner  | no eq   = boxInterpBiunobs eq t1 t2 inner
 
        convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-       convert {.0} {Empty} {Empty} {γ1} {γ2} g = tt
+       convert {.0} {Empty} {Empty} {[]} {[]} g = tt
        convert {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x1 ∷ γ1} {x2 ∷ γ2} (hd , tl) =
           convertHyp hd , convert {sz} {Γ1} {Γ2} {γ1} {γ2} tl
 
        convert2 : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ2 ⟧Γ adv γ1 γ2
-       convert2 {.0} {Empty} {Empty} {γ1} {γ2} _ = tt
+       convert2 {.0} {Empty} {Empty} {[]} {[]} _ = tt
+       convert2 {.0} {Empty} {Empty} {γ1} {γ2} _ = ?
        convert2 {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} {[]} ()
        convert2 {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x1 ∷ γ1} {x2 ∷ γ2} (hd , tl)
          rewrite sameTypes {sz} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl =
