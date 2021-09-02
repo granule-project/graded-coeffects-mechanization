@@ -574,7 +574,7 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
 
     splitContext1 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
     splitContext1 {0} {[]} {[]} {Empty} {Empty} _ = tt
-    splitContext1 {0} {γ1} {γ2} {Empty} {Empty} p = ?
+    splitContext1 {0} {γ1} {γ2} {Empty} {Empty} p = {!!}
     splitContext1 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext1 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext1 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
@@ -588,7 +588,7 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
 
     splitContext2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ r · Γ2 ⟧Γ adv γ1 γ2
     splitContext2 {0} {[]} {[]} {Empty} {Empty} _ = tt
-    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} p = ?
+    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} p = {!!}
     splitContext2 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext2 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext2 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
@@ -770,7 +770,7 @@ biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {
 
        convert2 : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ2 ⟧Γ adv γ1 γ2
        convert2 {.0} {Empty} {Empty} {[]} {[]} _ = tt
-       convert2 {.0} {Empty} {Empty} {γ1} {γ2} _ = ?
+       convert2 {.0} {Empty} {Empty} {γ1} {γ2} _ = {!!}
        convert2 {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} {[]} ()
        convert2 {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x1 ∷ γ1} {x2 ∷ γ2} (hd , tl)
          rewrite sameTypes {sz} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl =

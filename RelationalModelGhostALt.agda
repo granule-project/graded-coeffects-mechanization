@@ -120,6 +120,25 @@ multireduxPromoteLemma :
   -> Σ (Term × Term) (\(v1 , v2) -> multiRedux t1 ≡ Promote v1 × multiRedux t2 ≡ Promote v2)
 multireduxPromoteLemma = {!!}
 
+-- under some constraints perhaps
+--unaryImpliesBinarySpecialised : {e : Term} {τ : Type}
+--  ⟦ τ ⟧e t
+
+sameContext : {{R : Semiring}}
+              {sz : ℕ} {Γ : Context sz}
+              {s adv : grade}
+              {γ1 γ2 : List Term}
+            -> ⟦ s · Γ ⟧Γ adv γ1 γ2
+            -> (s ≤ adv)
+            -> γ1 ≡ γ2
+sameContext ⦃ R ⦄ {.0} {Empty} {s} {adv} {[]} {[]} ctxt pre = refl
+sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ x} {s} {adv} {[]} {[]} ctxt pre = refl
+sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ x} {s} {adv} {[]} {x₁ ∷ γ2} ctxt pre = {!!}
+sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ x} {s} {adv} {x₁ ∷ γ1} {[]} ctxt pre = {!!}
+sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ (Grad A r)} {s} {adv} {x₁ ∷ γ1} {x₂ ∷ γ2} ctxt pre
+ with s · (Ext Γ (Grad A r))
+... | Ext sΓ (Grad A' sr) = {!!}
+
 delta : {{R : Semiring}}
         {adv r s : grade}
         {t1 t2 : Term}
@@ -157,8 +176,20 @@ intermediate {{R}} {Γ} {sz} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inn
         therefore (ghost *R s) ≤ Public is Public ≤ Public which is true.
  therefore adversary cannot see inside Box ghost τ but should be able to see inside Box (ghost *R s).
 -}
-... | yes p = {!!}
-... | no ¬p = {!!}
+intermediate {{R}} {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2 | yes p with inner
+intermediate ⦃ R ⦄ {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2
+  | yes p | boxInterpBiobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
+    boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) inner'
+intermediate ⦃ R ⦄ {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2
+  | yes p | boxInterpBiunobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
+    boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) {!inp!}
+    where
+      innerNew : {Γ : Context sz} -> ⟦ s · Γ ⟧Γ adv γ1 γ2 -> ⟦ τ ⟧e adv (multisubst' zero γ1 e) (multisubst' zero γ2 e)
+      innerNew {Γ} inp with Γ | inp
+      ... | Empty | ctxtInterp = {!!}
+      ... | Ext ctx x | ctxinterp = {!!}
+
+intermediate {{R}} {Γ} {sz} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2 | no ¬p = {!!}
 
 
 biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
@@ -253,7 +284,7 @@ biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz
            convertVal  {s} {v1} {v2} {A} (arg1 (Promote v1) (Promote v2) refl refl)
 
         underBox : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
-        underBox {_} {_} {_} {Empty}   g = tt
+        underBox {_} {[]} {[]} {Empty}   g = tt
         underBox {suc n} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = convertExp {s} {v1} {v2} {A} ass , underBox {n} {γ1} {γ2} {Γ} g
         underBox {_} {[]} {[]} {Ext Γ (Grad A r₁)} ()
         underBox {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
