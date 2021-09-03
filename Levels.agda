@@ -1033,11 +1033,58 @@ hm {.Private} {Unused} {.Unused} 0Priv = Refl Unused
 hm {.Public} {Public} {.Private} PrivPub = PrivPub
 hm {.Public} {Private} {.Private} PrivPub = PrivPub
 hm {.Public} {Dunno} {.Private} PrivPub = PrivPub
+-- Public <= Private  (Lo <= Hi)
+-- but
+-- Public * Unused <= Private
+-- Unused <= Private (0 <= Hi)
+-- is false as this means Hi [= 0
+
 hm {.Public} {Unused} {.Private} PrivPub = {!!}
-hm {.Dunno} {g} {.Unused} 0Dunno = {!!}
-hm {.Dunno} {g} {.Private} PrivDunno = {!!}
-hm {.Public} {g} {.Dunno} DunnoPub = {!!}
-hm {s} {g} {.s} (Refl .s) = {!!}
+
+hm {.Dunno} {Public} {.Unused} 0Dunno = 0Pub
+hm {.Dunno} {Private} {.Unused} 0Dunno = 0Dunno
+hm {.Dunno} {Dunno} {.Unused} 0Dunno = 0Dunno
+hm {.Dunno} {Unused} {.Unused} 0Dunno = Refl Unused
+hm {.Dunno} {Public} {.Private} PrivDunno = PrivPub
+hm {.Dunno} {Private} {.Private} PrivDunno = PrivDunno
+hm {.Dunno} {Dunno} {.Private} PrivDunno = PrivDunno
+
+-- same issue as above
+
+hm {.Dunno} {Unused} {.Private} PrivDunno = {!!}
+hm {.Public} {Public} {.Dunno} DunnoPub = DunnoPub
+hm {.Public} {Private} {.Dunno} DunnoPub = DunnoPub
+hm {.Public} {Dunno} {.Dunno} DunnoPub = DunnoPub
+
+-- Order Dunno Unused
+hm {.Public} {Unused} {.Dunno} DunnoPub = {!!}
+
+--
+hm {.Public} {Public} {.Public} (Refl Public) = Refl Public
+hm {.Public} {Private} {.Public} (Refl Public) = Refl Public
+hm {.Public} {Dunno} {.Public} (Refl Public) = Refl Public
+
+-- Order Public Unused
+hm {.Public} {Unused} {.Public} (Refl Public) = {!!}
+
+hm {.Private} {Public} {.Private} (Refl Private) = PrivPub
+hm {.Private} {Private} {.Private} (Refl Private) = Refl Private
+hm {.Private} {Dunno} {.Private} (Refl Private) = PrivDunno
+
+-- Order Private Unused
+hm {.Private} {Unused} {.Private} (Refl Private) = {!!}
+
+hm {.Dunno} {Public} {.Dunno} (Refl Dunno) = DunnoPub
+hm {.Dunno} {Private} {.Dunno} (Refl Dunno) = Refl Dunno
+hm {.Dunno} {Dunno} {.Dunno} (Refl Dunno) = Refl Dunno
+
+-- Order Dunno Unused
+hm {.Dunno} {Unused} {.Dunno} (Refl Dunno) = {!!}
+
+hm {.Unused} {Public} {.Unused} (Refl Unused) = Refl Unused
+hm {.Unused} {Private} {.Unused} (Refl Unused) = Refl Unused
+hm {.Unused} {Dunno} {.Unused} (Refl Unused) = Refl Unused
+hm {.Unused} {Unused} {.Unused} (Refl Unused) = Refl Unused
 
 ohah'' : {r g adv : Level}
     -> _≤_ levelSemiring r adv

@@ -133,11 +133,23 @@ sameContext : {{R : Semiring}}
             -> γ1 ≡ γ2
 sameContext ⦃ R ⦄ {.0} {Empty} {s} {adv} {[]} {[]} ctxt pre = refl
 sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ x} {s} {adv} {[]} {[]} ctxt pre = refl
-sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ x} {s} {adv} {[]} {x₁ ∷ γ2} ctxt pre = {!!}
-sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ x} {s} {adv} {x₁ ∷ γ1} {[]} ctxt pre = {!!}
-sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ (Grad A r)} {s} {adv} {x₁ ∷ γ1} {x₂ ∷ γ2} ctxt pre
- with s · (Ext Γ (Grad A r))
-... | Ext sΓ (Grad A' sr) = {!!}
+sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ (Grad A r)} {s} {adv} {[]} {x₁ ∷ γ2} () pre
+sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ (Grad A r)} {s} {adv} {x₁ ∷ γ1} {[]} () pre
+sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ (Grad A r)} {s} {adv} {x₁ ∷ γ1} {x₂ ∷ γ2} (ctxtHd , ctxtTl) pre
+ with s · (Ext Γ (Grad A r)) | ctxtHd (Promote x₁) (Promote x₂) refl refl
+... | Ext sΓ (Grad A' sr) | boxInterpBiobs pre2 .x₁ .x₂ inner = {!!}
+... | Ext sΓ (Grad A' sr) | boxInterpBiunobs pre2 .x₁ .x₂ inner = {!!}
+
+equalUnderSubst : {{R : Semiring}}
+              {sz : ℕ} {Γ : Context sz} {e : Term} {τ : Type}
+              {s adv : grade}
+              {γ1 γ2 : List Term}
+            -> ⟦ s · Γ ⟧Γ adv γ1 γ2
+            -> Γ ⊢ e ∶ τ
+            -> (s ≤ adv)
+            -> multisubst γ1 e ≡ multisubst γ2 e
+equalUnderSubst = ?
+
 
 delta : {{R : Semiring}}
         {adv r s : grade}
@@ -182,7 +194,7 @@ intermediate ⦃ R ⦄ {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1
     boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) inner'
 intermediate ⦃ R ⦄ {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2
   | yes p | boxInterpBiunobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
-    boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) {!inp!}
+    boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) (innerNew inp)
     where
       innerNew : {Γ : Context sz} -> ⟦ s · Γ ⟧Γ adv γ1 γ2 -> ⟦ τ ⟧e adv (multisubst' zero γ1 e) (multisubst' zero γ2 e)
       innerNew {Γ} inp with Γ | inp
