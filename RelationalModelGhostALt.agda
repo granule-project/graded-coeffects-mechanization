@@ -140,6 +140,7 @@ sameContext ⦃ R ⦄ {.(suc _)} {Ext Γ (Grad A r)} {s} {adv} {x₁ ∷ γ1} {x
 ... | Ext sΓ (Grad A' sr) | boxInterpBiobs pre2 .x₁ .x₂ inner = {!!}
 ... | Ext sΓ (Grad A' sr) | boxInterpBiunobs pre2 .x₁ .x₂ inner = {!!}
 
+{-
 equalUnderSubst : {{R : Semiring}}
               {sz : ℕ} {Γ : Context sz} {e : Term} {τ : Type}
               {s adv : grade}
@@ -149,7 +150,7 @@ equalUnderSubst : {{R : Semiring}}
             -> (s ≤ adv)
             -> multisubst γ1 e ≡ multisubst γ2 e
 equalUnderSubst = ?
-
+-}
 
 delta : {{R : Semiring}}
         {adv r s : grade}
@@ -166,6 +167,18 @@ delta {{R}} {adv} {r} {s} {t1} {t2} {τ} inp v1 v2 v1redux v2redux with s ≤d a
 ... | no ¬p1 | yes p2 | no ¬p3 = {!!}
 ... | no ¬p1 | no ¬p2 | yes p3 = {!!}
 ... | no ¬p1 | no ¬p2 | no ¬p3 = {!!}
+
+intermediateAlt : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
+              {Γ : Context sz}
+              {s ghost adv : grade}
+              {γ1 γ2 : List Term}
+              {e : Term}
+              {A : Type}
+           -> (s ·g (Γ , ghost)) ⊢ e ∶ A
+           -> s ≤ adv
+           -> ⟦ s ·g (Γ , ghost) ⟧Γg adv γ1 γ2
+           -> ⟦ A ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
+intermediateAlt = {!!}
 
 intermediate : {{R : Semiring}} {sz : ℕ}
             {Γ : Context sz}
@@ -255,17 +268,30 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
    Box g ⟦ G ⟧ -> Box g (Box r ⟦ A ⟧)
 -}
 biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
-... | yes eq rewrite injPair2 prf | idem* {R} {r} =
-  let
+... | yes eq rewrite sym (injPair2 prf) | idem* {R} {r} =
+ --  let
+   {-
+    -- Last weeks' attempt (06/09/2021)
     ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv {!!}
     ih0 = subst (\h -> ⟦ Box ghost' A ⟧v adv h (Promote (multisubst γ2 t)))
              (sym (substPresProm {zero} {γ1} {t})) ih
     ih1 = subst (\h -> ⟦ Box ghost' A ⟧v adv (multisubst γ1 (Promote t)) h)
              (sym (substPresProm {zero} {γ2} {t})) ih0
+             -- but we don't have ¬ (ghost' ≤ adv) here?
     az = intermediate {sz} {Γ} {ghost'} {r} {adv} {γ1} {γ2} {A} {Promote t} contextInterp eq {!ih!} {!!}
     az2 = congidm {multisubst' zero γ1 (Promote t)} {multisubst' zero γ2 (Promote t)} {!!}
-  in
-    {!z2!}
+  -}
+
+    -- Today's attempt (06/09/2021)
+--    boxInner = \v1 v2 v1redux v2redux -> boxInterpBiobs {!!} {!!} {!!} {!!}
+--    boxInner' = subst (\h -> ⟦ Box r A ⟧e adv h (Promote (multisubst γ2 t)))
+--             (sym (substPresProm {zero} {γ1} {t})) {!!}
+--    boxInner'' = subst (\h -> ⟦ Box r A ⟧e adv (multisubst γ1 (Promote t)) h)
+--             (sym (substPresProm {zero} {γ2} {t})) boxInner'
+  -- in
+    -- looks like eq0 and eq0 give us enough to build the two levels of box
+    -- if only we had that we can observe (in the binary relation)
+    main -- boxInterpBiobs eq0 {!!} {!!} boxInner
 
 
 -- Previous implementation:
@@ -277,68 +303,101 @@ biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz
   Therefore the adversary can observer under the box(es) down to the value of t
 -}
   where
-    congidm : {t1 t2 : Term} -> ⟦ Box (ghost' *R r) A ⟧v adv t1 t2 -> ⟦ Box (r *R ghost') (Box r A) ⟧v adv t1 t2
+    -- related to attempt on the 06/09/2021
+   {- boxInner : ⟦ Box r A ⟧e adv (multisubst' 0 γ1 (Promote t)) (multisubst' 0 γ2 (Promote t))
+    boxInner v1 v2 v1redux v2redux
+      rewrite trans (sym v1redux) (cong multiRedux (substPresProm {0} {γ1} {t}))
+            | trans (sym v2redux) (cong multiRedux (substPresProm {0} {γ2} {t})) =
+      boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t)
+        (intermediateAlt {!!} {!!} {!!})
+   -}
+
+    congidm : {t1 t2 : Term} -> ⟦ Box (ghost' *R r) A ⟧v adv t1 t2 -> ⟦ Box (r *R ghost') (Box r A) ⟧v adv (Promote t1) (Promote t2)
     congidm = {!!}
 
-    main : ⟦ Box ghost (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t))) (Promote (multisubst' 0 γ2 (Promote t)))
-    main rewrite injPair2 prf = boxInterpBiobs eq0 (multisubst γ1 (Promote t))  (multisubst γ2 (Promote t)) conclusion
+    convertVal : {s : grade} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
+    convertVal {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
+    ... | yes eq = boxInterpBiobs eq v1 v2 interp
+    ... | no eq  = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {A} {v1} {v2} interp)
+
+    convertVal {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) = boxInterpBiunobs (propInvTimesMonoAsym x eq) v1 v2 interp
+
+    convertExp : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
+    convertExp {s} {v1} {v2} {A} arg1 v1' v2' v1redux' v2redux' rewrite trans (sym v1redux') (reduxProm {v1}) | trans (sym v2redux') (reduxProm {v2}) =
+       convertVal  {s} {v1} {v2} {A} (arg1 (Promote v1) (Promote v2) refl refl)
+
+    underBox : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
+    underBox {_} {[]} {[]} {Empty}   g = tt
+    underBox {suc n} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = convertExp {s} {v1} {v2} {A} ass , underBox {n} {γ1} {γ2} {Γ} g
+    underBox {_} {[]} {[]} {Ext Γ (Grad A r₁)} ()
+    underBox {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
+    underBox {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} ()
+
+    thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
+    thm {v} {γ} redux =
+       let qr = cong multiRedux (substPresProm {0} {γ} {t})
+           qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
+       in sym (trans (sym redux) qr')
+
+    binaryToUnaryVal : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]v (Promote v1)) × ([ Box s A ]v (Promote v2))
+    binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiobs eq' .v1 .v2 ainterp) =
+      let (a , b) = binaryImpliesUnary {A} {v1} {v2} {adv} ainterp in (boxInterpV v1 a , boxInterpV v2 b)
+
+    binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 (left , right)) = (boxInterpV v1 left) , (boxInterpV v2 right)
+
+
+    binaryToUnaryExp : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ([ Box s A ]e (Promote v1)) × ([ Box s A ]e (Promote v2))
+    binaryToUnaryExp {s} {v1} {v2} {A} arg1 = (left , right)
       where
+        left : [ Box s A ]e (Promote v1)
+        left v0 redux rewrite trans (sym redux) (reduxProm {v1}) with binaryToUnaryVal {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
+        ... | (left' , right') = left'
 
-        convertVal : {s : grade} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
-        convertVal {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
-        ... | yes eq = boxInterpBiobs eq v1 v2 interp
-        ... | no eq  = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {A} {v1} {v2} interp)
+        right : [ Box s A ]e (Promote v2)
+        right v0 redux rewrite trans (sym redux) (reduxProm {v2}) with binaryToUnaryVal {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
+        ... | (left' , right') = right'
 
-        convertVal {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) = boxInterpBiunobs (propInvTimesMonoAsym x eq) v1 v2 interp
-
-        convertExp : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
-        convertExp {s} {v1} {v2} {A} arg1 v1' v2' v1redux' v2redux' rewrite trans (sym v1redux') (reduxProm {v1}) | trans (sym v2redux') (reduxProm {v2}) =
-           convertVal  {s} {v1} {v2} {A} (arg1 (Promote v1) (Promote v2) refl refl)
-
-        underBox : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
-        underBox {_} {[]} {[]} {Empty}   g = tt
-        underBox {suc n} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = convertExp {s} {v1} {v2} {A} ass , underBox {n} {γ1} {γ2} {Γ} g
-        underBox {_} {[]} {[]} {Ext Γ (Grad A r₁)} ()
-        underBox {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
-        underBox {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} ()
-
-        thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
-        thm {v} {γ} redux =
-           let qr = cong multiRedux (substPresProm {0} {γ} {t})
-               qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
-           in sym (trans (sym redux) qr')
-
-        binaryToUnaryVal : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]v (Promote v1)) × ([ Box s A ]v (Promote v2))
-        binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiobs eq' .v1 .v2 ainterp) =
-          let (a , b) = binaryImpliesUnary {A} {v1} {v2} {adv} ainterp in (boxInterpV v1 a , boxInterpV v2 b)
-
-        binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 (left , right)) = (boxInterpV v1 left) , (boxInterpV v2 right)
+    underBox2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> [ Γ ]Γ γ1 × [ Γ ]Γ γ2
+    underBox2 {_} {_} {_} {Empty} g = (tt , tt)
+    underBox2 {_} {[]} {[]} {Ext Γ (Grad A r)} ()
+    underBox2 {_} {[]} {x ∷ γ2} {Ext Γ (Grad A r)} ()
+    underBox2 {_} {x ∷ γ1} {[]} {Ext Γ (Grad A r)} ()
+    underBox2 {suc sz} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A r')} (arg , g) =
+     let
+      (left , right) = underBox2 {sz} {γ1} {γ2} {Γ} g
+      (l , r) = binaryToUnaryExp arg
+     in
+       (l , left) , (r , right)
 
 
-        binaryToUnaryExp : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ([ Box s A ]e (Promote v1)) × ([ Box s A ]e (Promote v2))
-        binaryToUnaryExp {s} {v1} {v2} {A} arg1 = (left , right)
-          where
-            left : [ Box s A ]e (Promote v1)
-            left v0 redux rewrite trans (sym redux) (reduxProm {v1}) with binaryToUnaryVal {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
-            ... | (left' , right') = left'
 
-            right : [ Box s A ]e (Promote v2)
-            right v0 redux rewrite trans (sym redux) (reduxProm {v2}) with binaryToUnaryVal {s} {v1} {v2} {A} (arg1 (Promote v1) ((Promote v2)) refl refl)
-            ... | (left' , right') = right'
+    main : ⟦ Box ghost (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t))) (Promote (multisubst' 0 γ2 (Promote t)))
+    main rewrite injPair1 prf with ghost' ≤d adv
+    ... | yes geq' = boxInterpBiobs eq0 (multisubst γ1 (Promote t))  (multisubst γ2 (Promote t)) conclusion
+      where
+       conclusion : ⟦ Box r A ⟧e adv (multisubst' 0 γ1 (Promote t)) (multisubst' 0 γ2 (Promote t))
+       conclusion v1 v2 v1redux v2redux rewrite sym (injPair2 prf) | sym (reduxAndSubstCombinedProm {v1} {t} {γ1} v1redux)         | sym (reduxAndSubstCombinedProm {v2} {t} {γ2} v2redux) =
+         let ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (visible geq' (underBox {sz} {γ1} {γ2} contextInterp))
+         in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) (unpackObs geq' ih)
 
 
-        underBox2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> [ Γ ]Γ γ1 × [ Γ ]Γ γ2
-        underBox2 {_} {_} {_} {Empty} g = (tt , tt)
-        underBox2 {_} {[]} {[]} {Ext Γ (Grad A r)} ()
-        underBox2 {_} {[]} {x ∷ γ2} {Ext Γ (Grad A r)} ()
-        underBox2 {_} {x ∷ γ1} {[]} {Ext Γ (Grad A r)} ()
-        underBox2 {suc sz} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A r')} (arg , g) =
-         let
-          (left , right) = underBox2 {sz} {γ1} {γ2} {Γ} g
-          (l , r) = binaryToUnaryExp arg
-         in
-           (l , left) , (r , right)
+    ... | no geq' rewrite sym (injPair2 prf) =
+      let
+        ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (invisible geq' (underBox2 contextInterp))
+        intermedio = intermediate contextInterp eq ih geq'
+        intermedio' = subst (\h -> ⟦ Box ((R Semiring.*R ghost') r) A ⟧v adv h (Promote (multisubst γ2 t)))
+                       (sym (substPresProm {zero} {γ1} {t})) intermedio
+        intermedio'' = subst (\h -> ⟦ Box ((R Semiring.*R ghost') r) A ⟧v adv (multisubst γ1 (Promote t)) h)
+                       (sym (substPresProm {zero} {γ2} {t})) intermedio'
+      in subst
+           (λ h →
+              ⟦ Box h (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t)))
+              (Promote (multisubst' 0 γ2 (Promote t))))
+           (sym (injPair2 prf)) (congidm intermedio'')
 
+
+
+{-
         conclusion : ⟦ Box r A ⟧e adv (multisubst' 0 γ1 (Promote t)) (multisubst' 0 γ2 (Promote t))
         conclusion v1 v2 v1redux v2redux rewrite injPair1 prf | sym (injPair2 prf) |  sym (reduxAndSubstCombinedProm {v1} {t} {γ1} v1redux) |  sym (reduxAndSubstCombinedProm {v2} {t} {γ2} v2redux) {- =
           let ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (visible {!!} (underBox {sz} {γ1} {γ2} contextInterp))
@@ -348,7 +407,11 @@ biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz
         ... | yes geq' =
            let ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (visible geq' (underBox {sz} {γ1} {γ2} contextInterp))
            in boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t) (unpackObs geq' ih)
+
         ... | no geq' rewrite sym (injPair2 prf) = {!!}
+-}
+
+
 
 {-
 
