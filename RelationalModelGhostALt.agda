@@ -177,22 +177,25 @@ intermediateAlt : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ
            -> (s ·g (Γ , ghost)) ⊢ e ∶ A
            -> s ≤ adv
            -> ⟦ s ·g (Γ , ghost) ⟧Γg adv γ1 γ2
+           -> [ A ]v (multisubst γ1 e)
+           -> [ A ]v (multisubst γ2 e)
            -> ⟦ A ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
 intermediateAlt = {!!}
 
-intermediate : {{R : Semiring}} {sz : ℕ}
+intermediate : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ}
             {Γ : Context sz}
-            {ghost s adv : grade}
+            {ghost r adv : grade}
             {γ1 γ2 : List Term}
             {τ : Type}
             {e : Term}
-            -> ⟦ s · Γ ⟧Γ adv γ1 γ2
-            -> (s ≤ adv)
+            -> (Γ , ghost) ⊢ e ∶ τ
+            -> ⟦ r · Γ ⟧Γ adv γ1 γ2
+            -> (r ≤ adv)
             -> ⟦ Box ghost τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
             -> ¬ (ghost ≤ adv)
-            -> ⟦ Box (ghost *R s) τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
-intermediate {{R}} {Γ} {sz} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2
- with (ghost *R s) ≤d adv
+            -> ⟦ Box (ghost *R r) τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _ inp pre1 inner pre2
+ with (ghost *R r) ≤d adv
 {-
   But what if s = Public, g = Private, adv = Public
   then we have s ≤ adv (Public ≤ Public) yes
@@ -201,11 +204,13 @@ intermediate {{R}} {Γ} {sz} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inn
         therefore (ghost *R s) ≤ Public is Public ≤ Public which is true.
  therefore adversary cannot see inside Box ghost τ but should be able to see inside Box (ghost *R s).
 -}
-intermediate {{R}} {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2 | yes p with inner
-intermediate ⦃ R ⦄ {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2
+intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _ inp pre1 inner pre2 | yes p with inner
+
+intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _ inp pre1 inner pre2
   | yes p | boxInterpBiobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
     boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) inner'
-intermediate ⦃ R ⦄ {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2
+
+intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2
   | yes p | boxInterpBiunobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
     boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) (innerNew inp)
     where
@@ -214,7 +219,7 @@ intermediate ⦃ R ⦄ {sz} {Γ} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1
       ... | Empty | ctxtInterp = {!!}
       ... | Ext ctx x | ctxinterp = {!!}
 
-intermediate {{R}} {Γ} {sz} {ghost} {s} {adv} {γ1} {γ2} {τ} {e} inp pre1 inner pre2 | no ¬p = {!!}
+intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2 | no ¬p = {!!}
 
 
 biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
@@ -384,7 +389,7 @@ biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz
     ... | no geq' rewrite sym (injPair2 prf) =
       let
         ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (invisible geq' (underBox2 contextInterp))
-        intermedio = intermediate contextInterp eq ih geq'
+        intermedio = intermediate typ contextInterp eq ih geq'
         intermedio' = subst (\h -> ⟦ Box ((R Semiring.*R ghost') r) A ⟧v adv h (Promote (multisubst γ2 t)))
                        (sym (substPresProm {zero} {γ1} {t})) intermedio
         intermedio'' = subst (\h -> ⟦ Box ((R Semiring.*R ghost') r) A ⟧v adv (multisubst γ1 (Promote t)) h)
