@@ -124,6 +124,7 @@ multireduxPromoteLemma = {!!}
 --unaryImpliesBinarySpecialised : {e : Term} {τ : Type}
 --  ⟦ τ ⟧e t
 
+-- Probably going to delete this
 sameContext : {{R : Semiring}}
               {sz : ℕ} {Γ : Context sz}
               {s adv : grade}
@@ -212,12 +213,18 @@ intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _
 
 intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2
   | yes p | boxInterpBiunobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
-    boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e) (innerNew inp)
-    where
-      innerNew : {Γ : Context sz} -> ⟦ s · Γ ⟧Γ adv γ1 γ2 -> ⟦ τ ⟧e adv (multisubst' zero γ1 e) (multisubst' zero γ2 e)
-      innerNew {Γ} inp with Γ | inp
-      ... | Empty | ctxtInterp = {!!}
-      ... | Ext ctx x | ctxinterp = {!!}
+    boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e)
+       (intermediateAlt {!typ!} {!!} {!!} {!!} {!!})
+      {-
+        -- Previous inner, helper for this, commented out 07/09/2021
+
+        (innerNew inp)
+       where
+        innerNew : {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ τ ⟧e adv (multisubst' zero γ1 e) (multisubst' zero γ2 e)
+        innerNew {Γ} inp v1 v2 v1redux v2redux with Γ | inp
+        ... | Empty | ctxtInterp = {!!}
+        ... | Ext ctx x | ctxinterp = {!!}
+      -}
 
 intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2 | no ¬p = {!!}
 
