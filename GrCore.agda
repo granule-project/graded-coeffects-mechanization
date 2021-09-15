@@ -64,7 +64,6 @@ _++_ : {{R : Semiring}} {s : ℕ} -> Context s -> Context s -> Context s
 Empty ++ Empty = Empty
 (Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
 
-
 postulate
   -- keeps things simple with the above definition
   sameTypes : {{R : Semiring}} {s : ℕ} {Γ1 Γ2 : Context s} {Γ : Context (suc s)} {A A' : Type} {r1 r2 : grade}
