@@ -212,7 +212,7 @@ delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiunobs pre .t1 .t2 x₁)
 ... | no ¬p1 | no ¬p2 | no ¬p3 = {!!}
 -}
 
-intermediateAlt : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
+intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
               {Γ : Context sz}
               {ghost r adv : grade}
               {γ1 γ2 : List Term}
@@ -221,10 +221,30 @@ intermediateAlt : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ
            -> (Γ , ghost) ⊢ e ∶ A
            -> r ≤ adv
            -> ⟦ r ·g (Γ , ghost) ⟧Γg adv γ1 γ2
-           -> [ A ]v (multisubst γ1 e)
-           -> [ A ]v (multisubst γ2 e)
+           -> [ A ]e (multisubst γ1 e)
+           -> [ A ]e (multisubst γ2 e)
            -> ⟦ A ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
-intermediateAlt = {!!}
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {a1 ∷ γ1'} {a2 ∷ γ2'} {.(Var 0)} {A} (var {Γ1 = Empty} {Γ2} pos) pre inp e1 e2 v1 v2 v1redux v2redux
+ rewrite isSimultaneous'' {Var 0} {a1 ∷ γ1'} | (injPair1 pos) with inp | r · Γ | inspect (\r -> r · Γ) r
+... | visible pre2 inner | Ext ad (Grad A' r₁) | [ eq ] = {!!}
+... | invisible pre2 inner | ad | eq = {!!}
+
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var (1 + Γlength Γ1'))} {A} (var {Γ1 = Ext Γ1' a} {Γ2} pos) pre inp e1 e2 =
+  {!!}
+
+
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} (approx typ approx1 approx2 sub) pre inp e1 e2 =
+  {!!}
+ 
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(App _ _)} {A} (app typ typ₁) pre inp e1 e2 =
+  {!!}
+
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Abs (Γlength _ + 1) _)} {.(FunTy _ _ _)} (abs pos typ) pre inp e1 e2 = {!!}
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Promote _)} {.(Box _ _)} (pr typ) pre inp e1 e2 = {!!}
+intermediateSub {Γ = .(Semiring.0R _ · _)} {.(Semiring.1R _)} {r} {adv} {γ1} {γ2} {.unit} {.Unit} unitConstr pre inp e1 e2 = {!!}
+intermediateSub {Γ = .(Semiring.0R _ · _)} {.(Semiring.1R _)} {r} {adv} {γ1} {γ2} {.vtrue} {.BoolTy} trueConstr pre inp e1 e2 = {!!}
+intermediateSub {Γ = .(Semiring.0R _ · _)} {.(Semiring.1R _)} {r} {adv} {γ1} {γ2} {.vfalse} {.BoolTy} falseConstr pre inp e1 e2 = {!!}
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(If _ _ _)} {A} (if typ typ₁ typ₂) pre inp e1 e2 = {!!}
 
 intermediate : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ}
             {Γ : Context sz}
@@ -257,8 +277,8 @@ intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _
 intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2
   | yes p | boxInterpBiunobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
     boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e)
-       (intermediateAlt {sz} {Γ} {ghost} {r} {adv} typ pre1 inp (proj₁ inner' {!!} {!!}) {!!})
-       -- (intermediateAlt {!typ!} {!!} {!!} {!!} {!!})
+       (intermediateSub {sz} {Γ} {ghost} {r} {adv} typ pre1 inp (proj₁ inner') (proj₂ inner'))
+       -- (intermediateSub {!typ!} {!!} {!!} {!!} {!!})
       {-
 --        -- Previous inner, helper for this, commented out 07/09/2021
 
@@ -365,7 +385,7 @@ biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz
       rewrite trans (sym v1redux) (cong multiRedux (substPresProm {0} {γ1} {t}))
             | trans (sym v2redux) (cong multiRedux (substPresProm {0} {γ2} {t})) =
       boxInterpBiobs eq (multisubst' zero γ1 t) (multisubst' zero γ2 t)
-        (intermediateAlt {!!} {!!} {!!})
+        (intermediateSub {!!} {!!} {!!})
    -}
 
     congidm : {t1 t2 : Term}
