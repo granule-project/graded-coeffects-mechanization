@@ -224,13 +224,25 @@ intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ
            -> [ A ]e (multisubst γ1 e)
            -> [ A ]e (multisubst γ2 e)
            -> ⟦ A ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
-intermediateSub {Γ = Γ} {ghost} {r} {adv} {a1 ∷ γ1'} {a2 ∷ γ2'} {.(Var 0)} {A} (var {Γ1 = Empty} {Γ2} pos) pre inp e1 e2 v1 v2 v1redux v2redux
- rewrite isSimultaneous'' {Var 0} {a1 ∷ γ1'} | (injPair1 pos) with inp | r · Γ | inspect (\r -> r · Γ) r
-... | visible pre2 inner | Ext ad (Grad A' r₁) | [ eq ] = {!!}
-... | invisible pre2 inner | ad | eq = {!!}
 
-intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var (1 + Γlength Γ1'))} {A} (var {Γ1 = Ext Γ1' a} {Γ2} pos) pre inp e1 e2 =
-  {!!}
+-- Case where
+--  (x : A, ghost) ⊢ x : A
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {a1 ∷ γ1'} {a2 ∷ γ2'} {.(Var 0)} {A} (var {Γ1 = Empty} {Γ2} pos) pre inp e1 e2 v1 v2 v1redux v2redux
+ rewrite (injPair1 pos) with inp | r · Γ | inspect (\r -> r · Γ) r
+... | visible pre2 (arg , _) | Ext ad (Grad A' r₁) | Relation.Binary.PropositionalEquality.[ eq ] = conc
+  where
+    conc : ⟦ A ⟧v adv v1 v2
+    conc with arg (Promote a1) (Promote a2) refl refl
+    ... | boxInterpBiobs _ .a1 .a2 argInner = argInner v1 v2 (isSimultaneous' {v1} {a1} {γ1'} v1redux) ((isSimultaneous' {v2} {a2} {γ2'} v2redux))
+    ... | boxInterpBiunobs preN .a1 .a2 argInner = ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) rightUnit* preN) pre) 
+
+-- Here we have that `r ≤ adv` but `¬ ((r * ghost) ≤ adv)`
+-- ah but we also know that `ghost = 1` so ... we get a contradiction
+... | invisible pre2 inner | Ext ad x | Relation.Binary.PropositionalEquality.[ eq ] =
+  ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) rightUnit*) pre2) pre)
+
+intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var _)} {A} (var {Γ1 = _} {Γ2} pos) pre inp e1 e2 =
+  {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
 
 
 intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} (approx typ approx1 approx2 sub) pre inp e1 e2 =
