@@ -278,19 +278,11 @@ intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} t
   | yes p | boxInterpBiunobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
     boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e)
        (intermediateSub {sz} {Γ} {ghost} {r} {adv} typ pre1 inp (proj₁ inner') (proj₂ inner'))
-       -- (intermediateSub {!typ!} {!!} {!!} {!!} {!!})
-      {-
---        -- Previous inner, helper for this, commented out 07/09/2021
 
-        (innerNew inp)
-       where
-        innerNew : {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ τ ⟧e adv (multisubst' zero γ1 e) (multisubst' zero γ2 e)
-        innerNew {Γ} inp v1 v2 v1redux v2redux with Γ | inp
-        ... | Empty | ctxtInterp = {!!}
-        ... | Ext ctx x | ctxinterp = {!!}
-      -}
-
-intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2 | no ¬p = {!!}
+intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2 | no ¬p with inner
+... | boxInterpBiobs pre3 .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) _ = ⊥-elim (pre2 pre3)
+... | boxInterpBiunobs pre3 .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
+  boxInterpBiunobs ¬p (multisubst' zero γ1 e) (multisubst' zero γ2 e) inner'
 
 
 biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
@@ -301,6 +293,7 @@ biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {
         -> (adv : grade)
         -> ⟦ (Γ , ghost) ⟧Γg adv γ1 γ2
         -> ⟦ Box ghost τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+        
         -- another idea is `Box 1 τ` here
 
 biFundamentalTheoremGhost {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp
@@ -613,9 +606,8 @@ biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ 
 
 biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp = {!!}
 
-biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp = {!!}
 
-
+{-
 nonInterferenceGhostAlt :
    {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}}
    {e : Term} {r s : grade} {pre : r ≤ s} {nonEq : r ≢ s}
@@ -631,3 +623,4 @@ nonInterferenceGhostAlt :
 
 nonInterferenceGhostAlt {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
  {!!}
+-}
