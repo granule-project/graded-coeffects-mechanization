@@ -572,6 +572,7 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
       rewrite trans (sym v1redux') (reduxProm {v1})
             | trans (sym v2redux') (reduxProm {v2}) = convertVal {r1} {r2} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
 
+    -- pull out to its own thing to resue
     splitContext1 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
     splitContext1 {0} {[]} {[]} {Empty} {Empty} _ = tt
     splitContext1 {0} {γ1} {γ2} {Empty} {Empty} p = {!!}

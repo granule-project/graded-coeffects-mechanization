@@ -896,34 +896,11 @@ instance
   propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Unused} {Private} {adv} inp1 inp2 = inp1
   propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Unused} {Dunno} {adv} inp1 inp2 = inp1
 
-  --propInvTimesMonoAsym : {r s adv : Level}
-  --                     -> ¬(_≤_ levelSemiring (_*R_ levelSemiring r s) adv)
-  --                     -> (_≤_ levelSemiring r adv)
-  --                     -> ¬(_≤_ levelSemiring s adv)
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Public} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propInvTimesMonoAsym levelSemiringNonInterfering {Public} {Unused} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Public} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Private} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Dunno} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Private} {Unused} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Public} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Dunno} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Dunno} {Unused} {adv} inp1 inp2 = inp1
-  propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-  propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-  propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-  propInvTimesMonoAsym levelSemiringNonInterfering {Unused} {Unused} {adv} inp1 inp2 = inp1
+
+  idem* levelSemiringNonInterfering {Public} = refl
+  idem* levelSemiringNonInterfering {Private} = refl
+  idem* levelSemiringNonInterfering {Dunno} = refl
+  idem* levelSemiringNonInterfering {Unused} = refl
 
 instance
   levelIFstructure : InformationFlowSemiring levelSemiring
@@ -1018,6 +995,8 @@ instance
   idem* levelIFstructure {Dunno} = refl
   idem* levelIFstructure {Unused} = refl
 
+  plusMono levelIFstructure = plusMono levelSemiringNonInterfering
+
 {-
 Things that do not hold
 
@@ -1057,3 +1036,71 @@ ohah : {r g adv : Level}
     -> _≤_ levelSemiring (_*R_ levelSemiring r g) adv
     -> _≤_ levelSemiring g adv
 -}
+
+check : {s1 s2 adv : Level}
+      -> _≤_ levelSemiring s1 adv
+      -> _≤_ levelSemiring (_+R_ levelSemiring s1 s2) adv
+check {Public} {Public} {Public} (Refl .Public) = Refl Public
+check {Public} {Public} {Private} PrivPub = PrivPub
+check {Public} {Public} {Dunno} DunnoPub = DunnoPub
+check {Public} {Public} {Unused} 0Pub = 0Pub
+check {Public} {Private} {Public} (Refl .Public) = Refl Public
+check {Public} {Private} {Private} PrivPub = PrivPub
+check {Public} {Private} {Dunno} DunnoPub = DunnoPub
+check {Public} {Private} {Unused} 0Pub = 0Pub
+check {Public} {Dunno} {Public} (Refl .Public) = Refl Public
+check {Public} {Dunno} {Private} PrivPub = PrivPub
+check {Public} {Dunno} {Dunno} DunnoPub = DunnoPub
+check {Public} {Dunno} {Unused} 0Pub = 0Pub
+check {Public} {Unused} {Public} (Refl .Public) = Refl Public
+check {Public} {Unused} {Private} PrivPub = PrivPub
+check {Public} {Unused} {Dunno} DunnoPub = DunnoPub
+check {Public} {Unused} {Unused} 0Pub = 0Pub
+check {Private} {Public} {Public} ()
+check {Private} {Public} {Private} (Refl .Private) = PrivPub
+check {Private} {Public} {Dunno} ()
+check {Private} {Public} {Unused} 0Priv = 0Pub
+check {Private} {Private} {Public} ()
+check {Private} {Private} {Private} (Refl .Private) = Refl Private
+check {Private} {Private} {Dunno} ()
+check {Private} {Private} {Unused} 0Priv = 0Priv
+check {Private} {Dunno} {Public} ()
+check {Private} {Dunno} {Private} (Refl .Private) = PrivDunno
+check {Private} {Dunno} {Dunno} ()
+check {Private} {Dunno} {Unused} 0Priv = 0Dunno
+check {Private} {Unused} {Public} ()
+check {Private} {Unused} {Private} (Refl .Private) = Refl Private
+check {Private} {Unused} {Dunno} ()
+check {Private} {Unused} {Unused} 0Priv = 0Priv
+check {Dunno} {Public} {Public} ()
+check {Dunno} {Public} {Private} PrivDunno = PrivPub
+check {Dunno} {Public} {Dunno} (Refl .Dunno) = DunnoPub
+check {Dunno} {Public} {Unused} 0Dunno = 0Pub
+check {Dunno} {Private} {Public} ()
+check {Dunno} {Private} {Private} PrivDunno = PrivDunno
+check {Dunno} {Private} {Dunno} (Refl .Dunno) = Refl Dunno
+check {Dunno} {Private} {Unused} 0Dunno = 0Dunno
+check {Dunno} {Dunno} {Public} ()
+check {Dunno} {Dunno} {Private} PrivDunno = PrivDunno
+check {Dunno} {Dunno} {Dunno} (Refl .Dunno) = Refl Dunno
+check {Dunno} {Dunno} {Unused} 0Dunno = 0Dunno
+check {Dunno} {Unused} {Public} ()
+check {Dunno} {Unused} {Private} PrivDunno = PrivDunno
+check {Dunno} {Unused} {Dunno} (Refl .Dunno) = Refl Dunno
+check {Dunno} {Unused} {Unused} 0Dunno = 0Dunno
+check {Unused} {Public} {Public} ()
+check {Unused} {Public} {Private} ()
+check {Unused} {Public} {Dunno} ()
+check {Unused} {Public} {Unused} (Refl .Unused) = 0Pub
+check {Unused} {Private} {Public} ()
+check {Unused} {Private} {Private} ()
+check {Unused} {Private} {Dunno} ()
+check {Unused} {Private} {Unused} (Refl .Unused) = 0Priv
+check {Unused} {Dunno} {Public} ()
+check {Unused} {Dunno} {Private} ()
+check {Unused} {Dunno} {Dunno} ()
+check {Unused} {Dunno} {Unused} (Refl .Unused) = 0Dunno
+check {Unused} {Unused} {Public} ()
+check {Unused} {Unused} {Private} ()
+check {Unused} {Unused} {Dunno} ()
+check {Unused} {Unused} {Unused} (Refl .Unused) = Refl Unused

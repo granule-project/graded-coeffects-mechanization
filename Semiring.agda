@@ -47,6 +47,7 @@ record Semiring : Set₁ where
 
 open Semiring
 
+{- May not need this anymore
 partialJoin : {{ R : Semiring }} -> grade R -> grade R -> Maybe (grade R)
 partialJoin {{R}} r s with _≤d_ R r s | _≤d_ R s r
 ... | yes _ | _     = just s
@@ -76,14 +77,7 @@ partialJoinIdem : {{ R : Semiring }} {r : grade R}
 partialJoinIdem {{R}} {r} with _≤d_ R r r
 ... | yes p = refl
 ... | no ¬p = ⊥-elim (¬p (reflexive≤ R {r}))
-
-urhu : {{ R : Semiring }} {r1 r2 adv r : grade R}
-     -> _≤_ R r1 adv
-     -> ¬ (_≤_ R r2 adv)
-     -> just r ≡ partialJoin r1 r2
-     -> _≤_ R r adv
-urhu {{R}} {r1} {r2} {adv} {r} pre1 npre2 eq with _≤d_ R r1 r2 | _≤d_ R r2 r1
-... | a1 | a2 = {!!}
+-}
 
 record NonInterferingSemiring (R : Semiring) : Set₁ where
   field
@@ -92,6 +86,7 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
     -- in classical logic this is the same as:   r1 ≤ s  →  r1 + r2 ≤ s
     antisymmetry : {r s : grade R} -> _≤_ R r s -> _≤_ R s r -> r ≡ s
 
+   -- TODO: rename this because it's a terrible name, notice that the + is on the left
     plusMono : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
 
     propertyConditionalNI : {r1 r2 r adv : grade R}
@@ -118,6 +113,7 @@ propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
   ngoal
     (subst (\h -> (_≤_ R (_*R_ R r s) h)) (idem* R') (monotone* R pre1 pre2))
 
+{-
 joinMonoInv1 : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
                {r1 r2 adv r' : grade R}
      -> just r' ≡ partialJoin {{R}} r1 r2
@@ -139,6 +135,7 @@ joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} ev pre with _≤d_ R r1 r2 | _≤
 ... | yes p1 | no ¬p2 = transitive≤ R (subst (\h -> _≤_ R r1 h) (sym (just-injective ev)) p1) pre
 ... | no ¬p1 | yes p2 rewrite sym (just-injective ev) = pre
 joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} () pre | no ¬p1 | no ¬p2
+-}
 
 plusMonoInv : {R : Semiring} {R' : NonInterferingSemiring R}
               {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
@@ -172,6 +169,7 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     absorb# : {r : grade R} -> r # (1R R) ≡ (1R R)
 
     idem* : {r : grade R} -> _*R_ R r r ≡ r
+    plusMono : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
 
     -- distributivity rules with other operators?
     -- substitution theorem will tell us if we need these

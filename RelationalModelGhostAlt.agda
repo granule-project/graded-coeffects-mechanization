@@ -59,6 +59,8 @@ unpackUnobs : {{R : Semiring}} {A : Type} {v1 v2 : Term} {r adv : grade}
 unpackUnobs {A} {v1} {v2} {r} {adv} pre (boxInterpBiobs eq .v1 .v2 innerExprInterp) = ⊥-elim (pre eq)
 unpackUnobs {A} {v1} {v2} {r} {adv} pre (boxInterpBiunobs eq .v1 .v2 innerExprInterp) = innerExprInterp
 
+{-
+-- can probably delete
 unpackEvidence : {{R : Semiring}}
                  {s : ℕ}
                  { Γ Γ1 Γ2 : ContextG s }
@@ -75,6 +77,7 @@ unpackEvidence : {{R : Semiring}}
                    )
                   )
 unpackEvidence {s = s} {Γ} {fst , snd} {fst₁ , snd₁} {r} rel = {!!}
+-}
 
 justInj : {A : Set} {a1 a2 : A} -> just a1 ≡ just a2 -> a1 ≡ a2
 justInj {A} {a1} {.a1} refl = refl
@@ -215,6 +218,15 @@ delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiunobs pre .t1 .t2 x₁)
 -- elimInversion
 
 mutual
+    contextSplitLeft : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 Γ2 : ContextG sz} {γ1 γ2 : List Term} {adv : grade}
+                     -> ⟦ Γ1 ++g Γ2 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
+    contextSplitLeft {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv} (visible pre inner) with g1 ≤d adv
+    ... | yes p = {!!}
+    ... | no ¬p = invisible ¬p {!binaryImpliesUnaryG inner!} -- okay because we can do binaryImpliesUnary
+    contextSplitLeft {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv} (invisible pre inner) with g1 ≤d adv
+    ... | yes p = ⊥-elim (pre (plusMono R' p))
+    ... | no ¬p = {!!}
+
     intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
                   {Γ : Context sz}
                   {ghost r adv : grade}
@@ -253,14 +265,15 @@ mutual
 
     intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} typ1 typ2 {ctxtP}) pre inp e1 e2 =
       let
-       ih1 = intermediateSub typ1 pre (subContext1 {!!}) (proj₁ ih1evidence) (proj₂ ih1evidence)
+--       (trans ? (cong (\x -> r ·g x) ctxtP))
+       ih1 = intermediateSub typ1 pre subContext1 (proj₁ ih1evidence) (proj₂ ih1evidence)
        ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
       in
       {!!}
       where
        
-        subContext1 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ {!!} ⟧Γg adv γ1 γ2 -> ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-        subContext1 = {!!}
+        subContext1 : ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
+        subContext1 = contextSplitLeft (subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp)
 
         subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
         subContext1bi = {!!}

@@ -46,6 +46,11 @@ _++g_ : {{R : Semiring}} {s : ℕ} -> ContextG s -> ContextG s -> (ContextG s)
 Γlengthg : {{R : Semiring}} {s : ℕ} -> ContextG s -> ℕ
 Γlengthg (G , _) = Γlength G
 
+-- Derived properties on contexts
+Γg-distrib*+ : {{R : Semiring}} {sz : ℕ} -> {r : grade} -> {Γ1g Γ2g : ContextG sz} ->
+               r ·g (Γ1g ++g Γ2g) ≡ (r ·g Γ1g) ++g (r ·g Γ2g)
+Γg-distrib*+ {{R}} {sz} {r} {Γ1g} {Γ2g} = {!!}               
+
 -- Typing
 data _⊢_∶_ {{R : Semiring}} {{R' : InformationFlowSemiring R}} : {s : ℕ} -> ContextG s -> Term -> Type -> Set where
 
