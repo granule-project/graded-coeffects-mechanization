@@ -40,10 +40,8 @@ r #g Empty = Empty
 r #g Ext G (Grad A s) = Ext (r #g G) (Grad A (r # s))
 
 -- Context addition
-_++g_ : {{R : Semiring}} {s : ℕ} -> ContextG s -> ContextG s -> Maybe (ContextG s)
-(G , r) ++g (G' , r') with partialJoin r r'
-... | just rj = just (G ++ G' , rj)
-... | nothing = nothing
+_++g_ : {{R : Semiring}} {s : ℕ} -> ContextG s -> ContextG s -> (ContextG s)
+(G , r) ++g (G' , r') = (G ++ G' , r +R r')
 
 Γlengthg : {{R : Semiring}} {s : ℕ} -> ContextG s -> ℕ
 Γlengthg (G , _) = Γlength G
@@ -87,7 +85,7 @@ data _⊢_∶_ {{R : Semiring}} {{R' : InformationFlowSemiring R}} : {s : ℕ} -
 
      ->   Γ1 ⊢ t1 ∶ FunTy A r B
      ->   Γ2 ⊢ t2 ∶ A
-     ->   { just Γ ≡ (Γ1 ++g (r ·g Γ2))}
+     ->   { Γ ≡ (Γ1 ++g (r ·g Γ2))}
      -> -----------------------------
           Γ ⊢ App t1 t2 ∶ B
 

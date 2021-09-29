@@ -63,7 +63,7 @@ unpackEvidence : {{R : Semiring}}
                  {s : ℕ}
                  { Γ Γ1 Γ2 : ContextG s }
                  {r : grade}
-                 (rel : just Γ ≡ (Γ1 ++g (r ·g Γ2)))
+                 (rel : Γ ≡ (Γ1 ++g (r ·g Γ2)))
                -> Σ grade (\ghost ->
                     Σ (Context s × grade) (\(Γ1' , g1) ->
                       Σ (Context s × grade) (\(Γ2' , g2) ->
@@ -253,13 +253,13 @@ mutual
 
     intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} typ1 typ2 {ctxtP}) pre inp e1 e2 =
       let
-       ih1 = intermediateSub typ1 pre (subContext1 ?) (proj₁ ih1evidence) (proj₂ ih1evidence)
+       ih1 = intermediateSub typ1 pre (subContext1 {!!}) (proj₁ ih1evidence) (proj₂ ih1evidence)
        ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
       in
       {!!}
       where
        
-        subContext1 : {Γ1 : Context sz} -> ⟦ ? ⟧Γg adv γ1 γ2 -> ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
+        subContext1 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ {!!} ⟧Γg adv γ1 γ2 -> ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
         subContext1 = {!!}
 
         subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
