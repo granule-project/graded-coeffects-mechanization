@@ -251,18 +251,37 @@ mutual
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} (approx typ approx1 approx2 sub) pre inp e1 e2 =
       {!!}
 
-    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {(App t1 t2)} {.B} (app {Γ1 = Γ1} {Γ2} {s} {A} {B} typ1 typ2) pre inp e1 e2 =
+    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} typ1 typ2 {ctxtP}) pre inp e1 e2 =
       let
-       ih1 = intermediateSub typ1 pre subContext1 {!!} {!!} 
-       ih2 = intermediateSub typ2 pre {!!} {!!} {!!}
+       ih1 = intermediateSub typ1 pre (subContext1 ?) (proj₁ ih1evidence) (proj₂ ih1evidence)
+       ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
       in
       {!!}
       where
-        ih1evidence : [ FunTy A s B ]e (multisubst γ1) t1
-        ih1evidence =  ?
-
-        subContext1 : ⟦ r ·g (proj₁ Γ1 , proj₂ Γ1) ⟧Γg adv γ1 γ2
+       
+        subContext1 : {Γ1 : Context sz} -> ⟦ ? ⟧Γg adv γ1 γ2 -> ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
         subContext1 = {!!}
+
+        subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
+        subContext1bi = {!!}
+
+        subContext2 : ⟦ r ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
+        subContext2 = {!!}
+
+        subContext2bi : ⟦ ( Γ2 , g2) ⟧Γg adv γ1 γ2
+        subContext2bi = {!!}
+
+        ih1evidence : [ FunTy A s B ]e (multisubst γ1 t1) × [ FunTy A s B ]e (multisubst γ2 t1)
+        ih1evidence with biFundamentalTheoremGhost typ1 adv subContext1bi
+        ... | boxInterpBiobs preF .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) innerF = binaryImpliesUnary innerF
+        ... | boxInterpBiunobs preF .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) innerF = innerF
+
+        ih2evidence : [ A ]e (multisubst γ1 t2) × [ A ]e (multisubst γ2 t2)
+        ih2evidence with biFundamentalTheoremGhost typ2 adv subContext2bi
+        ... | boxInterpBiobs preA .(multisubst' 0 γ1 t2) .(multisubst' 0 γ2 t2) innerA = binaryImpliesUnary innerA
+        ... | boxInterpBiunobs preA .(multisubst' 0 γ1 t2) .(multisubst' 0 γ2 t2) innerA = innerA
+        
+
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {Abs .(Γlength _ + 1) t} {.(FunTy _ _ _)} (abs {_} {_} {_} {_} {Γ1} {Γ2} {_} {s} {A} {B} {.t} pos typ) pre inp e1 e2 =
      let
@@ -365,8 +384,8 @@ mutual
      model is then
        Box g ⟦ G ⟧ -> Box g (Box r ⟦ A ⟧)
     -}
-    biFundamentalTheoremGhost {{R}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
-    ... | yes eq rewrite sym (injPair2 prf) | idem* {R} {r} =
+    biFundamentalTheoremGhost {{R}} {{R'}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
+    ... | yes eq rewrite sym (injPair2 prf) | idem* R' {r} =
      --  let
        {-
         -- Last weeks' attempt (06/09/2021)
