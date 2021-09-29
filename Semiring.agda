@@ -175,8 +175,10 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     -- distributivity rules with other operators?
     -- substitution theorem will tell us if we need these
 
---    leftAbsorbSub   : {r : grade} -> 0R *R r ≡ 0R
---    rightAbsorbSub  : {r : grade} -> r *R 0R ≡ 0R
+    -- 0 * r <= r
+    -- r * 0 <= r
+    leftAbsorbSub   : {r : grade R} -> _≤_ R (_*R_ R (0R R) r) (0R R)
+    rightAbsorbSub  : {r : grade R} -> _≤_ R (_*R_ R r (0R R)) (0R R)
 
 
 

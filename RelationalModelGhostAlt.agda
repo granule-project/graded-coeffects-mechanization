@@ -212,7 +212,7 @@ delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiunobs pre .t1 .t2 x₁)
 ... | no ¬p1 | no ¬p2 | no ¬p3 = {!!}
 -}
 
-elimInversion
+-- elimInversion
 
 mutual
     intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
