@@ -103,16 +103,20 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
                      ->   (_≤_ R r (1R R))
                      -> ¬ (_≤_ R r2 adv)
 
-    -- this is derivable from monotone* and if * is idempotent (which it is for us)
-    -- or we could take this as the contrpositive which might look more sane:
-    -- (_≤_ R r adv) -> (_≤_ R s adv) -> (_≤_ R (_*R_ R r s) adv)
-    propInvTimesMonoAsym : {r s adv : grade R}
-                       -> ¬ (_≤_ R (_*R_ R r s) adv)
-                       ->   (_≤_ R r adv)
-                       -> ¬ (_≤_ R s adv)
+    idem* : {r : grade R} -> _*R_ R r r ≡ r
 
 open NonInterferingSemiring
 
+-- # Some derived properties
+
+propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
+                       {r s adv : grade R}
+                     -> ¬ (_≤_ R (_*R_ R r s) adv)
+                     ->   (_≤_ R r adv)
+                     -> ¬ (_≤_ R s adv)
+propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
+  ngoal
+    (subst (\h -> (_≤_ R (_*R_ R r s) h)) (idem* R') (monotone* R pre1 pre2))
 
 joinMonoInv1 : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
                {r1 r2 adv r' : grade R}
@@ -135,9 +139,6 @@ joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} ev pre with _≤d_ R r1 r2 | _≤
 ... | yes p1 | no ¬p2 = transitive≤ R (subst (\h -> _≤_ R r1 h) (sym (just-injective ev)) p1) pre
 ... | no ¬p1 | yes p2 rewrite sym (just-injective ev) = pre
 joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} () pre | no ¬p1 | no ¬p2
-
-
--- # Some derived properties
 
 plusMonoInv : {R : Semiring} {R' : NonInterferingSemiring R}
               {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
@@ -183,3 +184,14 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
 
 
 open InformationFlowSemiring
+
+-- # Some more derived properties
+
+propInvTimesMonoAsym : {{ R : Semiring }} {{ R' : InformationFlowSemiring R }}
+                       {r s adv : grade R}
+                     -> ¬ (_≤_ R (_*R_ R r s) adv)
+                     ->   (_≤_ R r adv)
+                     -> ¬ (_≤_ R s adv)
+propInvTimesMonoAsym {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
+  ngoal
+    (subst (\h -> (_≤_ R (_*R_ R r s) h)) (idem* R') (monotone* R pre1 pre2))

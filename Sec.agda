@@ -207,16 +207,9 @@ propertyConditionalNI2 {Lo} {Hi} {Lo} {Lo} pre1 pre2 = ⊥-elim (pre1 ReflLo)
 propertyConditionalNI2 {Lo} {Lo} {Lo} {Hi} pre1 pre2 = pre1
 propertyConditionalNI2 {Lo} {Lo} {Lo} {Lo} pre1 pre2 = pre1
 
-propInvTimesMonoAsym : {r s adv : Sec}
-                    -> ¬ ((r *R s) ≤ adv)
-                    ->   (r ≤ adv)
-                    -> ¬ (s ≤ adv)
-propInvTimesMonoAsym {Hi} {Hi} {Hi} pre1 pre2 = pre1
-propInvTimesMonoAsym {Hi} {Lo} {Hi} pre1 pre2 = ⊥-elim (pre1 ReflHi)
-propInvTimesMonoAsym {Lo} {Hi} {Hi} pre1 pre2 = ⊥-elim (pre1 ReflHi)
-propInvTimesMonoAsym {Lo} {Hi} {Lo} pre1 pre2 = pre1
-propInvTimesMonoAsym {Lo} {Lo} {Hi} pre1 pre2 = pre1
-propInvTimesMonoAsym {Lo} {Lo} {Lo} pre1 pre2 = pre1
+propTimesIdem : {r : Sec} -> (r *R r) ≡ r
+propTimesIdem {Hi} = refl
+propTimesIdem {Lo} = refl
 
 antisym : {r s : Sec} -> (r ≤ s) -> (s ≤ r) -> r ≡ s
 antisym {Hi} {Hi} pre1 pre2 = refl
@@ -235,5 +228,5 @@ secSemiringNI = record
                   ; plusMono               = plusMono
                   ; propertyConditionalNI  = propertyConditionalNI
                   ; propertyConditionalNI2 = propertyConditionalNI2
-                  ; propInvTimesMonoAsym   = propInvTimesMonoAsym
+                  ; idem*   = propTimesIdem
                   }

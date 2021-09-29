@@ -314,7 +314,7 @@ mutual
       boxInterpBiunobs ¬p (multisubst' zero γ1 e) (multisubst' zero γ2 e) inner'
 
 
-    biFundamentalTheoremGhost : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
+    biFundamentalTheoremGhost : {{R : Semiring}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
               {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
 
             -> (Γ , ghost) ⊢ e ∶ τ
