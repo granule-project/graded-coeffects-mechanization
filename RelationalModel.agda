@@ -243,6 +243,107 @@ postulate
    -> syntacticSubst v1' (Γlength Γ1 + 1) (multisubst' 0 γ1 t)
     ≡ multisubst (v1' ∷ γ1) t
 
+-------------------------------------------------------
+-- # Binary interpretation implies unary interpretation
+
+mutual
+  binaryImpliesUnaryV : {{R : Semiring}} {A : Type} {t1 t2 : Term} {adv : grade}
+                    -> ⟦ A ⟧v adv t1 t2 -> [ A ]v t1 × [ A ]v t2
+  binaryImpliesUnaryV {FunTy A r B} {Abs x e1} {Abs x' e2} {adv} (funInterpBi e1 e2 body ubody1 ubody2) =
+     (funInterpV e1 ubody1) , (funInterpV e2 ubody2)
+
+  binaryImpliesUnaryV {Unit} {.unit} {.unit} {adv} unitInterpBi = unitInterpV , unitInterpV
+  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiobs x t1 t2 inner)
+   with binaryImpliesUnary {A} {t1} {t2} {adv} inner
+  ... | (fst , snd) = (boxInterpV t1 fst) , (boxInterpV t2 snd)
+  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiunobs x t1 t2 (fst , snd)) =
+    (boxInterpV t1 fst) , (boxInterpV t2 snd)
+  binaryImpliesUnaryV {BoolTy} {.vtrue} {.vtrue} {adv} boolInterpTrueBi = boolInterpTrue , boolInterpTrue
+  binaryImpliesUnaryV {BoolTy} {.vfalse} {.vfalse} {adv} boolInterpFalseBi = boolInterpFalse , boolInterpFalse
+
+  binaryImpliesUnary : {{R : Semiring}} {A : Type} {t1 t2 : Term} {adv : grade}
+                    -> ⟦ A ⟧e adv t1 t2 -> [ A ]e t1 × [ A ]e t2
+  binaryImpliesUnary {A} {t1} {t2} {adv} pre = (left , right)
+  -- pre takes two arguments- two values v1 and v2 that t1 and t2 reduce into
+  --   given these then v1 and v2 are in the value relation
+    where
+      left : [ A ]e t1
+      left v0 redux = proj₁ (binaryImpliesUnaryV (pre v0 (multiRedux t2) redux refl))
+
+      right : [ A ]e t2
+      right v0 redux = proj₂ (binaryImpliesUnaryV (pre (multiRedux t1) v0 refl redux))
+
+  binaryImpliesUnaryG : {{R : Semiring}} {sz : ℕ} { Γ : Context sz } {adv : grade} {γ1 γ2 : List Term}
+                    -> ⟦ Γ ⟧Γ adv γ1 γ2 -> ([ Γ ]Γ γ1) × ([ Γ ]Γ γ2)
+  binaryImpliesUnaryG {.0} {Empty} {adv} {_} {_} pre = tt , tt
+  binaryImpliesUnaryG {suc sz} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} (arg , rest)
+    with binaryImpliesUnary {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
+  ... | ( arg1 , arg2 ) | ( rest1 , rest2 ) = ( (arg1 , rest1) , (arg2 , rest2) )
+
+
+-------------------------------
+-- Conversion theorems for expressions and contexts
+
+unaryPlusElimLeft : {{R : Semiring}} {A : Type} {r1 r2 : grade} {x : Term} -> [ Box (r1 +R r2) A ]e (Promote x) -> [ Box r1 A ]e (Promote x)
+unaryPlusElimLeft {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
+... | boxInterpV e inner = boxInterpV e inner
+
+unaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
+unaryPlusElimLeftΓ {.0} {γ} {Empty} {Empty} tt = tt
+unaryPlusElimLeftΓ {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail) =
+  unaryPlusElimLeft {A} {r1} {r2} {x} head , unaryPlusElimLeftΓ {s} {γ} {Γ1} {Γ2} tail
+
+unaryPlusElimRight : {{R : Semiring}}{A : Type} {r1 r2 : grade} {x : Term} -> [ Box (r1 +R r2) A ]e (Promote x) -> [ Box r2 A ]e (Promote x)
+unaryPlusElimRight {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
+... | boxInterpV e inner = boxInterpV e inner
+
+unaryPlusElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ2 ]Γ γ
+unaryPlusElimRightΓ {.0} {γ} {Empty} {Empty} tt = tt
+unaryPlusElimRightΓ {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail)
+  rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
+    unaryPlusElimRight {A} {r1} {r2} {x} head , unaryPlusElimRightΓ {s} {γ} {Γ1} {Γ2} tail
+
+binaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {adv : grade} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz}
+                   -> (convertVal : ({r1 r2 adv : grade} {v1 v2 : Term} {A : Type}
+                          -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)))
+                   -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
+binaryPlusElimLeftΓ {{R}} {0} {adv} {[]} {[]} {Empty} {Empty} convertVal _ = tt
+binaryPlusElimLeftΓ {{R}} {0} {adv} {γ1} {γ2} {Empty} {Empty} convertVal p = p
+binaryPlusElimLeftΓ {{R}} {.(suc _)} {adv} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+binaryPlusElimLeftΓ {{R}} {.(suc _)} {adv} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+binaryPlusElimLeftΓ {{R}} {.(suc _)} {adv} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+binaryPlusElimLeftΓ {{R}} {(suc s)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
+    convert {r1} {r2} {adv} {v1} {v2} {A} arg , binaryPlusElimLeftΓ {s} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal rest
+  where
+    convert : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
+    convert {r1} {r2} {adv} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
+     rewrite trans (sym v1redux') (reduxProm {v1})
+          | trans (sym v2redux') (reduxProm {v2}) = convertVal {r1} {r2} {adv} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
+
+binaryPlusElimRightΓ : {{R : Semiring}}
+                       {sz : ℕ} {adv : grade} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz}
+                    -> (convertVal : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2))
+                    -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ2 ⟧Γ adv γ1 γ2
+binaryPlusElimRightΓ {{R}} {0} {adv} {[]} {[]} {Empty} {Empty} _ _ = tt
+binaryPlusElimRightΓ {{R}} {0} {adv} {γ1} {γ2} {Empty} {Empty} _ p = p
+binaryPlusElimRightΓ {{R}} {.(suc _)} {adv} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+binaryPlusElimRightΓ {{R}} {.(suc _)} {adv} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+binaryPlusElimRightΓ {{R}} {.(suc _)} {adv} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+binaryPlusElimRightΓ {{R}} {(suc s)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal2 (arg , rest)
+      rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
+        convert2 {r1} {r2} {v1} {v2} {A} arg , binaryPlusElimRightΓ {s} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal2 rest
+  where
+    convert2 : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧e adv (Promote v1) (Promote v2)
+    convert2 {r1} {r2} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
+      rewrite trans (sym v1redux') (reduxProm {v1})
+            | trans (sym v2redux') (reduxProm {v2}) = convertVal2 {r1} {r2} {adv} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
+
+convertValNISemiring : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
+convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
+... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
+... | yes eqo = boxInterpBiobs eqo v1 v2 arg
+convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv eq) v1 v2 argInterp
+
 -------------------------------
 -- Unary fundamental theorem
 
@@ -273,7 +374,7 @@ utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} t
       ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst' 0 γ t1} {multisubst' 0 γ t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ} typ1)
       fun1 = Abs var1 bod1
 
-      ih1 = utheorem {sz} {γ} {Γ1} {t1} {FunTy A r B} typ1 (convert context)
+      ih1 = utheorem {sz} {γ} {Γ1} {t1} {FunTy A r B} typ1 (unaryPlusElimLeftΓ context)
       ih1applied = ih1 fun1 fun1redux
 
       -- Join up the reductions
@@ -293,30 +394,10 @@ utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} t
     extract {x} {e} pre with pre
     ... | funInterpV .e  inner = inner
 
-
-    convertInterp : {A : Type} {r1 r2 : grade} {x : Term} -> [ Box (r1 +R (r *R r2)) A ]e (Promote x) -> [ Box r1 A ]e (Promote x)
-    convertInterp {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
-    ... | boxInterpV e inner = boxInterpV e inner
-
-    convert : {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ (r · Γ2) ]Γ γ -> [ Γ1 ]Γ γ
-    convert {.0} {γ} {Empty} {Empty} tt = tt
-    convert {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail) =
-      convertInterp {A} {r1} {r2} {x} head , convert {s} {γ} {Γ1} {Γ2} tail
-
-    convertInterp2 : {A : Type} {r1 r2 : grade} {x : Term} -> [ Box (r1 +R (r *R r2)) A ]e (Promote x) -> [ Box (r *R r2) A ]e (Promote x)
-    convertInterp2 {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
-    ... | boxInterpV e inner = boxInterpV e inner
-
-    convert2 : {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ (r · Γ2) ]Γ γ -> [ r · Γ2 ]Γ γ
-    convert2 {.0} {γ} {Empty} {Empty} tt = tt
-    convert2 {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail)
-      rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
-        convertInterp2 {A} {r1} {r2} {x} head , convert2 {s} {γ} {Γ1} {Γ2} tail
-
     argument : [ Box r A ]e (Promote (multisubst' zero γ t2))
     argument =
       let
-        ih2 = utheorem {sz} {γ} {r · Γ2} {Promote t2} {Box r A} (pr {Γ' = r · Γ2} {r} typ2 {refl}) (convert2 context)
+        ih2 = utheorem {sz} {γ} {r · Γ2} {Promote t2} {Box r A} (pr {Γ' = r · Γ2} {r} typ2 {refl}) (unaryPlusElimRightΓ context)
       in
         subst (\h -> [ Box r A ]e h) (substPresProm {0} {γ} {t2}) ih2
 
@@ -394,30 +475,19 @@ utheorem {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} {
     convertHyp {x} {r1} {r2} pre v0 v0redux with pre v0 v0redux
     ... | boxInterpV e inner = boxInterpV e inner
 
-    convertHyp2 : {x : Term} {r1 r2 : grade} {A : Type} -> [ Box ((r *R r1) +R r2) A ]e (Promote x) -> [ Box r2 A ]e (Promote x)
-    convertHyp2 {x} {r1} {r2} pre v0 v0redux with pre v0 v0redux
-    ... | boxInterpV e inner = boxInterpV e inner
-
     convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ : List Term} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
     convert {.0} {Empty} {Empty} {γ} g = tt
     convert {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} ()
     convert {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x ∷ γ} (hd , tl) =
       convertHyp hd , convert {sz} {Γ1} {Γ2} {γ} tl
 
-    convert2 : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ : List Term} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ2 ]Γ γ
-    convert2 {.0} {Empty} {Empty} {γ} g = tt
-    convert2 {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} ()
-    convert2 {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x ∷ γ} (hd , tl)
-     rewrite sameTypes {sz} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl =
-      convertHyp2 hd , convert2 {sz} {Γ1} {Γ2} {γ} tl
-
     caseBody : [ B ]v v1
     caseBody with reduxTheoremBool {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux'
     ... | inj₁ trueEv  =
-      utheorem {sz} {γ} {Γ2} {t1} {B} typ1 (convert2 context) v1
+      utheorem {sz} {γ} {Γ2} {t1} {B} typ1 (unaryPlusElimRightΓ context) v1
          (sym (reduxTheoremBool1 {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux' trueEv))
     ... | inj₂ falseEv =
-      utheorem {sz} {γ} {Γ2} {t2} {B} typ2 (convert2 context) v1
+      utheorem {sz} {γ} {Γ2} {t2} {B} typ2 (unaryPlusElimRightΓ context) v1
          (sym (reduxTheoremBool2 {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux' falseEv))
 
 -------------------------------
@@ -433,42 +503,7 @@ absInj1 : {x y : ℕ} {e1 e2 : Term} -> Abs x e1 ≡ Abs y e2 -> x ≡ y
 absInj1 refl = refl
 
 
---------------------------------------
-
-mutual
-  binaryImpliesUnaryV : {{R : Semiring}} {A : Type} {t1 t2 : Term} {adv : grade}
-                    -> ⟦ A ⟧v adv t1 t2 -> [ A ]v t1 × [ A ]v t2
-  binaryImpliesUnaryV {FunTy A r B} {Abs x e1} {Abs x' e2} {adv} (funInterpBi e1 e2 body ubody1 ubody2) =
-     (funInterpV e1 ubody1) , (funInterpV e2 ubody2)
-
-  binaryImpliesUnaryV {Unit} {.unit} {.unit} {adv} unitInterpBi = unitInterpV , unitInterpV
-  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiobs x t1 t2 inner)
-   with binaryImpliesUnary {A} {t1} {t2} {adv} inner
-  ... | (fst , snd) = (boxInterpV t1 fst) , (boxInterpV t2 snd)
-  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiunobs x t1 t2 (fst , snd)) =
-    (boxInterpV t1 fst) , (boxInterpV t2 snd)
-  binaryImpliesUnaryV {BoolTy} {.vtrue} {.vtrue} {adv} boolInterpTrueBi = boolInterpTrue , boolInterpTrue
-  binaryImpliesUnaryV {BoolTy} {.vfalse} {.vfalse} {adv} boolInterpFalseBi = boolInterpFalse , boolInterpFalse
-
-  binaryImpliesUnary : {{R : Semiring}} {A : Type} {t1 t2 : Term} {adv : grade}
-                    -> ⟦ A ⟧e adv t1 t2 -> [ A ]e t1 × [ A ]e t2
-  binaryImpliesUnary {A} {t1} {t2} {adv} pre = (left , right)
-  -- pre takes two arguments- two values v1 and v2 that t1 and t2 reduce into
-  --   given these then v1 and v2 are in the value relation
-    where
-      left : [ A ]e t1
-      left v0 redux = proj₁ (binaryImpliesUnaryV (pre v0 (multiRedux t2) redux refl))
-
-      right : [ A ]e t2
-      right v0 redux = proj₂ (binaryImpliesUnaryV (pre (multiRedux t1) v0 refl redux))
-
-  binaryImpliesUnaryG : {{R : Semiring}} {sz : ℕ} { Γ : Context sz } {adv : grade} {γ1 γ2 : List Term}
-                    -> ⟦ Γ ⟧Γ adv γ1 γ2 -> ([ Γ ]Γ γ1) × ([ Γ ]Γ γ2)
-  binaryImpliesUnaryG {.0} {Empty} {adv} {_} {_} pre = tt , tt
-  binaryImpliesUnaryG {suc sz} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} (arg , rest)
-    with binaryImpliesUnary {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
-  ... | ( arg1 , arg2 ) | ( rest1 , rest2 ) = ( (arg1 , rest1) , (arg2 , rest2) )
-
+-------------------------
 
 propInvPlusMono1 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> {r1 r2 r adv : grade}
@@ -481,30 +516,6 @@ propInvPlusMono2 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> ¬((r1 +R (r *R r2)) ≤ adv)
                 -> ¬((r *R r2) ≤ adv)
 propInvPlusMono2 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = plusMonoInv' {R} {R'} {r1} {r *R r2} {adv} pre
-
--- pull out to its own thing to resue
-splitContextLeft : {{R : Semiring}} {sz : ℕ} {adv : grade} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz}
-                   -> (convertVal : ({r1 r2 adv : grade} {v1 v2 : Term} {A : Type}
-                          -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)))
-                   -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-splitContextLeft {{R}} {0} {adv} {[]} {[]} {Empty} {Empty} convertVal _ = tt
-splitContextLeft {{R}} {0} {adv} {γ1} {γ2} {Empty} {Empty} convertVal p = p
-splitContextLeft {{R}} {.(suc _)} {adv} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
-splitContextLeft {{R}} {.(suc _)} {adv} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
-splitContextLeft {{R}} {.(suc _)} {adv} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
-splitContextLeft {{R}} {(suc s)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
-    convert {r1} {r2} {adv} {v1} {v2} {A} arg , splitContextLeft {s} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal rest
-  where
-    convert : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
-    convert {r1} {r2} {adv} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
-     rewrite trans (sym v1redux') (reduxProm {v1})
-          | trans (sym v2redux') (reduxProm {v2}) = convertVal {r1} {r2} {adv} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
-
-convertValNISemiring : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
-convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
-... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
-... | yes eqo = boxInterpBiobs eqo v1 v2 arg
-convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv eq) v1 v2 argInterp
 
 
 {-# TERMINATING #-}
@@ -577,13 +588,13 @@ biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1}
     extract {x} {y} {e1} {e2} pre with pre
     ... | funInterpBi .e1 .e2 inner _ _ = inner
 
-    convertVal2 : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧v adv (Promote v1) (Promote v2)
-    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with (r1 +R (r *R r2)) ≤d adv | (r *R r2) ≤d adv
+    convertVal2 : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2)
+    convertVal2 {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with (r1 +R r2) ≤d adv | r2 ≤d adv
     ... | no eqo  | yes eq' = ⊥-elim (eqo eq)
     ... | no eqo  | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
     ... | yes eqo | yes eq' = boxInterpBiobs   eq' v1 v2 arg
     ... | yes eqo | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
-    convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (propInvPlusMono2 eq) v1 v2 argInterp
+    convertVal2 {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv eq) v1 v2 argInterp
 
     convertVal : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
     convertVal {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
@@ -593,22 +604,10 @@ biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1}
 
     -- pull out to its own thing to resue
     splitContext1 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-    splitContext1 = splitContextLeft convertVal 
-    
-    convert2 : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧e adv (Promote v1) (Promote v2)
-    convert2 {r1} {r2} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
-      rewrite trans (sym v1redux') (reduxProm {v1})
-            | trans (sym v2redux') (reduxProm {v2}) = convertVal2 {r1} {r2} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
+    splitContext1 = binaryPlusElimLeftΓ convertVal 
 
     splitContext2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ r · Γ2 ⟧Γ adv γ1 γ2
-    splitContext2 {0} {[]} {[]} {Empty} {Empty} _ = tt
-    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} p = {!p!}
-    splitContext2 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
-    splitContext2 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
-    splitContext2 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
-    splitContext2 {(suc s)} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (arg , rest)
-      rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
-        convert2 {r1} {r2} {v1} {v2} {A} arg , splitContext2 {s} {γ1} {γ2} {Γ1} {Γ2} rest
+    splitContext2 = binaryPlusElimRightΓ convertVal2 
 
     argument : ⟦ Box r A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
     argument =
