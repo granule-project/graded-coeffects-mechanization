@@ -218,14 +218,24 @@ delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiunobs pre .t1 .t2 x₁)
 -- elimInversion
 
 mutual
+
+
+    convertValL+ : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
+               -> {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
+    convertValL+ {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs pre .v1 .v2 inner)   with r1 ≤d adv
+    ... | yes p = boxInterpBiobs p v1 v2 inner
+    ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
+    convertValL+ {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) = boxInterpBiunobs (\eq -> pre (plusMono R' eq)) v1 v2 inner
+
     contextSplitLeft : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 Γ2 : ContextG sz} {γ1 γ2 : List Term} {adv : grade}
                      -> ⟦ Γ1 ++g Γ2 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
     contextSplitLeft {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv} (visible pre inner) with g1 ≤d adv
-    ... | yes p = {!!}
-    ... | no ¬p = invisible ¬p {!binaryImpliesUnaryG inner!} -- okay because we can do binaryImpliesUnary
+    ... | yes p = visible p (splitContextLeft convertValL+ inner)
+    ... | no ¬p = invisible ¬p (binaryImpliesUnaryG (splitContextLeft convertValL+ inner)) -- okay because we can do binaryImpliesUnary
     contextSplitLeft {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv} (invisible pre inner) with g1 ≤d adv
     ... | yes p = ⊥-elim (pre (plusMono R' p))
-    ... | no ¬p = {!!}
+    ... | no ¬p = invisible ¬p ?
+
 
     intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
                   {Γ : Context sz}
@@ -273,7 +283,8 @@ mutual
       where
        
         subContext1 : ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-        subContext1 = contextSplitLeft (subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp)
+        subContext1 = {!!}
+         -- contextSplitLeft (subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp)
 
         subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
         subContext1bi = {!!}

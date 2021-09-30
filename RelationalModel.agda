@@ -482,6 +482,30 @@ propInvPlusMono2 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> ¬((r *R r2) ≤ adv)
 propInvPlusMono2 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = plusMonoInv' {R} {R'} {r1} {r *R r2} {adv} pre
 
+-- pull out to its own thing to resue
+splitContextLeft : {{R : Semiring}} {sz : ℕ} {adv : grade} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz}
+                   -> (convertVal : ({r1 r2 adv : grade} {v1 v2 : Term} {A : Type}
+                          -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)))
+                   -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
+splitContextLeft {{R}} {0} {adv} {[]} {[]} {Empty} {Empty} convertVal _ = tt
+splitContextLeft {{R}} {0} {adv} {γ1} {γ2} {Empty} {Empty} convertVal p = p
+splitContextLeft {{R}} {.(suc _)} {adv} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+splitContextLeft {{R}} {.(suc _)} {adv} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+splitContextLeft {{R}} {.(suc _)} {adv} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
+splitContextLeft {{R}} {(suc s)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
+    convert {r1} {r2} {adv} {v1} {v2} {A} arg , splitContextLeft {s} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal rest
+  where
+    convert : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
+    convert {r1} {r2} {adv} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
+     rewrite trans (sym v1redux') (reduxProm {v1})
+          | trans (sym v2redux') (reduxProm {v2}) = convertVal {r1} {r2} {adv} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
+
+convertValNISemiring : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
+convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
+... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
+... | yes eqo = boxInterpBiobs eqo v1 v2 arg
+convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv eq) v1 v2 argInterp
+
 
 {-# TERMINATING #-}
 biFundamentalTheorem : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {sz : ℕ}
@@ -514,7 +538,7 @@ biFundamentalTheorem {{R}} {_} {Γ} {Var .(Γlength Γ1)} {τ} (var {_} {_} {.τ
    {!!}
 
 
-biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos =
+biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos =
    let
     -- Reducability of `App t1 t2` implies that there exists a value `Abs var1 bod1` which can be obtained by
     -- reducing `t1` underneath context `γ1` and `Abs var2 bod2` underneath context `γ2`
@@ -561,27 +585,16 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
     ... | yes eqo | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
     convertVal2 {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (propInvPlusMono2 eq) v1 v2 argInterp
 
-    convertVal : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
-    convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
+    convertVal : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
+    convertVal {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
     ... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
     ... | yes eqo = boxInterpBiobs eqo v1 v2 arg
-    convertVal {r1} {r2} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (propInvPlusMono1 eq) v1 v2 argInterp
-
-    convert : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
-    convert {r1} {r2} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
-      rewrite trans (sym v1redux') (reduxProm {v1})
-            | trans (sym v2redux') (reduxProm {v2}) = convertVal {r1} {r2} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
+    convertVal {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv {R} {R'} {r1} {r2} {adv} eq) v1 v2 argInterp
 
     -- pull out to its own thing to resue
     splitContext1 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-    splitContext1 {0} {[]} {[]} {Empty} {Empty} _ = tt
-    splitContext1 {0} {γ1} {γ2} {Empty} {Empty} p = {!!}
-    splitContext1 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
-    splitContext1 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
-    splitContext1 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
-    splitContext1 {(suc s)} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (arg , rest) =
-      convert {r1} {r2} {v1} {v2} {A} arg , splitContext1 {s} {γ1} {γ2} {Γ1} {Γ2} rest
-
+    splitContext1 = splitContextLeft convertVal 
+    
     convert2 : {r1 r2 : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R (r *R r2)) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box (r *R r2) A ⟧e adv (Promote v1) (Promote v2)
     convert2 {r1} {r2} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
       rewrite trans (sym v1redux') (reduxProm {v1})
@@ -589,7 +602,7 @@ biFundamentalTheorem {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A
 
     splitContext2 : {sz : ℕ} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz} -> ⟦ Γ1 ++ (r · Γ2) ⟧Γ adv γ1 γ2 -> ⟦ r · Γ2 ⟧Γ adv γ1 γ2
     splitContext2 {0} {[]} {[]} {Empty} {Empty} _ = tt
-    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} p = {!!}
+    splitContext2 {0} {γ1} {γ2} {Empty} {Empty} p = {!p!}
     splitContext2 {.(suc _)} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext2 {.(suc _)} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
     splitContext2 {.(suc _)} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} ()
