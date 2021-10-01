@@ -28,16 +28,16 @@ record Semiring : Set₁ where
     rightUnit+  : {r : grade} -> r +R 0R ≡ r
     comm+       : {r s : grade} -> r +R s ≡ s +R r
 
-    leftUnit*    : {r : grade} -> 1R *R r ≡ r
-    rightUnit*   : {r : grade} -> r *R 1R ≡ r
-    leftAbsorb   : {r : grade} -> 0R *R r ≡ 0R
-    rightAbsorb  : {r : grade} -> r *R 0R ≡ 0R
+    leftUnit*    : {r : grade} -> (1R *R r) ≤ r
+    rightUnit*   : {r : grade} -> (r *R 1R) ≤ r
+    leftAbsorb   : {r : grade} -> (0R *R r) ≤ 0R
+    rightAbsorb  : {r : grade} -> (r *R 0R) ≤ 0R
 
     assoc*     : {r s t : grade} -> (r *R s) *R t ≡ r *R (s *R t)
     assoc+     : {r s t : grade} -> (r +R s) +R t ≡ r +R (s +R t)
 
-    distrib1    : {r s t : grade} -> r *R (s +R t) ≡ (r *R s) +R (r *R t)
-    distrib2    : {r s t : grade} -> (r +R s) *R t ≡ (r *R t) +R (s *R t)
+    distrib1    : {r s t : grade} -> (r *R (s +R t)) ≤ ((r *R s) +R (r *R t))
+    distrib2    : {r s t : grade} -> ((r +R s) *R t) ≤ ((r *R t) +R (s *R t))
 
     monotone*  : {r1 r2 s1 s2 : grade} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
     monotone+  : {r1 r2 s1 s2 : grade} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s1) ≤ (r2 +R s2)
@@ -160,19 +160,20 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     -- this is a possibility for type preservation from a few of my sketches
     --substProp : {r : grade R} -> _+R_ R (1R R) r ≡ (1R R) # r
 
-    unit#   : {r : grade R}     -> default # r  ≡ r
     comm#   : {r s : grade R}   -> r # s        ≡ s # r
     assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
     idem#   : {r : grade R}     -> r # r        ≡ r
 
-    -- definitely holds for Level and seems needed for the proof.
-    absorb# : {r : grade R} -> r # (1R R) ≡ (1R R)
-
     idem* : {r : grade R} -> _*R_ R r r ≡ r
     plusMono : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
 
+
+    timesLeft : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_*R_ R r1 r2) s)
     -- distributivity rules with other operators?
     -- substitution theorem will tell us if we need these
+
+
+    com* : {r s : grade R} -> _*R_ R r s ≡ _*R_ R s r
 
     -- 0 * r <= r
     -- r * 0 <= r
@@ -184,6 +185,9 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
 open InformationFlowSemiring
 
 -- # Some more derived properties
+
+plusMonoSym : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {r1 r2 s : grade R} -> (_≤_ R r2 s) -> (_≤_ R (_+R_ R r1 r2) s)
+plusMonoSym {{R}} {{R'}} {r1} {r2} {s} pre rewrite comm+ R {r1} {r2} = plusMono R' pre
 
 propInvTimesMonoAsym : {{ R : Semiring }} {{ R' : InformationFlowSemiring R }}
                        {r s adv : grade R}

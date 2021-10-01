@@ -233,7 +233,7 @@ mutual
     ... | yes p = boxInterpBiobs p v1 v2 inner
     ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
     convertValR+ {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) =
-      boxInterpBiunobs {!!} {!v1!} v2 inner -- boxInterpBiunobs (\eq -> pre (plusMono R' eq)) v1 v2 inner
+      boxInterpBiunobs (\pre' -> pre (plusMonoSym pre')) v1 v2 inner -- boxInterpBiunobs (\eq -> pre (plusMono R' eq)) v1 v2 inner
 
     contextSplitLeft : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 Γ2 : ContextG sz} {γ1 γ2 : List Term} {adv : grade}
                      -> ⟦ Γ1 ++g Γ2 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
@@ -250,8 +250,26 @@ mutual
     ... | yes p = visible p (binaryPlusElimRightΓ convertValR+ inner)
     ... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryPlusElimRightΓ convertValR+ inner))
     contextSplitRight {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv} (invisible pre inner) with g2 ≤d adv
-    ... | yes p = ⊥-elim (pre {!!})
+    ... | yes p = ⊥-elim (pre (plusMonoSym p))
     ... | no ¬p = invisible ¬p ((unaryPlusElimRightΓ (proj₁ inner)) , (unaryPlusElimRightΓ (proj₂ inner)))
+
+    convertValR* : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
+               -> {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 *R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2)
+    convertValR* {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs pre .v1 .v2 inner)   with r2 ≤d adv
+    ... | yes p = boxInterpBiobs p v1 v2 inner
+    ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
+    convertValR* {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) =
+      boxInterpBiunobs (\pre' -> pre (subst (\\h -> h ≤ adv) com* (timesLeft pre'))) v1 v2 inner
+
+    contextElimTimes : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 : ContextG sz} {γ1 γ2 : List Term} {r adv : grade}
+                     -> ⟦ r ·g Γ1 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
+    contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (visible pre inner) with g1 ≤d adv             
+    ... | yes p = visible p (binaryTimesElimRightΓ {!   !} inner)
+    ... | no ¬p = {!   !}
+    contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (invisible pre inner) with g1 ≤d adv             
+    ... | yes p = {!   !}
+    ... | no ¬p = {!   !}
+    
 
     intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
                   {Γ : Context sz}
@@ -275,12 +293,12 @@ mutual
         conc : ⟦ A ⟧v adv v1 v2
         conc with arg (Promote a1) (Promote a2) refl refl
         ... | boxInterpBiobs _ .a1 .a2 argInner = argInner v1 v2 (isSimultaneous' {v1} {a1} {γ1'} v1redux) ((isSimultaneous' {v2} {a2} {γ2'} v2redux))
-        ... | boxInterpBiunobs preN .a1 .a2 argInner = ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) rightUnit* preN) pre) 
+        ... | boxInterpBiunobs preN .a1 .a2 argInner = ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) {!   !} preN) pre)  -- used to use equality rightUnit*
 
     -- Here we have that `r ≤ adv` but `¬ ((r * ghost) ≤ adv)`
     -- ah but we also know that `ghost = 1` so ... we get a contradiction
     ... | invisible pre2 inner | Ext ad x | Relation.Binary.PropositionalEquality.[ eq ] =
-      ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) rightUnit*) pre2) pre)
+      ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) {!   !}) pre2) pre) -- NEXT: rightUnit* used to be 
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var _)} {A} (var {Γ1 = _} {Γ2} pos) pre inp e1 e2 =
       {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
@@ -297,15 +315,17 @@ mutual
       in
       {!!}
       where
-       
+        inp' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
+        inp' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp
+
         subContext1 : ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-        subContext1 = contextSplitLeft (subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp)
+        subContext1 = contextSplitLeft inp'
 
         subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-        subContext1bi = contextSplitLeft {!inp!}
+        subContext1bi = {!   !} -- binaryTimesElimRightΓ ? ?
 
         subContext2 : ⟦ r ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
-        subContext2 = contextSplitRight {!!}
+        subContext2 = contextSplitRight {! inp  !}
 
         subContext2bi : ⟦ ( Γ2 , g2) ⟧Γg adv γ1 γ2
         subContext2bi = {!!}

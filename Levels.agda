@@ -56,11 +56,117 @@ reified Unused Private  = no (λ ())
 reified Unused Dunno    = no (λ ())
 reified Unused Unused   = yes (Refl Unused)
 
+-- Meet with respect to security ordering
+meet : Level -> Level -> Level
+meet Unused x        = x
+meet x Unused        = x
+meet Public x        = Public
+meet x Public        = Public
+meet Private Private = Private
+meet Dunno Private   = Dunno
+meet Private Dunno   = Dunno
+meet Dunno Dunno     = Dunno
+
+comm* : {r s : Level} -> meet r s ≡ meet s r
+comm* {Public} {Public} = refl
+comm* {Public} {Private} = refl
+comm* {Public} {Dunno} = refl
+comm* {Public} {Unused} = refl
+comm* {Private} {Public} = refl
+comm* {Private} {Private} = refl
+comm* {Private} {Dunno} = refl
+comm* {Private} {Unused} = refl
+comm* {Dunno} {Public} = refl
+comm* {Dunno} {Private} = refl
+comm* {Dunno} {Dunno} = refl
+comm* {Dunno} {Unused} = refl
+comm* {Unused} {Public} = refl
+comm* {Unused} {Private} = refl
+comm* {Unused} {Dunno} = refl
+comm* {Unused} {Unused} = refl
+
+-- join with respect to the security ordering
+join : Level -> Level -> Level
+join Unused x = Unused
+join x Unused = Unused
+join Private x = Private
+join x Private = Private
+join Dunno x = Dunno
+join x Dunno = Dunno
+join Public Public = Public
+
+distrib : {r s t : Level} -> 
+         Order (meet (meet r s) (meet r t)) (meet r (meet s t))
+distrib {Public} {Public} {Public} = Refl Public
+distrib {Public} {Public} {Private} = Refl Public
+distrib {Public} {Public} {Dunno} = Refl Public
+distrib {Public} {Public} {Unused} = Refl Public
+distrib {Public} {Private} {Public} = Refl Public
+distrib {Public} {Private} {Private} = Refl Public
+distrib {Public} {Private} {Dunno} = Refl Public
+distrib {Public} {Private} {Unused} = Refl Public
+distrib {Public} {Dunno} {Public} = Refl Public
+distrib {Public} {Dunno} {Private} = Refl Public
+distrib {Public} {Dunno} {Dunno} = Refl Public
+distrib {Public} {Dunno} {Unused} = Refl Public
+distrib {Public} {Unused} {Public} = Refl Public
+distrib {Public} {Unused} {Private} = Refl Public
+distrib {Public} {Unused} {Dunno} = Refl Public
+distrib {Public} {Unused} {Unused} = Refl Public
+distrib {Private} {Public} {Public} = Refl Public
+distrib {Private} {Public} {Private} = Refl Public
+distrib {Private} {Public} {Dunno} = Refl Public
+distrib {Private} {Public} {Unused} = Refl Public
+distrib {Private} {Private} {Public} = Refl Public
+distrib {Private} {Private} {Private} = Refl Private
+distrib {Private} {Private} {Dunno} = Refl Dunno
+distrib {Private} {Private} {Unused} = Refl Private
+distrib {Private} {Dunno} {Public} = Refl Public
+distrib {Private} {Dunno} {Private} = Refl Dunno
+distrib {Private} {Dunno} {Dunno} = Refl Dunno
+distrib {Private} {Dunno} {Unused} = Refl Dunno
+distrib {Private} {Unused} {Public} = Refl Public
+distrib {Private} {Unused} {Private} = Refl Private
+distrib {Private} {Unused} {Dunno} = Refl Dunno
+distrib {Private} {Unused} {Unused} = Refl Private
+distrib {Dunno} {Public} {Public} = Refl Public
+distrib {Dunno} {Public} {Private} = Refl Public
+distrib {Dunno} {Public} {Dunno} = Refl Public
+distrib {Dunno} {Public} {Unused} = Refl Public
+distrib {Dunno} {Private} {Public} = Refl Public
+distrib {Dunno} {Private} {Private} = Refl Dunno
+distrib {Dunno} {Private} {Dunno} = Refl Dunno
+distrib {Dunno} {Private} {Unused} = Refl Dunno
+distrib {Dunno} {Dunno} {Public} = Refl Public
+distrib {Dunno} {Dunno} {Private} = Refl Dunno
+distrib {Dunno} {Dunno} {Dunno} = Refl Dunno
+distrib {Dunno} {Dunno} {Unused} = Refl Dunno
+distrib {Dunno} {Unused} {Public} = Refl Public
+distrib {Dunno} {Unused} {Private} = Refl Dunno
+distrib {Dunno} {Unused} {Dunno} = Refl Dunno
+distrib {Dunno} {Unused} {Unused} = Refl Dunno
+distrib {Unused} {Public} {Public} = Refl Public
+distrib {Unused} {Public} {Private} = Refl Public
+distrib {Unused} {Public} {Dunno} = Refl Public
+distrib {Unused} {Public} {Unused} = Refl Public
+distrib {Unused} {Private} {Public} = Refl Public
+distrib {Unused} {Private} {Private} = Refl Private
+distrib {Unused} {Private} {Dunno} = Refl Dunno
+distrib {Unused} {Private} {Unused} = Refl Private
+distrib {Unused} {Dunno} {Public} = Refl Public
+distrib {Unused} {Dunno} {Private} = Refl Dunno
+distrib {Unused} {Dunno} {Dunno} = Refl Dunno
+distrib {Unused} {Dunno} {Unused} = Refl Dunno
+distrib {Unused} {Unused} {Public} = Refl Public
+distrib {Unused} {Unused} {Private} = Refl Private
+distrib {Unused} {Unused} {Dunno} = Refl Dunno
+distrib {Unused} {Unused} {Unused} = Refl Unused
+
 instance
   levelSemiring : Semiring
   grade levelSemiring = Level
-  1R levelSemiring      = Private
-  0R levelSemiring      = Unused
+  1R levelSemiring    = Private
+  0R levelSemiring    = Unused
 
   -- remember the ordering in the calculus goes the 'opposite way' to Granule but
   -- the above `Order` data type is defined using Granule's direction
@@ -69,34 +175,9 @@ instance
 
   _≤d_ levelSemiring = reified
 
-  -- unit property
-  _+R_ levelSemiring Unused x = x
-  _+R_ levelSemiring x Unused = x
-  -- Hack for Private
-  _+R_ levelSemiring Dunno Private = Dunno
-  _+R_ levelSemiring Private Dunno = Dunno
- -- otherwise dunno acts like another unit
-  _+R_ levelSemiring Dunno x = x
-  _+R_ levelSemiring x Dunno = x
-  -- otherwise join
-  _+R_ levelSemiring Private Private = Private
-  _+R_ levelSemiring Public  Public  = Public
-  _+R_ levelSemiring Private Public  = Public
-  _+R_ levelSemiring Public Private  = Public
+  _+R_ levelSemiring = meet
+  _*R_ levelSemiring = meet
 
-  -- absorbing
-  _*R_ levelSemiring Unused x = Unused
-  _*R_ levelSemiring x Unused = Unused
-  -- dunno behaviour
-  _*R_ levelSemiring Private Dunno = Dunno
-  _*R_ levelSemiring Dunno Private = Dunno
-  _*R_ levelSemiring x Dunno = x
-  _*R_ levelSemiring Dunno x = x
-  -- otherwise join
-  _*R_ levelSemiring Private Private = Private
-  _*R_ levelSemiring Public  Public  = Public
-  _*R_ levelSemiring Private Public  = Public
-  _*R_ levelSemiring Public Private  = Public
 
   leftUnit+ levelSemiring {Public}  = refl
   leftUnit+ levelSemiring {Private} = refl
@@ -125,25 +206,25 @@ instance
   comm+ levelSemiring {Unused} {Dunno} = refl
   comm+ levelSemiring {Unused} {Unused} = refl
 
-  leftAbsorb levelSemiring {Public} = refl
-  leftAbsorb levelSemiring {Private} = refl
-  leftAbsorb levelSemiring {Dunno} = refl
-  leftAbsorb levelSemiring {Unused} = refl
+  leftAbsorb levelSemiring {Public} = 0Pub
+  leftAbsorb levelSemiring {Private} = 0Priv
+  leftAbsorb levelSemiring {Dunno} = 0Dunno
+  leftAbsorb levelSemiring {Unused} = Refl Unused
 
-  rightAbsorb levelSemiring {Public} = refl
-  rightAbsorb levelSemiring {Private} = refl
-  rightAbsorb levelSemiring {Dunno} = refl
-  rightAbsorb levelSemiring {Unused} = refl
+  rightAbsorb levelSemiring {Public} = 0Pub
+  rightAbsorb levelSemiring {Private} = 0Priv
+  rightAbsorb levelSemiring {Dunno} = 0Dunno
+  rightAbsorb levelSemiring {Unused} = Refl Unused
 
-  leftUnit* levelSemiring {Public}   = refl
-  leftUnit* levelSemiring {Private}  = refl
-  leftUnit* levelSemiring {Dunno}    = refl
-  leftUnit* levelSemiring {Unused}   = refl
+  leftUnit* levelSemiring {Public}   = Refl Public
+  leftUnit* levelSemiring {Private}  = Refl Private
+  leftUnit* levelSemiring {Dunno}    = Refl Dunno
+  leftUnit* levelSemiring {Unused}   = 0Priv
 
-  rightUnit* levelSemiring {Public}  = refl
-  rightUnit* levelSemiring {Private} = refl
-  rightUnit* levelSemiring {Dunno}   = refl
-  rightUnit* levelSemiring {Unused}  = refl
+  rightUnit* levelSemiring {Public}  = Refl Public
+  rightUnit* levelSemiring {Private} = Refl Private
+  rightUnit* levelSemiring {Dunno}   = Refl Dunno
+  rightUnit* levelSemiring {Unused}  = 0Priv
 
   assoc* levelSemiring {Public} {Public} {Public} = refl
   assoc* levelSemiring {Public} {Public} {Private} = refl
@@ -227,210 +308,99 @@ instance
   assoc+ levelSemiring {Dunno} {Unused} {t} = refl
   assoc+ levelSemiring {Unused} {s} {t} = refl
 
-  distrib1 levelSemiring {Public} {Public} {Public} = refl
-  distrib1 levelSemiring {Public} {Public} {Private} = refl
-  distrib1 levelSemiring {Public} {Public} {Dunno} = refl
-  distrib1 levelSemiring {Public} {Public} {Unused} = refl
-  distrib1 levelSemiring {Public} {Private} {Public} = refl
-  distrib1 levelSemiring {Public} {Private} {Private} = refl
-  distrib1 levelSemiring {Public} {Private} {Dunno} = refl
-  distrib1 levelSemiring {Public} {Private} {Unused} = refl
-  distrib1 levelSemiring {Public} {Dunno} {Public} = refl
-  distrib1 levelSemiring {Public} {Dunno} {Private} = refl
-  distrib1 levelSemiring {Public} {Dunno} {Dunno} = refl
-  distrib1 levelSemiring {Public} {Dunno} {Unused} = refl
-  distrib1 levelSemiring {Public} {Unused} {t} = refl
-  distrib1 levelSemiring {Private} {Public} {Public} = refl
-  distrib1 levelSemiring {Private} {Public} {Private} = refl
-  distrib1 levelSemiring {Private} {Public} {Dunno} = refl
-  distrib1 levelSemiring {Private} {Public} {Unused} = refl
-  distrib1 levelSemiring {Private} {Private} {Public} = refl
-  distrib1 levelSemiring {Private} {Private} {Private} = refl
-  distrib1 levelSemiring {Private} {Private} {Dunno} = refl
-  distrib1 levelSemiring {Private} {Private} {Unused} = refl
-  distrib1 levelSemiring {Private} {Dunno} {Public} = refl
-  distrib1 levelSemiring {Private} {Dunno} {Private} = refl
-  distrib1 levelSemiring {Private} {Dunno} {Dunno} = refl
-  distrib1 levelSemiring {Private} {Dunno} {Unused} = refl
-  distrib1 levelSemiring {Private} {Unused} {t} = refl
-  distrib1 levelSemiring {Dunno} {Public} {Public} = refl
-  distrib1 levelSemiring {Dunno} {Public} {Private} = refl
-  distrib1 levelSemiring {Dunno} {Public} {Dunno} = refl
-  distrib1 levelSemiring {Dunno} {Public} {Unused} = refl
-  distrib1 levelSemiring {Dunno} {Private} {Public} = refl
-  distrib1 levelSemiring {Dunno} {Private} {Private} = refl
-  distrib1 levelSemiring {Dunno} {Private} {Dunno} = refl
-  distrib1 levelSemiring {Dunno} {Private} {Unused} = refl
-  distrib1 levelSemiring {Dunno} {Dunno} {Public} = refl
-  distrib1 levelSemiring {Dunno} {Dunno} {Private} = refl
-  distrib1 levelSemiring {Dunno} {Dunno} {Dunno} = refl
-  distrib1 levelSemiring {Dunno} {Dunno} {Unused} = refl
-  distrib1 levelSemiring {Dunno} {Unused} {t} = refl
-  distrib1 levelSemiring {Unused} {s} {t} = refl
+  distrib1 levelSemiring {r} {s} {t} = distrib {r} {s} {t}
 
-  distrib2 levelSemiring {Public} {Public} {Public} = refl
-  distrib2 levelSemiring {Public} {Public} {Private} = refl
-  distrib2 levelSemiring {Public} {Public} {Dunno} = refl
-  distrib2 levelSemiring {Public} {Public} {Unused} = refl
-  distrib2 levelSemiring {Public} {Private} {Public} = refl
-  distrib2 levelSemiring {Public} {Private} {Private} = refl
-  distrib2 levelSemiring {Public} {Private} {Dunno} = refl
-  distrib2 levelSemiring {Public} {Private} {Unused} = refl
-  distrib2 levelSemiring {Public} {Dunno} {Public} = refl
-  distrib2 levelSemiring {Public} {Dunno} {Private} = refl
-  distrib2 levelSemiring {Public} {Dunno} {Dunno} = refl
-  distrib2 levelSemiring {Public} {Dunno} {Unused} = refl
-  distrib2 levelSemiring {Public} {Unused} {Public} = refl
-  distrib2 levelSemiring {Public} {Unused} {Private} = refl
-  distrib2 levelSemiring {Public} {Unused} {Dunno} = refl
-  distrib2 levelSemiring {Public} {Unused} {Unused} = refl
-  distrib2 levelSemiring {Private} {Public} {Public} = refl
-  distrib2 levelSemiring {Private} {Public} {Private} = refl
-  distrib2 levelSemiring {Private} {Public} {Dunno} = refl
-  distrib2 levelSemiring {Private} {Public} {Unused} = refl
-  distrib2 levelSemiring {Private} {Private} {Public} = refl
-  distrib2 levelSemiring {Private} {Private} {Private} = refl
-  distrib2 levelSemiring {Private} {Private} {Dunno} = refl
-  distrib2 levelSemiring {Private} {Private} {Unused} = refl
-  distrib2 levelSemiring {Private} {Dunno} {Public} = refl
-  distrib2 levelSemiring {Private} {Dunno} {Private} = refl
-  distrib2 levelSemiring {Private} {Dunno} {Dunno} = refl
-  distrib2 levelSemiring {Private} {Dunno} {Unused} = refl
-  distrib2 levelSemiring {Private} {Unused} {Public} = refl
-  distrib2 levelSemiring {Private} {Unused} {Private} = refl
-  distrib2 levelSemiring {Private} {Unused} {Dunno} = refl
-  distrib2 levelSemiring {Private} {Unused} {Unused} = refl
-  distrib2 levelSemiring {Dunno} {Public} {Public} = refl
-  distrib2 levelSemiring {Dunno} {Public} {Private} = refl
-  distrib2 levelSemiring {Dunno} {Public} {Dunno} = refl
-  distrib2 levelSemiring {Dunno} {Public} {Unused} = refl
-  distrib2 levelSemiring {Dunno} {Private} {Public} = refl
-  distrib2 levelSemiring {Dunno} {Private} {Private} = refl
-  distrib2 levelSemiring {Dunno} {Private} {Dunno} = refl
-  distrib2 levelSemiring {Dunno} {Private} {Unused} = refl
-  distrib2 levelSemiring {Dunno} {Dunno} {Public} = refl
-  distrib2 levelSemiring {Dunno} {Dunno} {Private} = refl
-  distrib2 levelSemiring {Dunno} {Dunno} {Dunno} = refl
-  distrib2 levelSemiring {Dunno} {Dunno} {Unused} = refl
-  distrib2 levelSemiring {Dunno} {Unused} {Public} = refl
-  distrib2 levelSemiring {Dunno} {Unused} {Private} = refl
-  distrib2 levelSemiring {Dunno} {Unused} {Dunno} = refl
-  distrib2 levelSemiring {Dunno} {Unused} {Unused} = refl
-  distrib2 levelSemiring {Unused} {Public} {Public} = refl
-  distrib2 levelSemiring {Unused} {Public} {Private} = refl
-  distrib2 levelSemiring {Unused} {Public} {Dunno} = refl
-  distrib2 levelSemiring {Unused} {Public} {Unused} = refl
-  distrib2 levelSemiring {Unused} {Private} {Public} = refl
-  distrib2 levelSemiring {Unused} {Private} {Private} = refl
-  distrib2 levelSemiring {Unused} {Private} {Dunno} = refl
-  distrib2 levelSemiring {Unused} {Private} {Unused} = refl
-  distrib2 levelSemiring {Unused} {Dunno} {Public} = refl
-  distrib2 levelSemiring {Unused} {Dunno} {Private} = refl
-  distrib2 levelSemiring {Unused} {Dunno} {Dunno} = refl
-  distrib2 levelSemiring {Unused} {Dunno} {Unused} = refl
-  distrib2 levelSemiring {Unused} {Unused} {t} = refl
+  distrib2 levelSemiring {r} {s} {t} 
+    rewrite comm* {meet r s} {t} = 
+      let x = distrib {t} {r} {s}
+          y = subst (\h -> Order (meet h (meet t s)) (meet t (meet r s))) (comm* {t} {r}) x
+      in subst (\h -> Order (meet (meet r t) h) (meet t (meet r s))) (comm* {t} {s}) y
 
   monotone* levelSemiring 0Pub 0Pub = 0Pub
   monotone* levelSemiring 0Pub 0Priv = 0Pub
-  monotone* levelSemiring 0Pub PrivPub = 0Pub
+  monotone* levelSemiring 0Pub PrivPub = PrivPub
   monotone* levelSemiring 0Pub 0Dunno = 0Pub
-  monotone* levelSemiring 0Pub PrivDunno = 0Pub
-  monotone* levelSemiring 0Pub (Refl Public) = 0Pub
-  monotone* levelSemiring 0Pub (Refl Private) = 0Pub
-  monotone* levelSemiring 0Pub (Refl Dunno) = 0Pub
-  monotone* levelSemiring 0Pub (Refl Unused) = Refl Unused
+  monotone* levelSemiring 0Pub PrivDunno = PrivPub
+  monotone* levelSemiring 0Pub DunnoPub = DunnoPub
+  monotone* levelSemiring 0Pub (Refl Public) = Refl Public
+  monotone* levelSemiring 0Pub (Refl Private) = PrivPub
+  monotone* levelSemiring 0Pub (Refl Dunno) = DunnoPub
+  monotone* levelSemiring 0Pub (Refl Unused) = 0Pub
   monotone* levelSemiring 0Priv 0Pub = 0Pub
   monotone* levelSemiring 0Priv 0Priv = 0Priv
-  monotone* levelSemiring 0Priv PrivPub = 0Pub
+  monotone* levelSemiring 0Priv PrivPub = PrivPub
   monotone* levelSemiring 0Priv 0Dunno = 0Dunno
-  monotone* levelSemiring 0Priv PrivDunno = 0Dunno
-  monotone* levelSemiring 0Priv (Refl Public) = 0Pub
-  monotone* levelSemiring 0Priv (Refl Private) = 0Priv
-  monotone* levelSemiring 0Priv (Refl Dunno) = 0Dunno
-  monotone* levelSemiring 0Priv (Refl Unused) = Refl Unused
-  monotone* levelSemiring PrivPub 0Pub = 0Pub
-  monotone* levelSemiring PrivPub 0Priv = 0Pub
+  monotone* levelSemiring 0Priv PrivDunno = PrivDunno
+  monotone* levelSemiring 0Priv DunnoPub = DunnoPub
+  monotone* levelSemiring 0Priv (Refl Public) = Refl Public
+  monotone* levelSemiring 0Priv (Refl Private) = Refl Private
+  monotone* levelSemiring 0Priv (Refl Dunno) = Refl Dunno
+  monotone* levelSemiring 0Priv (Refl Unused) = 0Priv
+  monotone* levelSemiring PrivPub 0Pub = PrivPub
+  monotone* levelSemiring PrivPub 0Priv = PrivPub
   monotone* levelSemiring PrivPub PrivPub = PrivPub
-  monotone* levelSemiring PrivPub 0Dunno = 0Pub
+  monotone* levelSemiring PrivPub 0Dunno = PrivPub
   monotone* levelSemiring PrivPub PrivDunno = PrivPub
+  monotone* levelSemiring PrivPub DunnoPub = DunnoPub
   monotone* levelSemiring PrivPub (Refl Public) = Refl Public
   monotone* levelSemiring PrivPub (Refl Private) = PrivPub
-  -- Private <= Pub   Dunno <= Dunno
-  -- --------------------------------------
-   --    Private * Dunno <= Pub * Dunno
-   --       Dunno        <= Pub    (didn't have this previously 24/06/2021).
   monotone* levelSemiring PrivPub (Refl Dunno) = DunnoPub
-  monotone* levelSemiring PrivPub (Refl Unused) = Refl Unused
+  monotone* levelSemiring PrivPub (Refl Unused) = PrivPub
   monotone* levelSemiring 0Dunno 0Pub = 0Pub
   monotone* levelSemiring 0Dunno 0Priv = 0Dunno
-  monotone* levelSemiring 0Dunno PrivPub = 0Pub
+  monotone* levelSemiring 0Dunno PrivPub = PrivPub
   monotone* levelSemiring 0Dunno 0Dunno = 0Dunno
-  monotone* levelSemiring 0Dunno PrivDunno = 0Dunno
-  monotone* levelSemiring 0Dunno (Refl Public) = 0Pub
-  monotone* levelSemiring 0Dunno (Refl Private) = 0Dunno
-  monotone* levelSemiring 0Dunno (Refl Dunno) = 0Dunno
-  monotone* levelSemiring 0Dunno (Refl Unused) = Refl Unused
-  monotone* levelSemiring PrivDunno 0Pub = 0Pub
-  monotone* levelSemiring PrivDunno 0Priv = 0Dunno
+  monotone* levelSemiring 0Dunno PrivDunno = PrivDunno
+  monotone* levelSemiring 0Dunno DunnoPub = DunnoPub
+  monotone* levelSemiring 0Dunno (Refl Public) = Refl Public
+  monotone* levelSemiring 0Dunno (Refl Private) = PrivDunno
+  monotone* levelSemiring 0Dunno (Refl Dunno) = Refl Dunno
+  monotone* levelSemiring 0Dunno (Refl Unused) = 0Dunno
+  monotone* levelSemiring PrivDunno 0Pub = PrivPub
+  monotone* levelSemiring PrivDunno 0Priv = PrivDunno
   monotone* levelSemiring PrivDunno PrivPub = PrivPub
-  monotone* levelSemiring PrivDunno 0Dunno = 0Dunno
+  monotone* levelSemiring PrivDunno 0Dunno = PrivDunno
   monotone* levelSemiring PrivDunno PrivDunno = PrivDunno
+  monotone* levelSemiring PrivDunno DunnoPub = DunnoPub
   monotone* levelSemiring PrivDunno (Refl Public) = Refl Public
   monotone* levelSemiring PrivDunno (Refl Private) = PrivDunno
   monotone* levelSemiring PrivDunno (Refl Dunno) = Refl Dunno
-  monotone* levelSemiring PrivDunno (Refl Unused) = Refl Unused
-  monotone* levelSemiring (Refl Public) 0Pub = 0Pub
-  monotone* levelSemiring (Refl Private) 0Pub = 0Pub
-  monotone* levelSemiring (Refl Dunno) 0Pub = 0Pub
-  monotone* levelSemiring (Refl Unused) 0Pub = Refl Unused
-  monotone* levelSemiring (Refl Public) 0Priv = 0Pub
-  monotone* levelSemiring (Refl Private) 0Priv = 0Priv
-  monotone* levelSemiring (Refl Dunno) 0Priv = 0Dunno
-  monotone* levelSemiring (Refl Unused) 0Priv = Refl Unused
-  monotone* levelSemiring (Refl Public) PrivPub = Refl Public
-  monotone* levelSemiring (Refl Private) PrivPub = PrivPub
-  monotone* levelSemiring (Refl Dunno) PrivPub = DunnoPub
-  monotone* levelSemiring (Refl Unused) PrivPub = Refl Unused
-  monotone* levelSemiring (Refl Public) 0Dunno = 0Pub
-  monotone* levelSemiring (Refl Private) 0Dunno = 0Dunno
-  monotone* levelSemiring (Refl Dunno) 0Dunno = 0Dunno
-  monotone* levelSemiring (Refl Unused) 0Dunno = Refl Unused
-  monotone* levelSemiring (Refl Public) PrivDunno = Refl Public
-  monotone* levelSemiring (Refl Private) PrivDunno = PrivDunno
-  monotone* levelSemiring (Refl Dunno) PrivDunno = Refl Dunno
-  monotone* levelSemiring (Refl Unused) PrivDunno = Refl Unused
-  monotone* levelSemiring (Refl Public) (Refl Public) = Refl Public
-  monotone* levelSemiring (Refl Public) (Refl Private) = Refl Public
-  monotone* levelSemiring (Refl Public) (Refl Dunno) = Refl Public
-  monotone* levelSemiring (Refl Public) (Refl Unused) = Refl Unused
-  monotone* levelSemiring (Refl Private) (Refl Public) = Refl Public
-  monotone* levelSemiring (Refl Private) (Refl Private) = Refl Private
-  monotone* levelSemiring (Refl Private) (Refl Dunno) = Refl Dunno
-  monotone* levelSemiring (Refl Private) (Refl Unused) = Refl Unused
-  monotone* levelSemiring (Refl Dunno) (Refl Public) = Refl Public
-  monotone* levelSemiring (Refl Dunno) (Refl Private) = Refl Dunno
-  monotone* levelSemiring (Refl Dunno) (Refl Dunno) = Refl Dunno
-  monotone* levelSemiring (Refl Dunno) (Refl Unused) = Refl Unused
-  monotone* levelSemiring (Refl Unused) (Refl r) = Refl Unused
-  monotone* levelSemiring 0Pub DunnoPub = 0Pub
-  monotone* levelSemiring 0Priv DunnoPub = 0Pub
-  monotone* levelSemiring PrivPub DunnoPub = DunnoPub
-  monotone* levelSemiring 0Dunno DunnoPub = 0Pub
-  monotone* levelSemiring PrivDunno DunnoPub = DunnoPub
-  monotone* levelSemiring DunnoPub 0Pub = 0Pub
-  monotone* levelSemiring DunnoPub 0Priv = 0Pub
+  monotone* levelSemiring PrivDunno (Refl Unused) = PrivDunno
+  monotone* levelSemiring DunnoPub 0Pub = DunnoPub
+  monotone* levelSemiring DunnoPub 0Priv = DunnoPub
   monotone* levelSemiring DunnoPub PrivPub = DunnoPub
-  monotone* levelSemiring DunnoPub 0Dunno = 0Pub
+  monotone* levelSemiring DunnoPub 0Dunno = DunnoPub
   monotone* levelSemiring DunnoPub PrivDunno = DunnoPub
   monotone* levelSemiring DunnoPub DunnoPub = DunnoPub
   monotone* levelSemiring DunnoPub (Refl Public) = Refl Public
   monotone* levelSemiring DunnoPub (Refl Private) = DunnoPub
   monotone* levelSemiring DunnoPub (Refl Dunno) = DunnoPub
-  monotone* levelSemiring DunnoPub (Refl Unused) = Refl Unused
+  monotone* levelSemiring DunnoPub (Refl Unused) = DunnoPub
+  monotone* levelSemiring (Refl Public) 0Pub = Refl Public
+  monotone* levelSemiring (Refl Private) 0Pub = PrivPub
+  monotone* levelSemiring (Refl Dunno) 0Pub = DunnoPub
+  monotone* levelSemiring (Refl Unused) 0Pub = 0Pub
+  monotone* levelSemiring (Refl Public) 0Priv = Refl Public
+  monotone* levelSemiring (Refl Private) 0Priv = Refl Private
+  monotone* levelSemiring (Refl Dunno) 0Priv = Refl Dunno
+  monotone* levelSemiring (Refl Unused) 0Priv = 0Priv
+  monotone* levelSemiring (Refl Public) PrivPub = Refl Public
+  monotone* levelSemiring (Refl Private) PrivPub = PrivPub
+  monotone* levelSemiring (Refl Dunno) PrivPub = DunnoPub
+  monotone* levelSemiring (Refl Unused) PrivPub = PrivPub
+  monotone* levelSemiring (Refl Public) 0Dunno = Refl Public
+  monotone* levelSemiring (Refl Private) 0Dunno = PrivDunno
+  monotone* levelSemiring (Refl Dunno) 0Dunno = Refl Dunno
+  monotone* levelSemiring (Refl Unused) 0Dunno = 0Dunno
+  monotone* levelSemiring (Refl Public) PrivDunno = Refl Public
+  monotone* levelSemiring (Refl Private) PrivDunno = PrivDunno
+  monotone* levelSemiring (Refl Dunno) PrivDunno = Refl Dunno
+  monotone* levelSemiring (Refl Unused) PrivDunno = PrivDunno
   monotone* levelSemiring (Refl Public) DunnoPub = Refl Public
   monotone* levelSemiring (Refl Private) DunnoPub = DunnoPub
   monotone* levelSemiring (Refl Dunno) DunnoPub = DunnoPub
-  monotone* levelSemiring (Refl Unused) DunnoPub = Refl Unused
+  monotone* levelSemiring (Refl Unused) DunnoPub = DunnoPub
+  monotone* levelSemiring (Refl x) (Refl y) = Refl (meet x y)
 
   monotone+ levelSemiring {Public} {Public} {Public} {Public} pre1 pre2 = Refl Public
   monotone+ levelSemiring {Public} {Public} {Public} {Private} pre1 pre2 = Refl Public
@@ -589,338 +559,11 @@ instance
   transitive≤ levelSemiring {Unused} {Unused} {Unused} inp1 inp2 = Refl Unused
 
 instance
-  levelSemiringNonInterfering : NonInterferingSemiring levelSemiring
-  -- does not hold for Level which is the key
-  oneIsBottom levelSemiringNonInterfering {r} = {!!}
-
-  antisymmetry levelSemiringNonInterfering {Public} {Public} (Refl .Public) pre2 = refl
-  antisymmetry levelSemiringNonInterfering {Private} {Public} () pre2
-  antisymmetry levelSemiringNonInterfering {Private} {Private} (Refl .Private) pre2 = refl
-  antisymmetry levelSemiringNonInterfering {Private} {Dunno} () pre2
-  antisymmetry levelSemiringNonInterfering {Dunno} {Public} () pre2
-  antisymmetry levelSemiringNonInterfering {Dunno} {Dunno} (Refl .Dunno) pre2 = refl
-  antisymmetry levelSemiringNonInterfering {Unused} {Public} () pre2
-  antisymmetry levelSemiringNonInterfering {Unused} {Private} () pre2
-  antisymmetry levelSemiringNonInterfering {Unused} {Dunno} () pre2
-  antisymmetry levelSemiringNonInterfering {Unused} {Unused} (Refl .Unused) pre2 = refl
-
-  plusMono levelSemiringNonInterfering {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
-  plusMono levelSemiringNonInterfering {Public} {Public} {adv}  pre = pre
-  plusMono levelSemiringNonInterfering {Private} {Public} {adv} pre = transitive≤ levelSemiring PrivPub pre
-  plusMono levelSemiringNonInterfering {Dunno} {Public} {adv}   pre = transitive≤ levelSemiring DunnoPub  pre
-  plusMono levelSemiringNonInterfering {Unused} {Public} {Unused} pre = 0Pub
-  plusMono levelSemiringNonInterfering {Public} {Private} {adv} pre = pre
-  plusMono levelSemiringNonInterfering {Private} {Private} {adv} pre = pre
-  plusMono levelSemiringNonInterfering {Dunno} {Private} {adv} pre = pre
-  plusMono levelSemiringNonInterfering {Unused} {Private} {Unused} pre = 0Priv
-  plusMono levelSemiringNonInterfering {Unused} {Dunno} {Unused} pre = 0Dunno
-  plusMono levelSemiringNonInterfering {Public} {Dunno} {adv}  pre = pre
-  plusMono levelSemiringNonInterfering {Private} {Dunno} {adv} pre = transitive≤ levelSemiring PrivDunno pre
-  plusMono levelSemiringNonInterfering {Dunno} {Dunno} {adv}   pre = pre
-
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Private} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Private} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Private} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Dunno} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Dunno} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Dunno} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Unused} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Unused} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Public} {Unused} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Public} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Private} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Dunno} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Private} {Unused} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Private} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Public} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Dunno} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Dunno} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Dunno} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Private} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Private} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Private} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Dunno} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Dunno} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Dunno} inp1 inp2 ()
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-  propertyConditionalNI levelSemiringNonInterfering {Unused} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 (Refl Unused)
-
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Public} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Public} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Public} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Private} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Dunno} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Public} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Public} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Public} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Public} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Private} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Private} {Dunno} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Dunno} {Dunno} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Dunno} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Private} {Private} inp1 inp2 = λ _ -> inp1 (Refl Private)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Private} {Dunno} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Priv
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI2 levelSemiringNonInterfering {Private} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Public} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Public} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Public} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Private} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Dunno} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Dunno} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Dunno} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Public} {Public} inp1 inp2 = λ _ -> inp1 (Refl Public)
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Public} {Private} inp1 inp2 = λ _ -> inp1 PrivPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Public} {Dunno} inp1 inp2 = λ _ -> inp1 DunnoPub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Public} {Unused} inp1 inp2 = λ _ -> inp1 0Pub
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Private} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Private} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Private} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Private} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Public} inp1 inp2 ()
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Private} inp1 inp2 = λ _ -> inp1 PrivDunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Dunno} inp1 inp2 = λ _ -> inp1 (Refl Dunno)
-  propertyConditionalNI2 levelSemiringNonInterfering {Dunno} {Unused} {Dunno} {Unused} inp1 inp2 = λ _ -> inp1 0Dunno
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Public} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Public} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Public} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Private} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Private} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Private} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Dunno} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Dunno} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Dunno} {Dunno} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Unused} {Public} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Unused} {Private} {adv} inp1 inp2 = inp1
-  propertyConditionalNI2 levelSemiringNonInterfering {Unused} {Unused} {Dunno} {adv} inp1 inp2 = inp1
-
-
-  idem* levelSemiringNonInterfering {Public} = refl
-  idem* levelSemiringNonInterfering {Private} = refl
-  idem* levelSemiringNonInterfering {Dunno} = refl
-  idem* levelSemiringNonInterfering {Unused} = refl
-
-instance
   levelIFstructure : InformationFlowSemiring levelSemiring
 
   default levelIFstructure = Dunno
 
-  _#_ levelIFstructure Private s = Private
-  _#_ levelIFstructure r Private = Private
-  -- some debate here
-  _#_ levelIFstructure r s = _*R_ levelSemiring r s
-
-  --substProp levelIFstructure {Public} = {!!}
-  --substProp levelIFstructure {Private} = refl
-  --substProp levelIFstructure {Dunno} = {!!}
-  --substProp levelIFstructure {Unused} = refl
-
-  unit# levelIFstructure {Public}  = refl
-  unit# levelIFstructure {Private} = refl
-  unit# levelIFstructure {Dunno}   = refl
-  unit# levelIFstructure {Unused}  = refl -- <- doesn't hold if *R is actually +R
+  _#_ levelIFstructure r s = join r s
 
   comm# levelIFstructure {Public} {Public} = refl
   comm# levelIFstructure {Public} {Private} = refl
@@ -943,7 +586,7 @@ instance
   assoc# levelIFstructure {Public} {Public} {Private} = refl
   assoc# levelIFstructure {Public} {Public} {Dunno} = refl
   assoc# levelIFstructure {Public} {Public} {Unused} = refl
-  assoc# levelIFstructure {Public} {Private} {t} = refl
+  assoc# levelIFstructure {Public} {Private} {t} = {!   !}
   assoc# levelIFstructure {Public} {Dunno} {Public} = refl
   assoc# levelIFstructure {Public} {Dunno} {Private} = refl
   assoc# levelIFstructure {Public} {Dunno} {Dunno} = refl
@@ -952,12 +595,12 @@ instance
   assoc# levelIFstructure {Public} {Unused} {Private} = refl
   assoc# levelIFstructure {Public} {Unused} {Dunno} = refl
   assoc# levelIFstructure {Public} {Unused} {Unused} = refl
-  assoc# levelIFstructure {Private} {s} {t} = refl
+  assoc# levelIFstructure {Private} {s} {t} = {!   !}
   assoc# levelIFstructure {Dunno} {Public} {Public} = refl
   assoc# levelIFstructure {Dunno} {Public} {Private} = refl
   assoc# levelIFstructure {Dunno} {Public} {Dunno} = refl
   assoc# levelIFstructure {Dunno} {Public} {Unused} = refl
-  assoc# levelIFstructure {Dunno} {Private} {t} = refl
+  assoc# levelIFstructure {Dunno} {Private} {t} = {!   !}
   assoc# levelIFstructure {Dunno} {Dunno} {Public} = refl
   assoc# levelIFstructure {Dunno} {Dunno} {Private} = refl
   assoc# levelIFstructure {Dunno} {Dunno} {Dunno} = refl
@@ -985,17 +628,121 @@ instance
   idem# levelIFstructure {Dunno}   = refl
   idem# levelIFstructure {Unused}  = refl
 
-  absorb# levelIFstructure {Public}  = refl
-  absorb# levelIFstructure {Private} = refl
-  absorb# levelIFstructure {Dunno}   = refl
-  absorb# levelIFstructure {Unused}  = refl
-
   idem* levelIFstructure {Public} = refl
   idem* levelIFstructure {Private} = refl
   idem* levelIFstructure {Dunno} = refl
   idem* levelIFstructure {Unused} = refl
 
-  plusMono levelIFstructure = plusMono levelSemiringNonInterfering
+  plusMono levelIFstructure {r2 = Public} 0Pub = 0Pub
+  plusMono levelIFstructure {r2 = Private} 0Pub = 0Pub
+  plusMono levelIFstructure {r2 = Dunno} 0Pub = 0Pub
+  plusMono levelIFstructure {r2 = Unused} 0Pub = 0Pub
+  plusMono levelIFstructure {r2 = Public} 0Priv = 0Pub
+  plusMono levelIFstructure {r2 = Private} 0Priv = 0Priv
+  plusMono levelIFstructure {r2 = Dunno} 0Priv = 0Dunno
+  plusMono levelIFstructure {r2 = Unused} 0Priv = 0Priv
+  plusMono levelIFstructure {r2 = Public} PrivPub = PrivPub
+  plusMono levelIFstructure {r2 = Private} PrivPub = PrivPub
+  plusMono levelIFstructure {r2 = Dunno} PrivPub = PrivPub
+  plusMono levelIFstructure {r2 = Unused} PrivPub = PrivPub
+  plusMono levelIFstructure {r2 = Public} 0Dunno = 0Pub
+  plusMono levelIFstructure {r2 = Private} 0Dunno = 0Dunno
+  plusMono levelIFstructure {r2 = Dunno} 0Dunno = 0Dunno
+  plusMono levelIFstructure {r2 = Unused} 0Dunno = 0Dunno
+  plusMono levelIFstructure {r2 = Public} PrivDunno = PrivPub
+  plusMono levelIFstructure {r2 = Private} PrivDunno = PrivDunno
+  plusMono levelIFstructure {r2 = Dunno} PrivDunno = PrivDunno
+  plusMono levelIFstructure {r2 = Unused} PrivDunno = PrivDunno
+  plusMono levelIFstructure {r2 = Public} DunnoPub = DunnoPub
+  plusMono levelIFstructure {r2 = Private} DunnoPub = DunnoPub
+  plusMono levelIFstructure {r2 = Dunno} DunnoPub = DunnoPub
+  plusMono levelIFstructure {r2 = Unused} DunnoPub = DunnoPub
+  plusMono levelIFstructure {r2 = Public} (Refl Public) = Refl Public
+  plusMono levelIFstructure {r2 = Public} (Refl Private) = PrivPub
+  plusMono levelIFstructure {r2 = Public} (Refl Dunno) = DunnoPub
+  plusMono levelIFstructure {r2 = Public} (Refl Unused) = 0Pub
+  plusMono levelIFstructure {r2 = Private} (Refl Public) = Refl Public
+  plusMono levelIFstructure {r2 = Private} (Refl Private) = Refl Private
+  plusMono levelIFstructure {r2 = Private} (Refl Dunno) = Refl Dunno
+  plusMono levelIFstructure {r2 = Private} (Refl Unused) = 0Priv
+  plusMono levelIFstructure {r2 = Dunno} (Refl Public) = Refl Public
+  plusMono levelIFstructure {r2 = Dunno} (Refl Private) = PrivDunno
+  plusMono levelIFstructure {r2 = Dunno} (Refl Dunno) = Refl Dunno
+  plusMono levelIFstructure {r2 = Dunno} (Refl Unused) = 0Dunno
+  plusMono levelIFstructure {r2 = Unused} (Refl Public) = Refl Public
+  plusMono levelIFstructure {r2 = Unused} (Refl Private) = Refl Private
+  plusMono levelIFstructure {r2 = Unused} (Refl Dunno) = Refl Dunno
+  plusMono levelIFstructure {r2 = Unused} (Refl Unused) = Refl Unused
+
+  timesLeft levelIFstructure {Public} {Public} {Public} (Refl .Public) = Refl Public
+  timesLeft levelIFstructure {Public} {Public} {Private} PrivPub = PrivPub
+  timesLeft levelIFstructure {Public} {Public} {Dunno} DunnoPub = DunnoPub
+  timesLeft levelIFstructure {Public} {Public} {Unused} 0Pub = 0Pub
+  timesLeft levelIFstructure {Public} {Private} {Public} (Refl .Public) = Refl Public
+  timesLeft levelIFstructure {Public} {Private} {Private} PrivPub = PrivPub
+  timesLeft levelIFstructure {Public} {Private} {Dunno} DunnoPub = DunnoPub
+  timesLeft levelIFstructure {Public} {Private} {Unused} 0Pub = 0Pub
+  timesLeft levelIFstructure {Public} {Dunno} {Public} (Refl .Public) = Refl Public
+  timesLeft levelIFstructure {Public} {Dunno} {Private} PrivPub = PrivPub
+  timesLeft levelIFstructure {Public} {Dunno} {Dunno} DunnoPub = DunnoPub
+  timesLeft levelIFstructure {Public} {Dunno} {Unused} 0Pub = 0Pub
+  timesLeft levelIFstructure {Public} {Unused} {Public} (Refl .Public) = Refl Public
+  timesLeft levelIFstructure {Public} {Unused} {Private} PrivPub = PrivPub
+  timesLeft levelIFstructure {Public} {Unused} {Dunno} DunnoPub = DunnoPub
+  timesLeft levelIFstructure {Public} {Unused} {Unused} 0Pub = 0Pub
+  timesLeft levelIFstructure {Private} {Public} {Public} ()
+  timesLeft levelIFstructure {Private} {Public} {Private} (Refl .Private) = PrivPub
+  timesLeft levelIFstructure {Private} {Public} {Dunno} ()
+  timesLeft levelIFstructure {Private} {Public} {Unused} 0Priv = 0Pub
+  timesLeft levelIFstructure {Private} {Private} {Public} ()
+  timesLeft levelIFstructure {Private} {Private} {Private} (Refl .Private) = Refl Private
+  timesLeft levelIFstructure {Private} {Private} {Dunno} ()
+  timesLeft levelIFstructure {Private} {Private} {Unused} 0Priv = 0Priv
+  timesLeft levelIFstructure {Private} {Dunno} {Public} ()
+  timesLeft levelIFstructure {Private} {Dunno} {Private} (Refl .Private) = PrivDunno
+  timesLeft levelIFstructure {Private} {Dunno} {Dunno} ()
+  timesLeft levelIFstructure {Private} {Dunno} {Unused} 0Priv = 0Dunno
+  timesLeft levelIFstructure {Private} {Unused} {Public} ()
+  timesLeft levelIFstructure {Private} {Unused} {Private} (Refl .Private) = Refl Private
+  timesLeft levelIFstructure {Private} {Unused} {Dunno} ()
+  timesLeft levelIFstructure {Private} {Unused} {Unused} 0Priv = 0Priv
+  timesLeft levelIFstructure {Dunno} {Public} {Public} ()
+  timesLeft levelIFstructure {Dunno} {Public} {Private} PrivDunno = PrivPub
+  timesLeft levelIFstructure {Dunno} {Public} {Dunno} (Refl .Dunno) = DunnoPub
+  timesLeft levelIFstructure {Dunno} {Public} {Unused} 0Dunno = 0Pub
+  timesLeft levelIFstructure {Dunno} {Private} {Public} ()
+  timesLeft levelIFstructure {Dunno} {Private} {Private} PrivDunno = PrivDunno
+  timesLeft levelIFstructure {Dunno} {Private} {Dunno} (Refl .Dunno) = Refl Dunno
+  timesLeft levelIFstructure {Dunno} {Private} {Unused} 0Dunno = 0Dunno
+  timesLeft levelIFstructure {Dunno} {Dunno} {Public} ()
+  timesLeft levelIFstructure {Dunno} {Dunno} {Private} PrivDunno = PrivDunno
+  timesLeft levelIFstructure {Dunno} {Dunno} {Dunno} (Refl .Dunno) = Refl Dunno
+  timesLeft levelIFstructure {Dunno} {Dunno} {Unused} 0Dunno = 0Dunno
+  timesLeft levelIFstructure {Dunno} {Unused} {Public} ()
+  timesLeft levelIFstructure {Dunno} {Unused} {Private} PrivDunno = PrivDunno
+  timesLeft levelIFstructure {Dunno} {Unused} {Dunno} (Refl .Dunno) = Refl Dunno
+  timesLeft levelIFstructure {Dunno} {Unused} {Unused} 0Dunno = 0Dunno
+  timesLeft levelIFstructure {Unused} {Public} {Public} ()
+  timesLeft levelIFstructure {Unused} {Public} {Private} ()
+  timesLeft levelIFstructure {Unused} {Public} {Dunno} ()
+  timesLeft levelIFstructure {Unused} {Public} {Unused} (Refl .Unused) = 0Pub
+  timesLeft levelIFstructure {Unused} {Private} {Public} ()
+  timesLeft levelIFstructure {Unused} {Private} {Private} ()
+  timesLeft levelIFstructure {Unused} {Private} {Dunno} ()
+  timesLeft levelIFstructure {Unused} {Private} {Unused} (Refl .Unused) = 0Priv
+  timesLeft levelIFstructure {Unused} {Dunno} {Public} ()
+  timesLeft levelIFstructure {Unused} {Dunno} {Private} ()
+  timesLeft levelIFstructure {Unused} {Dunno} {Dunno} ()
+  timesLeft levelIFstructure {Unused} {Dunno} {Unused} (Refl .Unused) = 0Dunno
+  timesLeft levelIFstructure {Unused} {Unused} {Public} ()
+  timesLeft levelIFstructure {Unused} {Unused} {Private} ()
+  timesLeft levelIFstructure {Unused} {Unused} {Dunno} ()
+  timesLeft levelIFstructure {Unused} {Unused} {Unused} (Refl .Unused) = Refl Unused
+
+  com* levelIFstructure = comm*
+
+  leftAbsorbSub levelIFstructure {r} = {!   !}
+  rightAbsorbSub levelIFstructure {r} = {!   !}
 
 {-
 Things that do not hold

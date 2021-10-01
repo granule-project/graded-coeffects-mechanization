@@ -344,6 +344,20 @@ convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 ar
 ... | yes eqo = boxInterpBiobs eqo v1 v2 arg
 convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv eq) v1 v2 argInterp
 
+binaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} {r adv : grade} -> 
+     (convertVal : {s : grade} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2))
+   -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
+binaryTimesElimRightΓ {_} {[]} {[]} {Empty} {r} {adv} _ g = tt
+binaryTimesElimRightΓ {suc n} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} {r} {adv} convertVal (ass , g) =
+    convertExp {s} {v1} {v2} {A} ass , binaryTimesElimRightΓ {n} {γ1} {γ2} {Γ} {r} {adv} convertVal g
+  where
+        convertExp : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
+        convertExp {s} {v1} {v2} {A} arg1 v1' v2' v1redux' v2redux' rewrite trans (sym v1redux') (reduxProm {v1}) | trans (sym v2redux') (reduxProm {v2}) =
+           convertVal  {s} {v1} {v2} {A} (arg1 (Promote v1) (Promote v2) refl refl)
+binaryTimesElimRightΓ {_} {[]} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
+binaryTimesElimRightΓ {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
+binaryTimesElimRightΓ {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
+
 -------------------------------
 -- Unary fundamental theorem
 
@@ -701,16 +715,8 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
 
     convertVal {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) = boxInterpBiunobs (propInvTimesMonoAsymN x eq) v1 v2 interp
 
-    convertExp : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
-    convertExp {s} {v1} {v2} {A} arg1 v1' v2' v1redux' v2redux' rewrite trans (sym v1redux') (reduxProm {v1}) | trans (sym v2redux') (reduxProm {v2}) =
-       convertVal  {s} {v1} {v2} {A} (arg1 (Promote v1) (Promote v2) refl refl)
-
     underBox : {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
-    underBox {_} {[]} {[]} {Empty}   g = tt
-    underBox {suc n} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} (ass , g) = convertExp {s} {v1} {v2} {A} ass , underBox {n} {γ1} {γ2} {Γ} g
-    underBox {_} {[]} {[]} {Ext Γ (Grad A r₁)} ()
-    underBox {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} ()
-    underBox {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} ()
+    underBox = binaryTimesElimRightΓ convertVal
 
     thm : {v : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
     thm {v} {γ} redux =
