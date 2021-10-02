@@ -181,12 +181,12 @@ delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiobs pre .t1 .t2 inpInne
     inner v1 v2 v1redux v2redux
       rewrite (sym v1redux) | (sym v2redux) =
         boxInterpBiunobs ¬p2 t1 t2 {!!}
-  
+
 
 
 ... | no ¬p1 | yes p2 =
   boxInterpBiunobs ¬p1 (Promote t1) (Promote t2) ({!!} , {!!})
-  
+
 ... | no ¬p1 | no ¬p2 = {!!}
 
 delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiunobs pre .t1 .t2 inpInner) = {!!}
@@ -200,10 +200,10 @@ delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiobs pre .t1 .t2 inpInne
    inner v1 v2 v1redux v2redux
      rewrite (sym v1redux) | (sym v2redux) =
        boxInterpBiobs p2 t1 t2 inpInner
-   
+
 delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiunobs pre .t1 .t2 x₁) | yes p1 | yes p2 | yes p3 =
-  ⊥-elim (pre p3) 
-  
+  ⊥-elim (pre p3)
+
 ... | yes p1 | yes p2 | no ¬p3 =
   {!!}
 
@@ -259,17 +259,17 @@ mutual
     ... | yes p = boxInterpBiobs p v1 v2 inner
     ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
     convertValR* {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) =
-      boxInterpBiunobs (\pre' -> pre (subst (\\h -> h ≤ adv) com* (timesLeft pre'))) v1 v2 inner
+      boxInterpBiunobs (\pre' -> pre (subst (\h -> h ≤ adv) com* (timesLeft pre'))) v1 v2 inner
 
     contextElimTimes : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 : ContextG sz} {γ1 γ2 : List Term} {r adv : grade}
                      -> ⟦ r ·g Γ1 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
-    contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (visible pre inner) with g1 ≤d adv             
-    ... | yes p = visible p (binaryTimesElimRightΓ {!   !} inner)
-    ... | no ¬p = {!   !}
-    contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (invisible pre inner) with g1 ≤d adv             
-    ... | yes p = {!   !}
-    ... | no ¬p = {!   !}
-    
+    contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (visible pre inner) with g1 ≤d adv
+    ... | yes p = visible p (binaryTimesElimRightΓ convertValR* inner)
+    ... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryTimesElimRightΓ convertValR* inner))
+    contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (invisible pre inner) with g1 ≤d adv
+    ... | yes p rewrite com* {R} {r} {g1} = ⊥-elim (pre (timesLeft p))
+    ... | no ¬p = invisible ¬p {!   !}
+
 
     intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
                   {Γ : Context sz}
@@ -298,7 +298,7 @@ mutual
     -- Here we have that `r ≤ adv` but `¬ ((r * ghost) ≤ adv)`
     -- ah but we also know that `ghost = 1` so ... we get a contradiction
     ... | invisible pre2 inner | Ext ad x | Relation.Binary.PropositionalEquality.[ eq ] =
-      ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) {!   !}) pre2) pre) -- NEXT: rightUnit* used to be 
+      ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) {!   !}) pre2) pre) -- NEXT: rightUnit* used to be
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var _)} {A} (var {Γ1 = _} {Γ2} pos) pre inp e1 e2 =
       {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
@@ -339,7 +339,7 @@ mutual
         ih2evidence with biFundamentalTheoremGhost typ2 adv subContext2bi
         ... | boxInterpBiobs preA .(multisubst' 0 γ1 t2) .(multisubst' 0 γ2 t2) innerA = binaryImpliesUnary innerA
         ... | boxInterpBiunobs preA .(multisubst' 0 γ1 t2) .(multisubst' 0 γ2 t2) innerA = innerA
-        
+
 
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {Abs .(Γlength _ + 1) t} {.(FunTy _ _ _)} (abs {_} {_} {_} {_} {Γ1} {Γ2} {_} {s} {A} {B} {.t} pos typ) pre inp e1 e2 =

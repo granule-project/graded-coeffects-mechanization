@@ -358,6 +358,9 @@ binaryTimesElimRightΓ {_} {[]} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 binaryTimesElimRightΓ {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 binaryTimesElimRightΓ {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 
+unaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} {r adv : grade}
+   -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
+unaryTimesElimRightΓ {{R} {sz} {γ1} {γ2} {Γ} {r} {adv} inp = ?
 -------------------------------
 -- Unary fundamental theorem
 
