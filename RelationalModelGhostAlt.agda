@@ -314,13 +314,45 @@ mutual
        ((n , t1') , ev1) = reduxTheoremApp {multisubst γ1 t1} {multisubst γ1 t2} {v1} (trans (cong multiRedux substPresApp) v1redux)
        ((n' , t1'') , ev2) = reduxTheoremApp {multisubst γ2 t1} {multisubst γ2 t2} {v2} (trans (cong multiRedux substPresApp) v2redux)
        
+       
+
        ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
 
        ih1' = ih1 (Abs n t1') (Abs n' t1'') ev1 ev2
-       ih2' = ih2 ? ? ? ?
+       ih2' = ih2 {!   !} {!   !} {!   !} {!   !}
       in
       {!  !}
       where
+        goal : (x y : ℕ) (t t' t1 t1' : Term)
+             -> ⟦ FunTy A s B ⟧v adv (Abs x t) (Abs y t')
+             -> ⟦ Box s A ⟧e adv (Promote t1) (Promote t1')
+             -> ⟦ B ⟧v adv v1 v2
+        goal x y t t' t1 t1' ih1 ih2 with ih1
+        ... | funInterpBi {adv} {A} {B} {r} {x'} {y'} e1 e2 bodyBi bodyUn1 bodyUni2 =
+          let
+            ((x , t) , ((ev1a , ev2a) , ev3a)) = reduxTheoremAll v1redux
+            bodySubst = bodyBi t1 t1' ih2
+            {-
+            ev1 : multiRedux (multisubst γ1 t1) ≡
+          Abs
+          (proj₁
+           (proj₁
+            (reduxTheoremApp (trans (cong multiRedux substPresApp) v1redux))))
+          (proj₂
+           (proj₁
+            (reduxTheoremApp (trans (cong multiRedux substPresApp) v1redux))))
+
+
+            v1redux : (multiRedux (multisubst γ1 (App t3 t2))
+             | untypedRedux (multisubst γ1 (App t3 t2)))
+            ≡ v1
+
+            bodySubst : ⟦ B₁ ⟧e adv₁ (syntacticSubst t1 x t)
+            (syntacticSubst t1' y t')
+            bodySubst = bodyBi t1 t1' ih2
+            -}
+          in {!   !}
+
         inp' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
         inp' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp
 
