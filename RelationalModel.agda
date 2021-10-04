@@ -358,10 +358,19 @@ binaryTimesElimRightΓ {_} {[]} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 binaryTimesElimRightΓ {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 binaryTimesElimRightΓ {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 
-unaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} {r adv : grade}
-   -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
-unaryTimesElimRightΓ {{R} {sz} {γ1} {γ2} {Γ} {r} {adv} inp = ?
--------------------------------
+unaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 : List Term} {Γ : Context sz} {r : grade}
+   -> [ r · Γ ]Γ γ1 -> [ Γ ]Γ γ1
+unaryTimesElimRightΓ ⦃ R ⦄ {.0} {[]} {Empty} {r} inp = tt
+unaryTimesElimRightΓ ⦃ R ⦄ {.0} {x ∷ γ1} {Empty} {r} tt = tt
+unaryTimesElimRightΓ ⦃ R ⦄ {.(suc _)} {[]} {Ext Γ (Grad A s)} {r} ()
+unaryTimesElimRightΓ ⦃ R ⦄ {suc n} {x ∷ γ1} {Ext Γ (Grad A s)} {r} (ass , g) =
+  convertHyp ass , unaryTimesElimRightΓ {{R}} {n} {γ1} {Γ} {r} g
+    where
+      convertHyp : [ Box (r *R s) A ]e (Promote x) -> [ Box s A ]e (Promote x)
+      convertHyp pre v0 v0redux with pre v0 v0redux
+      ... | boxInterpV e inner = boxInterpV e inner
+
+---------------------------------
 -- Unary fundamental theorem
 
 -- Terminating pragma needed because in the (App t1 t2) case we need to recursve with (Promote t2) which doesn't look

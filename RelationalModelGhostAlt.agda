@@ -233,7 +233,7 @@ mutual
     ... | yes p = boxInterpBiobs p v1 v2 inner
     ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
     convertValR+ {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) =
-      boxInterpBiunobs (\pre' -> pre (plusMonoSym pre')) v1 v2 inner -- boxInterpBiunobs (\eq -> pre (plusMono R' eq)) v1 v2 inner
+      boxInterpBiunobs (\pre' -> pre (plusMonoSym pre')) v1 v2 inner
 
     contextSplitLeft : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 Γ2 : ContextG sz} {γ1 γ2 : List Term} {adv : grade}
                      -> ⟦ Γ1 ++g Γ2 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
@@ -268,7 +268,7 @@ mutual
     ... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryTimesElimRightΓ convertValR* inner))
     contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (invisible pre inner) with g1 ≤d adv
     ... | yes p rewrite com* {R} {r} {g1} = ⊥-elim (pre (timesLeft p))
-    ... | no ¬p = invisible ¬p {!   !}
+    ... | no ¬p = invisible ¬p ((unaryTimesElimRightΓ (proj₁ inner)) , (unaryTimesElimRightΓ (proj₂ inner)))
 
 
     intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
@@ -307,13 +307,20 @@ mutual
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} (approx typ approx1 approx2 sub) pre inp e1 e2 =
       {!!}
 
-    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} typ1 typ2 {ctxtP}) pre inp e1 e2 =
+    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} typ1 typ2 {ctxtP}) pre inp e1 e2
+       v1 v2 v1redux v2redux =
       let
 --       (trans ? (cong (\x -> r ·g x) ctxtP))
        ih1 = intermediateSub typ1 pre subContext1 (proj₁ ih1evidence) (proj₂ ih1evidence)
+       ((n , t1') , ev1) = reduxTheoremApp {multisubst γ1 t1} {multisubst γ1 t2} {v1} (trans (cong multiRedux substPresApp) v1redux)
+       ((n' , t1'') , ev2) = reduxTheoremApp {multisubst γ2 t1} {multisubst γ2 t2} {v2} (trans (cong multiRedux substPresApp) v2redux)
+       
        ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
+
+       ih1' = ih1 (Abs n t1') (Abs n' t1'') ev1 ev2
+       ih2' = ih2 ? ? ? ?
       in
-      {!!}
+      {!  !}
       where
         inp' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
         inp' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp
@@ -322,13 +329,13 @@ mutual
         subContext1 = contextSplitLeft inp'
 
         subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-        subContext1bi = {!   !} -- binaryTimesElimRightΓ ? ?
+        subContext1bi = contextElimTimes subContext1 -- binaryTimesElimRightΓ ? ?
 
         subContext2 : ⟦ r ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
-        subContext2 = contextSplitRight {! inp  !}
+        subContext2 = {!   !} -- contextSplitRight {! inp  !}
 
         subContext2bi : ⟦ ( Γ2 , g2) ⟧Γg adv γ1 γ2
-        subContext2bi = {!!}
+        subContext2bi = contextElimTimes (contextElimTimes (contextSplitRight inp'))
 
         ih1evidence : [ FunTy A s B ]e (multisubst γ1 t1) × [ FunTy A s B ]e (multisubst γ2 t1)
         ih1evidence with biFundamentalTheoremGhost typ1 adv subContext1bi
