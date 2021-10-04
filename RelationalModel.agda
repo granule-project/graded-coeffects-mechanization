@@ -216,6 +216,9 @@ postulate -- postulate now for development speed
   reduxTheoremBool1 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
   reduxTheoremBool2 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
 
+  
+
+
 -- This is about the structure of substitutions and relates to abs
  -- there is some simplification here because of the definition of ,, being
  -- incorrect

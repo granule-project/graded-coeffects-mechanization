@@ -90,15 +90,23 @@ binaryImpliesUnaryGg {suc sz} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2
   with binaryImpliesUnary {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
 ... | ( arg1 , arg2 ) | ( rest1 , rest2 ) = ( (arg1 , rest1) , (arg2 , rest2) )
 
-multiSubstTyG : {{R : Semiring}} {{R' : InformationFlowSemiring R }} -> {n : ℕ} {Γ : ContextG n} {t : Term} {A : Type} {γ : List Term} {ghost : grade} -> Γ ⊢ t ∶ A -> (Empty , ghost) ⊢ multisubst' 0 γ t ∶ A
-multiSubstTyG = {!!}
+postulate
+  multiSubstTyG : {{R : Semiring}} {{R' : InformationFlowSemiring R }} -> {n : ℕ} {Γ : ContextG n} {t : Term} {A : Type} {γ : List Term} {ghost : grade} -> Γ ⊢ t ∶ A -> (Empty , ghost) ⊢ multisubst' 0 γ t ∶ A
 
-reduxTheoremAppTyG : {{R : Semiring}} {{R' : InformationFlowSemiring R }}
+  reduxTheoremAppTyG : {{R : Semiring}} {{R' : InformationFlowSemiring R }}
                  -> {t1 t2 v : Term} {s : ℕ} {Γ : Context s} {A B : Type} {r : grade} {ghost : grade}
                  -> multiRedux (App t1 t2) ≡ v
                  -> (Γ , ghost) ⊢ t1 ∶ FunTy A r B
                  -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1' × (((Ext Γ (Grad A r)) , ghost) ⊢ (Abs z v1') ∶  B))
-reduxTheoremAppTyG = {!!}
+
+  multireduxPromoteLemma :
+    {{ R : Semiring }}
+    {adv r : grade}
+    {τ : Type}
+    {t1 t2 : Term}
+    -> ⟦ Box r τ ⟧e adv t1 t2
+    -> Σ (Term × Term) (\(v1 , v2) -> multiRedux t1 ≡ Promote v1 × multiRedux t2 ≡ Promote v2)
+
 
 promoteLemma : {t t' t'' : Term} -> Promote t ≡ t' -> Σ Term (\t'' -> Promote t'' ≡ t')
 promoteLemma {t} {t'} {t''} pre = t , pre
@@ -114,17 +122,9 @@ utheoremG : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {s : ℕ} {γ : 
         -> [ τ ]e (multisubst γ e)
 utheoremG = {!!}
 
-multireduxPromoteLemma :
-  {{ R : Semiring }}
-  {adv r : grade}
-  {τ : Type}
-  {t1 t2 : Term}
-  -> ⟦ Box r τ ⟧e adv t1 t2
-  -> Σ (Term × Term) (\(v1 , v2) -> multiRedux t1 ≡ Promote v1 × multiRedux t2 ≡ Promote v2)
-multireduxPromoteLemma = {!!}
 
 -- under some constraints perhaps
---unaryImpliesBinarySpecialised : {e : Term} {τ : Type}
+-- unaryImpliesBinarySpecialised : {e : Term} {τ : Type}
 --  ⟦ τ ⟧e t
 
 -- Probably going to delete this
@@ -181,7 +181,6 @@ delta ⦃ R ⦄ {adv} {r} {s} {t1} {t2} {τ} (boxInterpBiobs pre .t1 .t2 inpInne
     inner v1 v2 v1redux v2redux
       rewrite (sym v1redux) | (sym v2redux) =
         boxInterpBiunobs ¬p2 t1 t2 {!!}
-
 
 
 ... | no ¬p1 | yes p2 =
