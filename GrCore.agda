@@ -267,18 +267,20 @@ multiReduxProducesValues {A} {vtrue} typing = trueValue
 multiReduxProducesValues {A} {vfalse} typing = falseValue
 multiReduxProducesValues {A} {If t t₁ t₂} typing = {!!}
 
-multReduxCongruence : {t1 v : Term} {C : Term -> Term}
+postulate
+  multReduxCongruence : {t1 v : Term} {C : Term -> Term}
                    -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
-multReduxCongruence = {!!}
-
-preservation : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
+  
+  preservation : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
              -> Γ ⊢ t ∶ A
              -> Γ ⊢ multiRedux t ∶ A
-preservation = {!!}
 
+  valuesDontReduce : {t : Term} -> Value t -> multiRedux t ≡ t
 
-valuesDontReduce : {t : Term} -> Value t -> multiRedux t ≡ t
-valuesDontReduce {t} v = {!!}
+  determinism : {t t1 t2 : Term}
+             -> multiRedux t ≡ t1 
+             -> multiRedux t ≡ t2
+             -> t1 ≡ t2
 
 data FullBetaEq : Term -> Term -> Set where
   VarEq     : {x : ℕ} -> FullBetaEq (Var x) (Var x)

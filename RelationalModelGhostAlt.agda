@@ -309,49 +309,42 @@ mutual
     intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {t1} {t2} typ1 typ2 {ctxtP}) pre inp e1 e2
        v1 v2 v1redux v2redux =
       let
---       (trans ? (cong (\x -> r ·g x) ctxtP))
         ih1 = intermediateSub typ1 pre subContext1 (proj₁ ih1evidence) (proj₂ ih1evidence)
 
         v1redux' = trans (sym (cong multiRedux (substPresApp {0} {γ1} {t1} {t2}))) v1redux
         ((x , t) , (funRed , substRed)) = reduxTheoremAll {multisubst γ1 t1} {multisubst γ1 t2} {v1} v1redux'
-            
+
         v2redux' = trans (sym (cong multiRedux (substPresApp {0} {γ2} {t1} {t2}))) v2redux
         ((x' , t') , (funRed' , substRed')) = reduxTheoremAll {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux'
 
-       ih1' = ih1 (Abs n t1') (Abs n' t1'') ev1 ev2
-       ih2' = ih2 {!   !} {!   !} {!   !} {!   !}
+        ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
+        -- An alternate approach which may be needed
+        -- ih2alt = intermediateSub (pr {r = s} typ2) pre {!   !} {! boxInterpV (proj₁ ih2evidence)  !} {!   !}
+        ih1' = ih1 (Abs x t) (Abs x' t') funRed funRed'
+
       in
-      {!  !}
+        goal x x' (multisubst γ1 t2) (multisubst γ2 t2) t t' ih1' (arg ih2) substRed substRed'
       where
-        goal : (x y : ℕ) (t t' t1 t1' : Term)
-             -> ⟦ FunTy A s B ⟧v adv (Abs x t) (Abs y t')
-             -> ⟦ Box s A ⟧e adv (Promote t1) (Promote t1')
+        arg :  ⟦ A ⟧e adv (multisubst γ1 t2) (multisubst γ2 t2)
+            -> ⟦ Box s A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
+        arg inp vArg1 vArg2 vArg1redux vArg2redux
+         rewrite trans (sym vArg1redux) reduxProm
+                | trans (sym vArg2redux) reduxProm with s ≤d adv
+        ... |  yes p = boxInterpBiobs p (multisubst' zero γ1 t2) (multisubst' zero γ2 t2) inp
+        ... | no ¬p = boxInterpBiunobs ¬p (multisubst' zero γ1 t2) (multisubst' zero γ2 t2) (binaryImpliesUnary inp)
+
+        goal : (x y : ℕ) (ta ta' bodyt bodyt' : Term)
+             -> ⟦ FunTy A s B ⟧v adv (Abs x bodyt) (Abs y bodyt')
+             -> ⟦ Box s A ⟧e adv (Promote ta) (Promote ta')
+             -> multiRedux (syntacticSubst ta x bodyt) ≡ v1
+             -> multiRedux (syntacticSubst ta' y bodyt') ≡ v2
              -> ⟦ B ⟧v adv v1 v2
-        goal x y t t' t1 t1' ih1 ih2 with ih1
+        goal x y ta ta' bodyt bodyt' ih1 ih2 v1redux' v2redux' with ih1
         ... | funInterpBi {adv} {A} {B} {r} {x'} {y'} e1 e2 bodyBi bodyUn1 bodyUni2 =
           let
-            ((x , t) , ((ev1a , ev2a) , ev3a)) = reduxTheoremAll v1redux
-            bodySubst = bodyBi t1 t1' ih2
-            {-
-            ev1 : multiRedux (multisubst γ1 t1) ≡
-          Abs
-          (proj₁
-           (proj₁
-            (reduxTheoremApp (trans (cong multiRedux substPresApp) v1redux))))
-          (proj₂
-           (proj₁
-            (reduxTheoremApp (trans (cong multiRedux substPresApp) v1redux))))
-
-
-            v1redux : (multiRedux (multisubst γ1 (App t3 t2))
-             | untypedRedux (multisubst γ1 (App t3 t2)))
-            ≡ v1
-
-            bodySubst : ⟦ B₁ ⟧e adv₁ (syntacticSubst t1 x t)
-            (syntacticSubst t1' y t')
-            bodySubst = bodyBi t1 t1' ih2
-            -}
-          in {!   !}
+            bodySubst = bodyBi ta ta' ih2
+            result = bodySubst v1 v2 v1redux' v2redux'
+          in result
 
         inp' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
         inp' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) inp
@@ -360,7 +353,7 @@ mutual
         subContext1 = contextSplitLeft inp'
 
         subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-        subContext1bi = contextElimTimes subContext1 -- binaryTimesElimRightΓ ? ?
+        subContext1bi = contextElimTimes subContext1
 
         subContext2 : ⟦ r ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
         subContext2 = {!   !} -- contextSplitRight {! inp  !}
