@@ -1,4 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --inversion-max-depth=100 #-}
 
 module RelationalModelGhostAlt where
 
@@ -317,21 +318,36 @@ mutual
         v2redux' = trans (sym (cong multiRedux (substPresApp {0} {γ2} {t1} {t2}))) v2redux
         ((x' , t') , (funRed' , substRed')) = reduxTheoremAll {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux'
 
-        ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
+        -- ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
         -- An alternate approach which may be needed
-        -- ih2alt = intermediateSub (pr {r = s} typ2) pre {!   !} {! boxInterpV (proj₁ ih2evidence)  !} {!   !}
+        -- (ih2u1 , ih2u2) = binaryImpliesUnary ih2
+        ih2alt = intermediateSub (pr {sz} {(Γ2 , g2)} {r = s} typ2) pre subContext2alt (arg1 (proj₁ ih2evidence)) (arg2 (proj₂ ih2evidence))
+        ih2alt' = subst₂ (\h1 h2 -> ⟦ Box s A ⟧e adv h1 h2) (substPresProm {0} {γ1} {t2}) (substPresProm {0} {γ2} {t2}) ih2alt
         ih1' = ih1 (Abs x t) (Abs x' t') funRed funRed'
 
       in
-        goal x x' (multisubst γ1 t2) (multisubst γ2 t2) t t' ih1' (arg ih2) substRed substRed'
+        goal x x' (multisubst γ1 t2) (multisubst γ2 t2) t t' ih1' ih2alt' substRed substRed'
       where
+        arg1 : [ A ]e (multisubst γ1 t2) -> [ Box s A ]e (multisubst γ1 (Promote t2))
+        arg1 arg v vredux rewrite sym vredux =
+         let q = (sym (substPresProm {0} {γ1} {t2}))
+         in subst (\h -> [ Box s A ]v h) (trans (sym reduxProm) (cong multiRedux q)) (boxInterpV (multisubst γ1 t2) arg) -- rewrite trans (sym vredux) (cong multiRedux substPresProm) = boxInterpV (multisubst γ1 t2) arg
+
+        arg2 : [ A ]e (multisubst γ2 t2) -> [ Box s A ]e (multisubst γ2 (Promote t2))
+        arg2 arg v vredux rewrite sym vredux =
+          let q = (sym (substPresProm {0} {γ2} {t2}))
+          in subst (\h -> [ Box s A ]v h) (trans (sym reduxProm) (cong multiRedux q)) (boxInterpV (multisubst γ2 t2) arg)
+
+        {-
+        Left over from an alternate attempt
         arg :  ⟦ A ⟧e adv (multisubst γ1 t2) (multisubst γ2 t2)
-            -> ⟦ Box s A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
+          -> ⟦ Box s A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
         arg inp vArg1 vArg2 vArg1redux vArg2redux
          rewrite trans (sym vArg1redux) reduxProm
                 | trans (sym vArg2redux) reduxProm with s ≤d adv
         ... |  yes p = boxInterpBiobs p (multisubst' zero γ1 t2) (multisubst' zero γ2 t2) inp
         ... | no ¬p = boxInterpBiunobs ¬p (multisubst' zero γ1 t2) (multisubst' zero γ2 t2) (binaryImpliesUnary inp)
+        -}
 
         goal : (x y : ℕ) (ta ta' bodyt bodyt' : Term)
              -> ⟦ FunTy A s B ⟧v adv (Abs x bodyt) (Abs y bodyt')
@@ -355,8 +371,12 @@ mutual
         subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
         subContext1bi = contextElimTimes subContext1
 
-        subContext2 : ⟦ r ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
-        subContext2 = {!   !} -- contextSplitRight {! inp  !}
+        subContext2alt : ⟦ r ·g (s ·g ( Γ2 , g2 )) ⟧Γg adv γ1 γ2
+        subContext2alt = contextSplitRight inp'
+
+        -- Don't need this approach now (alternate but seemed to be not ideal)
+        -- subContext2 : ⟦ r ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
+        -- subContext2 = {!   !} -- contextSplitRight {! inp  !}
 
         subContext2bi : ⟦ ( Γ2 , g2) ⟧Γg adv γ1 γ2
         subContext2bi = contextElimTimes (contextElimTimes (contextSplitRight inp'))
