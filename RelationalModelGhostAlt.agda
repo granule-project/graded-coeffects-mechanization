@@ -306,17 +306,17 @@ mutual
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} (approx typ approx1 approx2 sub) pre inp e1 e2 =
       {!!}
 
-    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} typ1 typ2 {ctxtP}) pre inp e1 e2
+    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(App t1 t2)} {.B} (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {t1} {t2} typ1 typ2 {ctxtP}) pre inp e1 e2
        v1 v2 v1redux v2redux =
       let
 --       (trans ? (cong (\x -> r ·g x) ctxtP))
-       ih1 = intermediateSub typ1 pre subContext1 (proj₁ ih1evidence) (proj₂ ih1evidence)
-       ((n , t1') , ev1) = reduxTheoremApp {multisubst γ1 t1} {multisubst γ1 t2} {v1} (trans (cong multiRedux substPresApp) v1redux)
-       ((n' , t1'') , ev2) = reduxTheoremApp {multisubst γ2 t1} {multisubst γ2 t2} {v2} (trans (cong multiRedux substPresApp) v2redux)
-       
-       
+        ih1 = intermediateSub typ1 pre subContext1 (proj₁ ih1evidence) (proj₂ ih1evidence)
 
-       ih2 = intermediateSub typ2 pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
+        v1redux' = trans (sym (cong multiRedux (substPresApp {0} {γ1} {t1} {t2}))) v1redux
+        ((x , t) , (funRed , substRed)) = reduxTheoremAll {multisubst γ1 t1} {multisubst γ1 t2} {v1} v1redux'
+            
+        v2redux' = trans (sym (cong multiRedux (substPresApp {0} {γ2} {t1} {t2}))) v2redux
+        ((x' , t') , (funRed' , substRed')) = reduxTheoremAll {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux'
 
        ih1' = ih1 (Abs n t1') (Abs n' t1'') ev1 ev2
        ih2' = ih2 {!   !} {!   !} {!   !} {!   !}

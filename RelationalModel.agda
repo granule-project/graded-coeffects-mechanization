@@ -211,12 +211,11 @@ postulate -- postulate now for development speed
    -- --------------------------------------
    --   t1 t2 ⇣ v3
 
-  reduxTheoremAll : {t1 t2 v2 v3 : Term}
-                  -> multiRedux (App t1 t2) ≡ v3
+  reduxTheoremAll : {t1 t2 v : Term}
+                  -> multiRedux (App t1 t2) ≡ v
                   -> Σ (ℕ × Term) (\(x , t) ->
-                      (((multiRedux t1 ≡ (Abs x t)) ×
-                        (multiRedux t2 ≡ v2)) ×
-                         multiRedux (syntacticSubst v2 x t) ≡ v3))
+                      ((multiRedux t1 ≡ (Abs x t)) ×
+                        (multiRedux (syntacticSubst t2 x t) ≡ v)))
 
 
   multiSubstTy : {{R : Semiring}} -> {n : ℕ} {Γ : Context n} {t : Term} {A : Type} {γ : List Term} -> Γ ⊢ t ∶ A -> Empty ⊢ multisubst' 0 γ t ∶ A
