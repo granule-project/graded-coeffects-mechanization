@@ -64,6 +64,13 @@ _++_ : {{R : Semiring}} {s : ℕ} -> Context s -> Context s -> Context s
 Empty ++ Empty = Empty
 (Ext G (Grad A r)) ++ (Ext G' (Grad B s)) = Ext (G ++ G') (Grad A (r +R s))
 
+-- Context scalar multiplication distributes with context contactentation
+multConcatDistr : {{R : Semiring}} {s t : ℕ} {r : grade} {Γ1 : Context s} {Γ2 : Context t} ->
+                  r · (Γ1 ,, Γ2) ≡ ((r · Γ1) ,, (r · Γ2))
+multConcatDistr ⦃ R ⦄ {.0} {t} {r} {Empty} {Γ2} = refl
+multConcatDistr ⦃ R ⦄ {suc n} {t} {r} {Ext Γ1 (Grad A s)} {Γ2} 
+  rewrite multConcatDistr {n} {t} {r} {Γ1} {Γ2} = refl
+
 postulate
   -- keeps things simple with the above definition
   sameTypes : {{R : Semiring}} {s : ℕ} {Γ1 Γ2 : Context s} {Γ : Context (suc s)} {A A' : Type} {r1 r2 : grade}

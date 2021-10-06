@@ -383,20 +383,29 @@ mutual
 
         ih1evidence : [ FunTy A s B ]e (multisubst γ1 t1) × [ FunTy A s B ]e (multisubst γ2 t1)
         ih1evidence with biFundamentalTheoremGhost typ1 adv subContext1bi
-        ... | boxInterpBiobs preF .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) innerF = binaryImpliesUnary innerF
+        ... | boxInterpBiobs preF .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) innerF = binaryImpliesUnary {FunTy A s B} {multisubst γ1 t1} {multisubst γ2 t1} {adv} innerF
         ... | boxInterpBiunobs preF .(multisubst' 0 γ1 t1) .(multisubst' 0 γ2 t1) innerF = innerF
 
         ih2evidence : [ A ]e (multisubst γ1 t2) × [ A ]e (multisubst γ2 t2)
         ih2evidence with biFundamentalTheoremGhost typ2 adv subContext2bi
-        ... | boxInterpBiobs preA .(multisubst' 0 γ1 t2) .(multisubst' 0 γ2 t2) innerA = binaryImpliesUnary innerA
+        ... | boxInterpBiobs preA .(multisubst' 0 γ1 t2) .(multisubst' 0 γ2 t2) innerA = binaryImpliesUnary {A} {multisubst γ1 t2} {multisubst γ2 t2} {adv} innerA
         ... | boxInterpBiunobs preA .(multisubst' 0 γ1 t2) .(multisubst' 0 γ2 t2) innerA = innerA
 
 
 
-    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {Abs .(Γlength _ + 1) t} {.(FunTy _ _ _)} (abs {_} {_} {_} {_} {Γ1} {Γ2} {_} {s} {A} {B} {.t} pos typ) pre inp e1 e2 =
+    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {Abs .(Γlength Γ1 + 1) t} {FunTy A s B}
+         (abs {_} {_} {Γbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typ {pos2}) pre inp e1 e2 =
      let
       ih = intermediateSub typ pre {!!} {!!} {!!}
      in {!!}
+     where
+      ihcontext : {t t' : Term} {γ1 γ2 : List Term} -> ⟦ Box r A ⟧e adv t t' -> ⟦ r ·g ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2 -> ⟦ r ·g (((Ext Γ1 (Grad A r)) ,, Γ2) , ghost) ⟧Γg adv γ1 γ2
+      ihcontext {t} {t'} {γ1} {γ2} inp (visible pre' contextInterp) = {!  γ1 γ2 !}
+        -- visible pre' {! ?  !}  -- rewrite multConcatDistr {r = r} {Γ1} {Γ2}
+      ihcontext {t} {t'} {γ1} {γ2} inp (invisible pre' contextInterp) = invisible pre' ({!   !} , {!   !})
+
+      goal : ⟦ FunTy A s B ⟧e adv (multisubst γ1 (Abs (Γlength Γ1 + 1) t)) (multisubst γ2 (Abs (Γlength Γ1 + 1) t))
+      goal = {!   !}
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Promote _)} {.(Box _ _)} (pr typ) pre inp e1 e2 = {!!}
     intermediateSub {Γ = .(Semiring.0R _ · _)} {.(Semiring.1R _)} {r} {adv} {γ1} {γ2} {.unit} {.Unit} unitConstr pre inp e1 e2 = {!!}
