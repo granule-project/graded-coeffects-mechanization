@@ -393,19 +393,59 @@ mutual
 
 
 
-    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {Abs .(Γlength Γ1 + 1) t} {FunTy A s B}
-         (abs {_} {_} {Γbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typ {pos2}) pre inp e1 e2 =
+    intermediateSub {{R}} {{R'}} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {Abs .(Γlength Γ1 + 1) t} {FunTy A s B}
+         (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typ {pos2}) pre inp e1 e2 =
      let
-      ih = intermediateSub typ pre {!!} {!!} {!!}
-     in {!!}
+     {-
+      Goal:
+
+      Need to build a [[ FunTy A s B ]]e witness
+      from [ FunTy A s B ]e ... witnesses
+      which means I need to build something like ([[ Box s A ]] -> [[ B ]]) function
+
+
+      Reminders:
+       pos : (Γbody , gbody) ≡ (Ext (Γ1 ,, Γ2) (Grad A s) , g)
+       pos2 : (Γ , ghost) ≡ ((Γ1 ,, Γ2) , g)
+     -}
+        ihcontext' = subst (\h -> {!   !}) {!   !} ihcontext
+        ih = intermediateSub typ pre {!!} {!!} {!!}
+     in goal
      where
-      ihcontext : {t t' : Term} {γ1 γ2 : List Term} -> ⟦ Box r A ⟧e adv t t' -> ⟦ r ·g ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2 -> ⟦ r ·g (((Ext Γ1 (Grad A r)) ,, Γ2) , ghost) ⟧Γg adv γ1 γ2
-      ihcontext {t} {t'} {γ1} {γ2} inp (visible pre' contextInterp) = {!  γ1 γ2 !}
+      ihcontext : {t t' : Term} {γ1 γ2 : List Term}
+               -> ⟦ Box r A ⟧e adv (Promote t) (Promote t')
+               -> ⟦ r ·g ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2 -> ⟦ (r · ((Ext Γ1 (Grad A r)) ,, Γ2) , r *R ghost) ⟧Γg adv (t ∷ γ1) (t' ∷ γ2)
+      ihcontext {t} {t'} {γ1} {γ2} inp ctxt rewrite multConcatDistr {r = r} {Γ1} {Γ2} with ctxt
+      ... | visible pre' inner   rewrite idem* R' {r} = visible (timesLeft pre) (inp , inner)
+      ... | invisible pre' inner = ⊥-elim (pre' (timesLeft pre))
+      
+
+      ihcontextAlt : {t t' : Term} {γ1 γ2 : List Term}
+               -> ⟦ Box s A ⟧e adv (Promote t) (Promote t')
+               -> ⟦ ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2 -> ⟦ (((Ext Γ1 (Grad A s)) ,, Γ2) , ghost) ⟧Γg adv (t ∷ γ1) (t' ∷ γ2)
+      ihcontextAlt {t} {t'} {γ1} {γ2} inp ctxt with ctxt
+      ... | visible pre' inner   = visible pre' (inp , inner)
+      ... | invisible pre' inner = {!   !} -- ⊥-elim (pre' (timesLeft pre))
+
         -- visible pre' {! ?  !}  -- rewrite multConcatDistr {r = r} {Γ1} {Γ2}
-      ihcontext {t} {t'} {γ1} {γ2} inp (invisible pre' contextInterp) = invisible pre' ({!   !} , {!   !})
+      -- ihcontext {t} {t'} {γ1} {γ2} inp (invisible pre' contextInterp) = invisible pre' ({!   !} , {!   !})
+
+      goalBiInnner : ⟦ (Γ1 ,, Γ2) , ghost ⟧Γg adv γ1 γ2
+                  -> (v3 v4 : Term)
+                  -> ⟦ Box s A ⟧e adv (Promote v3) (Promote v4)
+                  -> ⟦ B ⟧e adv (syntacticSubst v3 (Γlength Γ1 + 1) (multisubst' zero γ1 t)) (syntacticSubst v4 (Γlength Γ1 + 1) (multisubst' zero γ2 t))
+      goalBiInnner outer v3 v4 arg v1' v2' v1redux' v2redux' =
+        let
+           ihcontext' = (ihcontextAlt {v3} {v4} {γ1} {γ2} arg outer)
+           ih = intermediateSub typ pre {!!} {!!} {!!}
+        in ih v1' v2' {!   !} {!   !} 
 
       goal : ⟦ FunTy A s B ⟧e adv (multisubst γ1 (Abs (Γlength Γ1 + 1) t)) (multisubst γ2 (Abs (Γlength Γ1 + 1) t))
-      goal = {!   !}
+      goal v1 v2 v1redux v2redux rewrite
+          trans (sym v1redux) (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t}))
+        | trans (sym v2redux) (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) =
+           funInterpBi (multisubst' zero γ1 t) (multisubst' zero γ2 t) (goalBiInnner {!   !}) {!   !} {!   !}
+
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Promote _)} {.(Box _ _)} (pr typ) pre inp e1 e2 = {!!}
     intermediateSub {Γ = .(Semiring.0R _ · _)} {.(Semiring.1R _)} {r} {adv} {γ1} {γ2} {.unit} {.Unit} unitConstr pre inp e1 e2 = {!!}
