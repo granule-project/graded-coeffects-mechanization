@@ -394,7 +394,7 @@ mutual
 
 
     intermediateSub {{R}} {{R'}} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {Abs .(Γlength Γ1 + 1) t} {FunTy A s B}
-         (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typ {pos2}) pre inp e1 e2 =
+         (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typ {pos2}) pre inp e1 e2 rewrite pos2 =
      let
      {-
       Goal:
@@ -428,7 +428,25 @@ mutual
                -> ⟦ ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2 -> ⟦ (((Ext Γ1 (Grad A s)) ,, Γ2) , ghost) ⟧Γg adv (t ∷ γ1) (t' ∷ γ2)
       ihcontextAlt {t} {t'} {γ1} {γ2} inp ctxt with ctxt
       ... | visible pre' inner   = visible pre' (inp , inner)
-      ... | invisible pre' inner = {!   !} -- ⊥-elim (pre' (timesLeft pre))
+      ... | invisible pre' (inner1 , inner2) =
+        let
+          (arg1 , arg2) = binaryImpliesUnary { Box s A } {Promote t} {Promote t'} {adv} inp
+        in invisible pre' ((arg1 , inner1) , (arg2 , inner2)) -- ⊥-elim (pre' (timesLeft pre))
+
+      convert : {t t' : Term} -> ⟦ Box s A ⟧e adv (Promote t) (Promote t') -> ⟦ Box (r *R s) A ⟧e adv (Promote t) (Promote t')
+      convert {t} {t'} inp v1 v2 v1redux v2redux with inp v1 v2 v1redux v2redux
+      ... | boxInterpBiobs preA t1 t2 inner = boxInterpBiobs (subst (\\h -> h ≤ adv) com* (timesLeft preA)) t1 t2 inner
+      ... | boxInterpBiunobs preA t1 t2 inner = boxInterpBiunobs ? t1 t2 inner
+
+      ihcontextAlt2 : {t t' : Term} {γ1 γ2 : List Term}
+               -> ⟦ Box s A ⟧e adv (Promote t) (Promote t')
+               -> ⟦ (r · (Γ1 ,, Γ2) , r *R ghost) ⟧Γg adv γ1 γ2 -> ⟦ (((Ext (r · Γ1) (Grad A (r *R s))) ,, (r · Γ2)) , r *R ghost) ⟧Γg adv (t ∷ γ1) (t' ∷ γ2)
+      ihcontextAlt2 {t} {t'} {γ1} {γ2} inp ctxt rewrite multConcatDistr {r = r} {Γ1} {Γ2} with ctxt
+      ... | visible pre' inner   = visible pre' (convert inp , inner)
+      ... | invisible pre' (inner1 , inner2) =
+        let
+          (arg1 , arg2) = binaryImpliesUnary { Box (r *R s) A } {Promote t} {Promote t'} {adv} (convert inp)
+        in invisible pre' ((arg1 , inner1) , (arg2 , inner2)) -- ⊥-elim (pre' (timesLeft pre))
 
         -- visible pre' {! ?  !}  -- rewrite multConcatDistr {r = r} {Γ1} {Γ2}
       -- ihcontext {t} {t'} {γ1} {γ2} inp (invisible pre' contextInterp) = invisible pre' ({!   !} , {!   !})
@@ -452,8 +470,11 @@ mutual
             -}
 
             (arg1 , arg2) = binaryImpliesUnary arg
-
-            ih = intermediateSub typ pre {!!} {! !} {!!}
+            -- pos : (Γbody , gbody) ≡ (Ext (Γ1 ,, Γ2) (Grad A s) , g)
+            -- goal 15 is ⟦ r ·g (Γbody , gbody) ⟧Γg adv _γ1_1729 _γ2_1730
+            context = ihcontextAlt2 {v3} {v4} {γ1} {γ2} {!   !} {!   !} -- arg outer
+            context' = subst (\ h -> ⟦ h ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)) {!    !} context
+            ih = intermediateSub typ pre {!!} (innerFun1 t arg1) (innerFun2 t arg2)
         in ih v1' v2' {!   !} {!   !} 
 
       goal : ⟦ FunTy A s B ⟧e adv (multisubst γ1 (Abs (Γlength Γ1 + 1) t)) (multisubst γ2 (Abs (Γlength Γ1 + 1) t))
