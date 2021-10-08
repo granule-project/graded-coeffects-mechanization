@@ -198,6 +198,9 @@ substPresIf {n} {x ∷ γ} {tg} {t1} {t2} = substPresIf {n + 1} {γ} {syntacticS
 reduxProm : {v : Term} -> multiRedux (Promote v) ≡ Promote v
 reduxProm {v} = refl
 
+reduxAbs : {x : ℕ} {t : Term} -> multiRedux (Abs x t) ≡ Abs x t
+reduxAbs = refl
+
 reduxFalse : multiRedux vfalse ≡ vfalse
 reduxFalse = refl
 

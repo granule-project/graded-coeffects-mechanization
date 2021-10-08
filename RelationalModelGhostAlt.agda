@@ -402,8 +402,11 @@ mutual
       Need to build a [[ FunTy A s B ]]e witness
       from [ FunTy A s B ]e ... witnesses
       which means I need to build something like ([[ Box s A ]] -> [[ B ]]) function
-
-
+      induction on intermediateSub will require a context with Box (r*s) A added which
+      we can get from the [[ Box s A ]] here (I think) adding to the context and doing induction
+      on... on what... well...we have [ Box s A ]e -> [ B ]e witnesses, so we need to map
+      from [[ Box s A]] to [Box s A] which we can do by binaryImpliesUnary lemma
+ 
       Reminders:
        pos : (Γbody , gbody) ≡ (Ext (Γ1 ,, Γ2) (Grad A s) , g)
        pos2 : (Γ , ghost) ≡ ((Γ1 ,, Γ2) , g)
@@ -434,10 +437,23 @@ mutual
                   -> (v3 v4 : Term)
                   -> ⟦ Box s A ⟧e adv (Promote v3) (Promote v4)
                   -> ⟦ B ⟧e adv (syntacticSubst v3 (Γlength Γ1 + 1) (multisubst' zero γ1 t)) (syntacticSubst v4 (Γlength Γ1 + 1) (multisubst' zero γ2 t))
-      goalBiInnner outer v3 v4 arg v1' v2' v1redux' v2redux' =
+      goalBiInnner outer v3 v4 arg v1' v2' v1redux' v2redux' 
+        with e1 (Abs (Γlength Γ1 + 1) (multisubst γ1 t)) (trans (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t})) reduxAbs)
+           | e2 (Abs (Γlength Γ1 + 1) (multisubst γ2 t)) (trans (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) reduxAbs)
+      ... | funInterpV bod1 innerFun1 | funInterpV bod2 innerFun2 =
         let
-           ihcontext' = (ihcontextAlt {v3} {v4} {γ1} {γ2} arg outer)
-           ih = intermediateSub typ pre {!!} {!!} {!!}
+            ihcontext' = (ihcontextAlt {v3} {v4} {γ1} {γ2} arg outer)
+
+            {-
+            eq1 = trans (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t})) reduxAbs
+            innerFun1 = e1 (Abs (Γlength Γ1 + 1) (multisubst γ1 t)) eq1
+            eq2 = trans (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) reduxAbs
+            innerFun2 = e2 (Abs (Γlength Γ1 + 1) (multisubst γ2 t)) eq2
+            -}
+
+            (arg1 , arg2) = binaryImpliesUnary arg
+
+            ih = intermediateSub typ pre {!!} {! !} {!!}
         in ih v1' v2' {!   !} {!   !} 
 
       goal : ⟦ FunTy A s B ⟧e adv (multisubst γ1 (Abs (Γlength Γ1 + 1) t)) (multisubst γ2 (Abs (Γlength Γ1 + 1) t))
