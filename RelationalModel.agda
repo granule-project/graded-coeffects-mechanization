@@ -378,17 +378,18 @@ binaryTimesElimRightΓ {_} {[]} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 binaryTimesElimRightΓ {_} {[]} {x ∷ γ5} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 binaryTimesElimRightΓ {_} {x ∷ γ4} {[]} {Ext Γ (Grad A r₁)} {r} {adv} _ ()
 
+convertUnaryBox : {{R : Semiring}} {A : Type} {r s : grade} {t : Term} -> [ Box r A ]e (Promote t) -> [ Box s A ]e (Promote t)
+convertUnaryBox pre v0 v0redux with pre v0 v0redux
+... | boxInterpV e inner = boxInterpV e inner
+
+
 unaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 : List Term} {Γ : Context sz} {r : grade}
    -> [ r · Γ ]Γ γ1 -> [ Γ ]Γ γ1
 unaryTimesElimRightΓ ⦃ R ⦄ {.0} {[]} {Empty} {r} inp = tt
 unaryTimesElimRightΓ ⦃ R ⦄ {.0} {x ∷ γ1} {Empty} {r} tt = tt
 unaryTimesElimRightΓ ⦃ R ⦄ {.(suc _)} {[]} {Ext Γ (Grad A s)} {r} ()
 unaryTimesElimRightΓ ⦃ R ⦄ {suc n} {x ∷ γ1} {Ext Γ (Grad A s)} {r} (ass , g) =
-  convertHyp ass , unaryTimesElimRightΓ {{R}} {n} {γ1} {Γ} {r} g
-    where
-      convertHyp : [ Box (r *R s) A ]e (Promote x) -> [ Box s A ]e (Promote x)
-      convertHyp pre v0 v0redux with pre v0 v0redux
-      ... | boxInterpV e inner = boxInterpV e inner
+  convertUnaryBox ass , unaryTimesElimRightΓ {{R}} {n} {γ1} {Γ} {r} g
 
 ---------------------------------
 -- Unary fundamental theorem
@@ -469,17 +470,10 @@ utheorem {s} {γ} {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {s1} {s2}
 -- # PROMOTION
 utheorem {s} {γ} {Γ'} {Promote t} {Box r A} (pr {_} {Γ} {Γ'} typing {prf}) context v substi rewrite prf =
    let
-     ih = utheorem {s} {γ} {Γ} {t} {A} typing (underBox context)
+     ih = utheorem {s} {γ} {Γ} {t} {A} typing (unaryTimesElimRightΓ context)
    in
      subst (\h -> [ Box r A ]v h) thm (boxInterpV (multisubst γ t) ih)
   where
-    convert : {s : grade} {v : Term} {A : Type} -> [ Box (r *R s) A ]e (Promote v) -> [ Box s A ]e (Promote v)
-    convert {s} {v} {A} pre v0 v0redux with pre v0 v0redux
-    ... | boxInterpV e inner = boxInterpV e inner
-
-    underBox : {sz : ℕ} {γ : List Term} {Γ : Context sz} -> [ r · Γ ]Γ γ -> [ Γ ]Γ γ
-    underBox {0} {_} {Empty} g = tt
-    underBox {suc sz} {v ∷ γ} {Ext Γ (Grad A s)} (ass , g) = convert ass , underBox {sz} {γ} {Γ} g
 
     thm : Promote (multisubst γ t) ≡ v
     thm =
@@ -515,17 +509,13 @@ utheorem {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} {
     in caseBody
   where
     v1redux' : multiRedux (If (multisubst γ tg) (multisubst γ t1) (multisubst γ t2))  ≡ v1
-    v1redux' = (trans (cong multiRedux (sym (substPresIf {0} {γ} {tg} {t1} {t2}))) v1redux)
-
-    convertHyp : {x : Term} {r1 r2 : grade} {A : Type} -> [ Box ((r *R r1) +R r2) A ]e (Promote x) -> [ Box r1 A ]e (Promote x)
-    convertHyp {x} {r1} {r2} pre v0 v0redux with pre v0 v0redux
-    ... | boxInterpV e inner = boxInterpV e inner
+    v1redux' = trans (cong multiRedux (sym (substPresIf {0} {γ} {tg} {t1} {t2}))) v1redux
 
     convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ : List Term} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
     convert {.0} {Empty} {Empty} {γ} g = tt
     convert {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} ()
     convert {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x ∷ γ} (hd , tl) =
-      convertHyp hd , convert {sz} {Γ1} {Γ2} {γ} tl
+      convertUnaryBox hd , convert {sz} {Γ1} {Γ2} {γ} tl
 
     caseBody : [ B ]v v1
     caseBody with reduxTheoremBool {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux'
