@@ -280,10 +280,11 @@ mutual
                -> (Γ , ghost) ⊢ e ∶ A
                -> r ≤ adv
                -> ⟦ r ·g (Γ , ghost) ⟧Γg adv γ1 γ2
-               -> [ A ]e (multisubst γ1 e)
-               -> [ A ]e (multisubst γ2 e)
-               -> ⟦ A ⟧e adv (multisubst γ1 e) (multisubst γ2 e)
-
+               -> [ Box ghost A ]e (Promote (multisubst γ1 e))
+               -> [ Box ghost A ]e (Promote (multisubst γ2 e))
+               -> ⟦ Box ghost A ⟧e adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+    -- split on whether ghost ⟨= adv first as no case easy, then induct for yes case
+  {-
     -- Case where
     --  (x : A, ghost) ⊢ x : A
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {a1 ∷ γ1'} {a2 ∷ γ2'} {.(Var 0)} {A} (var {Γ1 = Empty} {Γ2} pos) pre inp e1 e2 v1 v2 v1redux v2redux
@@ -338,7 +339,7 @@ mutual
           let q = (sym (substPresProm {0} {γ2} {t2}))
           in subst (\h -> [ Box s A ]v h) (trans (sym reduxProm) (cong multiRedux q)) (boxInterpV (multisubst γ2 t2) arg)
 
-        {-
+      {-
         Left over from an alternate attempt
         arg :  ⟦ A ⟧e adv (multisubst γ1 t2) (multisubst γ2 t2)
           -> ⟦ Box s A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
@@ -347,7 +348,7 @@ mutual
                 | trans (sym vArg2redux) reduxProm with s ≤d adv
         ... |  yes p = boxInterpBiobs p (multisubst' zero γ1 t2) (multisubst' zero γ2 t2) inp
         ... | no ¬p = boxInterpBiunobs ¬p (multisubst' zero γ1 t2) (multisubst' zero γ2 t2) (binaryImpliesUnary inp)
-        -}
+      -}
 
         goal : (x y : ℕ) (ta ta' bodyt bodyt' : Term)
              -> ⟦ FunTy A s B ⟧v adv (Abs x bodyt) (Abs y bodyt')
@@ -489,6 +490,9 @@ mutual
     intermediateSub {Γ = .(Semiring.0R _ · _)} {.(Semiring.1R _)} {r} {adv} {γ1} {γ2} {.vtrue} {.BoolTy} trueConstr pre inp e1 e2 = {!!}
     intermediateSub {Γ = .(Semiring.0R _ · _)} {.(Semiring.1R _)} {r} {adv} {γ1} {γ2} {.vfalse} {.BoolTy} falseConstr pre inp e1 e2 = {!!}
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(If _ _ _)} {A} (if typ typ₁ typ₂) pre inp e1 e2 = {!!}
+    -}
+
+    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {term} {A} type pre inp e1 e2 = {!!}
 
     intermediate : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ}
                 {Γ : Context sz}
@@ -502,6 +506,7 @@ mutual
                 -> ⟦ Box ghost τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
                 -> ¬ (ghost ≤ adv)
                 -> ⟦ Box (ghost *R r) τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+                
     intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _ inp pre1 inner pre2
      with (ghost *R r) ≤d adv
     {-
@@ -520,8 +525,9 @@ mutual
 
     intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2
       | yes p | boxInterpBiunobs x .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
-        boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e)
-           (intermediateSub {sz} {Γ} {ghost} {r} {adv} typ pre1 inp (proj₁ inner') (proj₂ inner'))
+        -- boxInterpBiobs p (multisubst' zero γ1 e) (multisubst' zero γ2 e)
+          let sub =  (intermediateSub {sz} {Γ} {ghost} {r} {adv} typ pre1 inp {!!} {!!}) -- (proj₁ inner') (proj₂ inner'))
+          in boxInterpBiobs (timesLeftSym pre1) {!!} {!!} {!!}
 
     intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} typ inp pre1 inner pre2 | no ¬p with inner
     ... | boxInterpBiobs pre3 .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) _ = ⊥-elim (pre2 pre3)
@@ -700,7 +706,7 @@ mutual
           let
             ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (invisible geq' (underBox2 contextInterp))
             ev = subst (\h -> h ≤ adv) (injPair2 prf) eq0
-            intermedio = intermediate typ (visible ev contextInterp) eq ih geq'
+            intermedio = {!!} -- intermediate typ (visible ev contextInterp) eq ih geq'
             intermedio' = subst (\h -> ⟦ Box ((R Semiring.*R ghost') r) A ⟧v adv h (Promote (multisubst γ2 t)))
                            (sym (substPresProm {zero} {γ1} {t})) intermedio
             intermedio'' = subst (\h -> ⟦ Box ((R Semiring.*R ghost') r) A ⟧v adv (multisubst γ1 (Promote t)) h)
@@ -714,11 +720,11 @@ mutual
                                    (Promote (multisubst γ1 (Promote t)))
                                    (Promote h)) (sym (substPresProm {zero} {γ2} {t})) next'
 
-          in subst
+          in {!!} {- subst
                (λ h →
                   ⟦ Box h (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t)))
                   (Promote (multisubst' 0 γ2 (Promote t))))
-               (sym (injPair2 prf)) next''
+               (sym (injPair2 prf)) next'' -}
 
 
 

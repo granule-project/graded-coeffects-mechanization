@@ -180,9 +180,12 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     leftAbsorbSub   : {r : grade R} -> _≤_ R (_*R_ R (0R R) r) (0R R)
     rightAbsorbSub  : {r : grade R} -> _≤_ R (_*R_ R r (0R R)) (0R R)
 
-
-
 open InformationFlowSemiring
+
+timesLeftSym : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
+             -> {r1 r2 s : grade R}
+             -> (_≤_ R r1 s) -> (_≤_ R (_*R_ R r2 r1) s)
+timesLeftSym {{R}} {{R'}} {r1} {r2} {s} pre = subst (\h -> _≤_ R h s) (com* R') (timesLeft R' pre)
 
 -- # Some more derived properties
 
