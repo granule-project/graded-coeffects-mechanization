@@ -50,9 +50,10 @@ injPair2 refl = refl
 
 unpackObs : {{R : Semiring}} {A : Type} {v1 v2 : Term} {r adv : grade}
           -> (r ≤ adv)
-          -> ⟦ Box r A ⟧v adv (Promote v1) (Promote v2) -> ⟦ A ⟧e adv v1 v2
-unpackObs {A} {v1} {v2} {r} {adv} pre (boxInterpBiobs _ .v1 .v2 innerExprInterp) = innerExprInterp
-unpackObs {A} {v1} {v2} {r} {adv} pre (boxInterpBiunobs eq .v1 .v2 innerExprInterp) = ⊥-elim (eq pre)
+          -> ⟦ Box r A ⟧e adv (Promote v1) (Promote v2) -> ⟦ A ⟧e adv v1 v2
+unpackObs {A} {v1} {v2} {r} {adv} pre inner v1' v2' v1redux v2redux with inner (Promote v1) (Promote v2) refl refl
+... | (boxInterpBiobs _ .v1 .v2 innerExprInterp) = innerExprInterp v1' v2' v1redux v2redux
+... | (boxInterpBiunobs eq .v1 .v2 innerExprInterp) = ⊥-elim (eq pre)
 
 unpackUnobs : {{R : Semiring}} {A : Type} {v1 v2 : Term} {r adv : grade}
           -> ¬ (r ≤ adv)
@@ -494,7 +495,7 @@ mutual
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {term} {A} type pre inp e1 e2 = {!!}
 
-    intermediate : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ}
+    {- intermediate : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ}
                 {Γ : Context sz}
                 {ghost r adv : grade}
                 {γ1 γ2 : List Term}
@@ -506,17 +507,16 @@ mutual
                 -> ⟦ Box ghost τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
                 -> ¬ (ghost ≤ adv)
                 -> ⟦ Box (ghost *R r) τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
-                
     intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _ inp pre1 inner pre2
      with (ghost *R r) ≤d adv
-    {-
-      But what if s = Public, g = Private, adv = Public
-      then we have s ≤ adv (Public ≤ Public) yes
-                 ¬ (ghost ≤ adv) meaning ¬ (Private ≤ Public) yes
-                 (ghost *R s) = Public * Private = Public
-            therefore (ghost *R s) ≤ Public is Public ≤ Public which is true.
-     therefore adversary cannot see inside Box ghost τ but should be able to see inside Box (ghost *R s).
-    -}
+
+    --   But what if s = Public, g = Private, adv = Public
+    --   then we have s ≤ adv (Public ≤ Public) yes
+    --              ¬ (ghost ≤ adv) meaning ¬ (Private ≤ Public) yes
+    --              (ghost *R s) = Public * Private = Public
+    --         therefore (ghost *R s) ≤ Public is Public ≤ Public which is true.
+    --  therefore adversary cannot see inside Box ghost τ but should be able to see inside Box (ghost *R s).
+
     intermediate {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _ inp pre1 inner pre2 | yes p with inner
 
     intermediate ⦃ R ⦄ {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {τ} {e} _ inp pre1 inner pre2
@@ -533,7 +533,7 @@ mutual
     ... | boxInterpBiobs pre3 .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) _ = ⊥-elim (pre2 pre3)
     ... | boxInterpBiunobs pre3 .(multisubst' 0 γ1 e) .(multisubst' 0 γ2 e) inner' =
       boxInterpBiunobs ¬p (multisubst' zero γ1 e) (multisubst' zero γ2 e) inner'
-
+  -}
 
     biFundamentalTheoremGhost : {{R : Semiring}} {{R'' : InformationFlowSemiring R}} {sz : ℕ}
               {Γ : Context sz} {ghost : grade} {e : Term} {τ : Type}
@@ -542,15 +542,15 @@ mutual
             -> {γ1 : List Term} {γ2 : List Term}
             -> (adv : grade)
             -> ⟦ (Γ , ghost) ⟧Γg adv γ1 γ2
-            -> ⟦ Box ghost τ ⟧v adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+            -> ⟦ Box ghost τ ⟧e adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
 
             -- another idea is `Box 1 τ` here
 
-    biFundamentalTheoremGhost {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp
+    biFundamentalTheoremGhost {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux
      rewrite injPair1 pos | sym (injPair2 pos) with Γ1 | γ1 | γ2 | contextInterp
     -- var at head of context (key idea, without out loss of generality as position in context is irrelevant
     -- to rest of the proof)
-    ... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | visible eq (argInterp , restInterp) = conc
+    ... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | visible eq (argInterp , restInterp) rewrite sym v1redux | sym v2redux = conc
 
       where
         conc : ⟦ Box ghost τ ⟧v adv (Promote (multisubst (a1 ∷ γ1') (Var 0))) (Promote (multisubst (a2 ∷ γ2') (Var 0)))
@@ -565,7 +565,7 @@ mutual
            rewrite injPair2 pos | isSimultaneous'' {a1} {γ1'} | isSimultaneous'' {a2} {γ2'} =
               ⊥-elim (neq eq)
 
-    ... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | invisible neq ((argInterp1 , restInterp1) , (argInterp2 , restInterp2)) = conc
+    ... | Empty | a1 ∷ γ1' | a2 ∷ γ2' | invisible neq ((argInterp1 , restInterp1) , (argInterp2 , restInterp2)) rewrite sym v1redux | sym v2redux = conc
       where
         conc : ⟦ Box ghost τ ⟧v adv (Promote (multisubst (a1 ∷ γ1') (Var 0))) (Promote (multisubst (a2 ∷ γ2') (Var 0)))
         conc rewrite injPair2 pos | isSimultaneous'' {a1} {γ1'} | isSimultaneous'' {a2} {γ2'} =
@@ -574,7 +574,7 @@ mutual
     -- var generalisation here
     ... | _ | _ | _ | _ = {!!}
 
-    biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG rewrite prf
+    biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG v1 v2 v1redux v2redux rewrite prf
       with contextInterpG
     {-
       G, ghost g' |- t : A
@@ -586,8 +586,8 @@ mutual
      model is then
        Box g ⟦ G ⟧ -> Box g (Box r ⟦ A ⟧)
     -}
-    biFundamentalTheoremGhost {{R}} {{R'}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | visible eq0 contextInterp with r ≤d adv
-    ... | yes eq rewrite sym (injPair2 prf) | idem* R' {r} =
+    biFundamentalTheoremGhost {{R}} {{R'}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG v1 v2 v1redux v2redux | visible eq0 contextInterp with r ≤d adv
+    ... | yes eq rewrite sym (injPair2 prf) | idem* R' {r} rewrite sym v1redux | sym v2redux =
      --  let
        {-
         -- Last weeks' attempt (06/09/2021)
@@ -610,7 +610,7 @@ mutual
       -- in
         -- looks like eq0 and eq0 give us enough to build the two levels of box
         -- if only we had that we can observe (in the binary relation)
-        main -- boxInterpBiobs eq0 {!!} {!!} boxInner
+        main -- main -- boxInterpBiobs eq0 {!!} {!!} 
 
 
     -- Previous implementation:
@@ -763,7 +763,7 @@ mutual
 
     -}
 
-    ... | no ¬req = main
+    ... | no ¬req rewrite sym v1redux | sym v2redux = main
       where
         binaryToUnaryVal : {s : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ([ Box s A ]v (Promote v1)) × ([ Box s A ]v (Promote v2))
         binaryToUnaryVal {s} {v1} {v2} {A} (boxInterpBiobs eq' .v1 .v2 ainterp) =
@@ -828,11 +828,11 @@ mutual
               in boxInterpV (multisubst γ2 t) ih2
 
 
-    biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG | invisible neq (contextInterp1 , contextInterp2) with ghost ≤d adv
+    biFundamentalTheoremGhost {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG v1 v2 v1redux v2redux | invisible neq (contextInterp1 , contextInterp2) with ghost ≤d adv
     ... | yes geq rewrite injPair2 prf = ⊥-elim (neq geq)
 
 
-    ... | no ¬geq = boxInterpBiunobs ¬geq (multisubst' zero γ1 (Promote t)) (multisubst' zero γ2 (Promote t)) ((conclusion1 , conclusion2))
+    ... | no ¬geq rewrite sym v1redux | sym v2redux = boxInterpBiunobs ¬geq (multisubst' zero γ1 (Promote t)) (multisubst' zero γ2 (Promote t)) ((conclusion1 , conclusion2))
        where
             convert : {s : grade} {v : Term} {A : Type} -> [ Box (r *R s) A ]e (Promote v) -> [ Box s A ]e (Promote v)
             convert {s} {v} {A} pre v0 v0redux with pre v0 v0redux
@@ -854,7 +854,7 @@ mutual
 
     -- reduxAndSubstCombinedProm
 
-    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp = {!!}
+    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
 
 {-
