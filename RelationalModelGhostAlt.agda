@@ -705,7 +705,21 @@ mutual
         ... | no geq' rewrite sym (injPair2 prf) =
           let
             ih = biFundamentalTheoremGhost {sz} {Γ} {ghost'} {t} {A} typ {γ1} {γ2} adv (invisible geq' (underBox2 contextInterp))
-            ev = subst (\h -> h ≤ adv) (injPair2 prf) eq0
+            (ihu1 , ihu2) = binaryImpliesUnary {Box ghost' A} {Promote (multisubst γ1 t)} {Promote (multisubst γ2 t)} {adv = adv} ih
+            ihu1c = convertUnaryBox {r = ghost'} {s = _*R_ r ghost'} ihu1
+            ihu2c = convertUnaryBox {r = ghost'} {s = _*R_ r ghost'} ihu2
+            ihu1c' = subst (\h -> [ Box h A ]e (Promote (multisubst γ1 t))) (sym (injPair2 prf)) ihu1c
+            ihu2c' = subst (\h -> [ Box h A ]e (Promote (multisubst γ2 t))) (sym (injPair2 prf)) ihu2c
+            contextInterpG' = subst (\h -> ⟦ (r · Γ) , h ⟧Γg adv γ1 γ2) (injPair2 prf) contextInterpG -- (sym (injPair2 prf)) 
+            -- contextInterpG ⟦ (r · Γ) , ghost ⟧Γg adv γ1 γ2
+            -- prf     : (Γ' , ghost) ≡ ((r · Γ) , (R Semiring.*R r) ghost')
+            -- 15: ⟦ r ·g (Γ' , ghost) ⟧Γg adv _γ1_1581 _γ2_1582
+            out = intermediateSub (pr {sz} {Γ , ghost'} {Γ' , ghost} {r} typ {prf}) eq {!!} {!!} {!!} -- ihu1c' ihu2c'
+
+            outAlt = intermediateSub typ eq contextInterpG' {!!} {!!} -- ihu1c' ihu2c'
+            out' = congidm {!!} -- may not be needed this step
+            
+            {- ev = subst (\h -> h ≤ adv) (injPair2 prf) eq0
             intermedio = {!!} -- intermediate typ (visible ev contextInterp) eq ih geq'
             intermedio' = subst (\h -> ⟦ Box ((R Semiring.*R ghost') r) A ⟧v adv h (Promote (multisubst γ2 t)))
                            (sym (substPresProm {zero} {γ1} {t})) intermedio
@@ -718,9 +732,9 @@ mutual
                                    (Promote (Promote (multisubst γ2 t)))) (sym (substPresProm {zero} {γ1} {t})) next
             next'' = subst (\h -> ⟦ Box ((R Semiring.*R r) ghost') (Box r A) ⟧v adv
                                    (Promote (multisubst γ1 (Promote t)))
-                                   (Promote h)) (sym (substPresProm {zero} {γ2} {t})) next'
+                                   (Promote h)) (sym (substPresProm {zero} {γ2} {t})) next' -}
 
-          in {!!} {- subst
+          in out (Promote (multisubst γ1 (Promote t))) (Promote (multisubst γ2 (Promote t))) (reduxProm {multisubst γ1 (Promote t)}) (reduxProm {multisubst γ2 (Promote t)}) {- subst
                (λ h →
                   ⟦ Box h (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t)))
                   (Promote (multisubst' 0 γ2 (Promote t))))
