@@ -226,7 +226,7 @@ mutual
     convertValL+ {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs pre .v1 .v2 inner)   with r1 ≤d adv
     ... | yes p = boxInterpBiobs p v1 v2 inner
     ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
-    convertValL+ {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) = boxInterpBiunobs (\eq -> pre (decreasing+ R' eq)) v1 v2 inner
+    convertValL+ {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) = boxInterpBiunobs (\eq -> pre (decreasing+NF R' eq)) v1 v2 inner
 
     convertValR+ : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
                -> {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2)
@@ -234,7 +234,7 @@ mutual
     ... | yes p = boxInterpBiobs p v1 v2 inner
     ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
     convertValR+ {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) =
-      boxInterpBiunobs (\pre' -> pre (decreasing+Sym pre')) v1 v2 inner
+      boxInterpBiunobs (\pre' -> pre (decreasing+NFSym pre')) v1 v2 inner
 
     contextSplitLeft : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 Γ2 : ContextG sz} {γ1 γ2 : List Term} {adv : grade}
                      -> ⟦ Γ1 ++g Γ2 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
@@ -242,7 +242,7 @@ mutual
     ... | yes p = visible p (binaryPlusElimLeftΓ convertValL+ inner)
     ... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryPlusElimLeftΓ convertValL+ inner)) -- okay because we can do binaryImpliesUnary
     contextSplitLeft {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv} (invisible pre inner) with g1 ≤d adv
-    ... | yes p = ⊥-elim (pre (decreasing+ R' p))
+    ... | yes p = ⊥-elim (pre (decreasing+NF R' p))
     ... | no ¬p = invisible ¬p (unaryPlusElimLeftΓ (proj₁ inner) , unaryPlusElimLeftΓ (proj₂ inner))
 
     contextSplitRight : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 Γ2 : ContextG sz} {γ1 γ2 : List Term} {adv : grade}
@@ -251,7 +251,7 @@ mutual
     ... | yes p = visible p (binaryPlusElimRightΓ convertValR+ inner)
     ... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryPlusElimRightΓ convertValR+ inner))
     contextSplitRight {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv} (invisible pre inner) with g2 ≤d adv
-    ... | yes p = ⊥-elim (pre (decreasing+Sym p))
+    ... | yes p = ⊥-elim (pre (decreasing+NFSym p))
     ... | no ¬p = invisible ¬p ((unaryPlusElimRightΓ (proj₁ inner)) , (unaryPlusElimRightΓ (proj₂ inner)))
 
     convertValR* : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
@@ -636,6 +636,11 @@ mutual
                 -> ⟦ Box (r *R ghost') (Box r A) ⟧v adv (Promote (Promote t1)) (Promote (Promote t2))
         congidm x = {!x!}
 
+        deltaIdem : {t : Term}
+                  -> [ Box (ghost *R r) A ]v (Promote t)
+                  -> [ Box (r *R ghost') (Box r A) ]v (Promote (Promote t))
+        deltaIdem = {!!}
+
         convertVal : {s : grade} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
         convertVal {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
         ... | yes eq = boxInterpBiobs eq v1 v2 interp
@@ -714,7 +719,10 @@ mutual
             -- contextInterpG ⟦ (r · Γ) , ghost ⟧Γg adv γ1 γ2
             -- prf     : (Γ' , ghost) ≡ ((r · Γ) , (R Semiring.*R r) ghost')
             -- 15: ⟦ r ·g (Γ' , ghost) ⟧Γg adv _γ1_1581 _γ2_1582
-            out = intermediateSub (pr {sz} {Γ , ghost'} {Γ' , ghost} {r} typ {prf}) eq {!!} {!!} {!!} -- ihu1c' ihu2c'
+
+            -- IntermediateSub on the conclusion typing means that we need a context where we have
+            -- r .g (r .g (G , g'))
+            out = intermediateSub {ghost = {!!}} (pr {sz} {Γ , ghost'} {Γ' , ghost} {r} typ {prf}) eq {!!} {!!} {!!} -- ihu1c' ihu2c'
 
             outAlt = intermediateSub typ eq contextInterpG' {!!} {!!} -- ihu1c' ihu2c'
             out' = congidm {!!} -- may not be needed this step
@@ -734,7 +742,8 @@ mutual
                                    (Promote (multisubst γ1 (Promote t)))
                                    (Promote h)) (sym (substPresProm {zero} {γ2} {t})) next' -}
 
-          in out (Promote (multisubst γ1 (Promote t))) (Promote (multisubst γ2 (Promote t))) (reduxProm {multisubst γ1 (Promote t)}) (reduxProm {multisubst γ2 (Promote t)}) {- subst
+          in {!!} -- out (Promote (multisubst γ1 (Promote t))) (Promote (multisubst γ2 (Promote t))) (reduxProm {multisubst γ1 (Promote t)}) (reduxProm {multisubst γ2 (Promote t)})
+          {- subst
                (λ h →
                   ⟦ Box h (Box r A) ⟧v adv (Promote (multisubst' 0 γ1 (Promote t)))
                   (Promote (multisubst' 0 γ2 (Promote t))))

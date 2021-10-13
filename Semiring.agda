@@ -82,17 +82,19 @@ partialJoinIdem {{R}} {r} with _≤d_ R r r
 record NonInterferingSemiring (R : Semiring) : Set₁ where
   field
     oneIsBottom : {r : grade R} -> _≤_ R (1R R) r
+    zeroIsTop   : {r : grade R} -> _≤_ R r (0R R)
 
     antisymmetry : {r s : grade R} -> _≤_ R r s -> _≤_ R s r -> r ≡ s
-
-   -- TODO: rename this because it's a terrible name, notice that the + is on the left
-    decreasing+ : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
 
     idem* : {r : grade R} -> _*R_ R r r ≡ r
 
 open NonInterferingSemiring
 
 -- # Some derived properties
+
+decreasing+ : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }} {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
+decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre =
+  subst (\h -> (_≤_ R (_+R_ R r1 r2) h)) (rightUnit+ R) (monotone+ R pre (zeroIsTop R'))
 
 propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
                        {r s adv : grade R}
@@ -107,7 +109,7 @@ propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
 decreasing+Inv : {R : Semiring} {R' : NonInterferingSemiring R}
               {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
 decreasing+Inv {R} {R'} {r1} {r2} {s} pre pre0 =
-  pre (decreasing+ R' {r1} {r2} {s} pre0)
+  pre (decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre0)
 
 decreasing+Inv' : {R : Semiring} {R' : NonInterferingSemiring R}
                 -> {r1 r2 s : grade R}
@@ -132,8 +134,7 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     idem#   : {r : grade R}     -> r # r        ≡ r
 
     idem* : {r : grade R} -> _*R_ R r r ≡ r
-    decreasing+ : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
-
+    zeroIsTop : {r : grade R} -> _≤_ R r (0R R)
 
     timesLeft : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_*R_ R r1 r2) s)
     -- distributivity rules with other operators?
@@ -155,9 +156,12 @@ timesLeftSym : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
 timesLeftSym {{R}} {{R'}} {r1} {r2} {s} pre = subst (\h -> _≤_ R h s) (com* R') (timesLeft R' pre)
 
 -- # Some more derived properties
+decreasing+NF : {{ R : Semiring }} {{ R' : InformationFlowSemiring R }} {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
+decreasing+NF {{R}} {{R'}} {r1} {r2} {s} pre =
+  subst (\h -> (_≤_ R (_+R_ R r1 r2) h)) (rightUnit+ R) (monotone+ R pre (zeroIsTop R'))
 
-decreasing+Sym : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {r1 r2 s : grade R} -> (_≤_ R r2 s) -> (_≤_ R (_+R_ R r1 r2) s)
-decreasing+Sym {{R}} {{R'}} {r1} {r2} {s} pre rewrite comm+ R {r1} {r2} = decreasing+ R' pre
+decreasing+NFSym : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {r1 r2 s : grade R} -> (_≤_ R r2 s) -> (_≤_ R (_+R_ R r1 r2) s)
+decreasing+NFSym {{R}} {{R'}} {r1} {r2} {s} pre rewrite comm+ R {r1} {r2} = decreasing+NF pre
 
 propInvTimesMonoAsym : {{ R : Semiring }} {{ R' : InformationFlowSemiring R }}
                        {r s adv : grade R}
