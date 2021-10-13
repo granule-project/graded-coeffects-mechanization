@@ -254,6 +254,7 @@ mutual
     ... | yes p = ⊥-elim (pre (decreasing+NFSym p))
     ... | no ¬p = invisible ¬p ((unaryPlusElimRightΓ (proj₁ inner)) , (unaryPlusElimRightΓ (proj₂ inner)))
 
+    -- WARNING- really hope we don't need this one!
     convertValR* : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
                -> {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 *R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2)
     convertValR* {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs pre .v1 .v2 inner)   with r2 ≤d adv
@@ -262,6 +263,7 @@ mutual
     convertValR* {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) =
       boxInterpBiunobs (\pre' -> pre (subst (\h -> h ≤ adv) com* (timesLeft pre'))) v1 v2 inner
 
+    -- WARNING- really hope we don't need this one!
     contextElimTimes : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 : ContextG sz} {γ1 γ2 : List Term} {r adv : grade}
                      -> ⟦ r ·g Γ1 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
     contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (visible pre inner) with g1 ≤d adv
@@ -335,29 +337,54 @@ mutual
       {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
 
     intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {.B} typ pre context u1 u2 v1 v2 v1redux v2redux
-     | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {_} {_} typ1 typ2 {ctxtP}) | (App t1 t2) = {!!}
+     | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {t1} {t2} typ1 typ2 {ctxtP}) | _ =
+       let
+         
 
+        -- 15 : ⟦ r ·g (Γ1 , g1) ⟧Γg adv _γ1_1161 _γ2_1162
+        --  (Γ , ghost) ≡ ((Γ1 , g1) ++g (s ·g (Γ2 , g2)))
+        -- i.e.  ghost  ≡ g1 + s * g2
+        -- p : ghost ≤ adv
+        -- context : ⟦ (r · Γ) , (R Semiring.*R r) ghost ⟧Γg adv γ1 γ2
+        -- which via the equality is really
+        --         : ⟦ (r · (Γ1 + s · Γ2)) , (R Semiring.*R r) (g1 + s * g2) ⟧Γg adv γ1 γ2
+        ih1 = intermediateSub typ1 pre subContext1 (proj₁ ih1evidence) (proj₂ ih1evidence)
+
+        ih2 = intermediateSub (pr {sz} {(Γ2 , g2)} {r = s} typ2) pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
+       in {!!}
+         where
+           {- goal : (x y : ℕ) (ta ta' bodyt bodyt' : Term)
+             -> ⟦ FunTy A s B ⟧v adv (Abs x bodyt) (Abs y bodyt')
+             -> ⟦ Box s A ⟧e adv (Promote ta) (Promote ta')
+             -> multiRedux (syntacticSubst ta x bodyt) ≡ v1
+             -> multiRedux (syntacticSubst ta' y bodyt') ≡ v2
+             -> ⟦ Box ghost B ⟧v adv v1 v2
+           goal x y ta ta' bodyt bodyt' ih1 ih2 v1redux' v2redux' with ih1
+           ... | funInterpBi {adv} {A} {B} {r} {x'} {y'} e1 e2 bodyBi bodyUn1 bodyUni2 =
+             let
+               bodySubst = bodyBi ta ta' ih2
+               result = bodySubst v1 v2 v1redux' v2redux'
+             in result
+           -}
+
+           context' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
+           context' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) context  
+
+           subContext1 : ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
+           subContext1 = contextSplitLeft context'
+
+           subContext2 : ⟦ r ·g (s ·g ( Γ2 , g2 )) ⟧Γg adv γ1 γ2
+           subContext2 = contextSplitRight context'
+
+           ih1evidence : [ Box g1 (FunTy A s B) ]e (Promote (multisubst γ1 t1)) × [ Box g1 (FunTy A s B) ]e (Promote (multisubst γ2 t1))
+           ih1evidence = {!!}
+
+           ih2evidence : [ Box (s *R g2) (Box s A) ]e (Promote (multisubst γ1 (Promote t2))) × [ Box (s *R g2) (Box s A) ]e (Promote (multisubst γ2 (Promote t2)))
+           ih2evidence = {!!}
+            
     -- split on whether ghost ⟨= adv first as no case easy, then induct for yes case
   {-
-    -- Case where
-    --  (x : A, ghost) ⊢ x : A
-    intermediateSub {Γ = Γ} {ghost} {r} {adv} {a1 ∷ γ1'} {a2 ∷ γ2'} {.(Var 0)} {A} (var {Γ1 = Empty} {Γ2} pos) pre inp e1 e2 v1 v2 v1redux v2redux
-     rewrite (injPair1 pos) with inp | r · Γ | inspect (\r -> r · Γ) r
-    ... | visible pre2 (arg , _) | Ext ad (Grad A' r₁) | Relation.Binary.PropositionalEquality.[ eq ] = conc
-      where
-        conc : ⟦ A ⟧v adv v1 v2
-        conc with arg (Promote a1) (Promote a2) refl refl
-        ... | boxInterpBiobs _ .a1 .a2 argInner = argInner v1 v2 (isSimultaneous' {v1} {a1} {γ1'} v1redux) ((isSimultaneous' {v2} {a2} {γ2'} v2redux))
-        ... | boxInterpBiunobs preN .a1 .a2 argInner = ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) {!   !} preN) pre)  -- used to use equality rightUnit*
-
-    -- Here we have that `r ≤ adv` but `¬ ((r * ghost) ≤ adv)`
-    -- ah but we also know that `ghost = 1` so ... we get a contradiction
-    ... | invisible pre2 inner | Ext ad x | Relation.Binary.PropositionalEquality.[ eq ] =
-      ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) {!   !}) pre2) pre) -- NEXT: rightUnit* used to be
-
-    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var _)} {A} (var {Γ1 = _} {Γ2} pos) pre inp e1 e2 =
-      {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
-
+    
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} (approx typ approx1 approx2 sub) pre inp e1 e2 =
       {!!}
