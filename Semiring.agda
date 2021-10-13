@@ -52,7 +52,7 @@ partialJoin : {{ R : Semiring }} -> grade R -> grade R -> Maybe (grade R)
 partialJoin {{R}} r s with _≤d_ R r s | _≤d_ R s r
 ... | yes _ | _     = just s
 ... | no  _ | yes _ = just r
-... | no _  | no  _ = nothing
+,... | no _  | no  _ = nothing
 
 partialJoinMono : {{ R : Semiring }} {r1 r2 : grade R} {s1 s2 : grade R} {r r' : grade R}
                 -> _≤_ R r1 r2
@@ -83,20 +83,10 @@ record NonInterferingSemiring (R : Semiring) : Set₁ where
   field
     oneIsBottom : {r : grade R} -> _≤_ R (1R R) r
 
-    -- in classical logic this is the same as:   r1 ≤ s  →  r1 + r2 ≤ s
     antisymmetry : {r s : grade R} -> _≤_ R r s -> _≤_ R s r -> r ≡ s
 
    -- TODO: rename this because it's a terrible name, notice that the + is on the left
-    plusMono : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
-
-    propertyConditionalNI : {r1 r2 r adv : grade R}
-                     -> ¬ (_≤_ R (_+R_ R (_*R_ R r r1) r2) adv)
-                     ->   (_≤_ R r (1R R))
-                     -> ¬ (_≤_ R r1 adv)
-    propertyConditionalNI2 : {r1 r2 r adv : grade R}
-                     -> ¬ (_≤_ R (_+R_ R (_*R_ R r r1) r2) adv)
-                     ->   (_≤_ R r (1R R))
-                     -> ¬ (_≤_ R r2 adv)
+    decreasing+ : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
 
     idem* : {r : grade R} -> _*R_ R r r ≡ r
 
@@ -113,40 +103,17 @@ propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
   ngoal
     (subst (\h -> (_≤_ R (_*R_ R r s) h)) (idem* R') (monotone* R pre1 pre2))
 
-{-
-joinMonoInv1 : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
-               {r1 r2 adv r' : grade R}
-     -> just r' ≡ partialJoin {{R}} r1 r2
-     -> _≤_ R r'  adv
-     -> _≤_ R r2 adv
-joinMonoInv1 {{R}} {r1} {r2} {adv} {r'} ev pre with _≤d_ R r1 r2 | _≤d_ R r2 r1
-... | yes eq | yes eq' rewrite sym (just-injective ev) = pre
-... | yes p1 | no ¬p2 rewrite sym (just-injective ev) = pre
-... | no ¬p1 | yes p2 = transitive≤ R (subst (\h -> _≤_ R r2 h) (sym (just-injective ev)) p2) pre
-joinMonoInv1 {{R}} {r1} {r2} {adv} {r'} () pre | no ¬p1 | no ¬p2
 
-joinMonoInv2 : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
-               {r1 r2 adv r' : grade R}
-     -> just r' ≡ partialJoin {{R}} r1 r2
-     -> _≤_ R r'  adv
-     -> _≤_ R r1 adv
-joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} ev pre with _≤d_ R r1 r2 | _≤d_ R r2 r1
-... | yes eq | yes eq' rewrite sym (trans (just-injective ev) (antisymmetry R' eq' eq)) = pre
-... | yes p1 | no ¬p2 = transitive≤ R (subst (\h -> _≤_ R r1 h) (sym (just-injective ev)) p1) pre
-... | no ¬p1 | yes p2 rewrite sym (just-injective ev) = pre
-joinMonoInv2 {{R}} {{R'}} {r1} {r2} {adv} {r'} () pre | no ¬p1 | no ¬p2
--}
-
-plusMonoInv : {R : Semiring} {R' : NonInterferingSemiring R}
+decreasing+Inv : {R : Semiring} {R' : NonInterferingSemiring R}
               {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
-plusMonoInv {R} {R'} {r1} {r2} {s} pre pre0 =
-  pre (plusMono R' {r1} {r2} {s} pre0)
+decreasing+Inv {R} {R'} {r1} {r2} {s} pre pre0 =
+  pre (decreasing+ R' {r1} {r2} {s} pre0)
 
-plusMonoInv' : {R : Semiring} {R' : NonInterferingSemiring R}
+decreasing+Inv' : {R : Semiring} {R' : NonInterferingSemiring R}
                 -> {r1 r2 s : grade R}
                 -> ¬ (_≤_ R (_+R_ R r1 r2)  s) -> ¬ (_≤_ R r2 s)
-plusMonoInv' {R} {R'} {r1} {r2} {s} pre =
-  plusMonoInv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
+decreasing+Inv' {R} {R'} {r1} {r2} {s} pre =
+  decreasing+Inv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
 
 -- Derived alternate characterisation of antisymmetry
 antisymmetryAlt : {R : Semiring} {R' : NonInterferingSemiring R} {r s : grade R} -> _≤_ R r s -> r ≢ s -> ¬ (_≤_ R s r)
@@ -165,7 +132,7 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     idem#   : {r : grade R}     -> r # r        ≡ r
 
     idem* : {r : grade R} -> _*R_ R r r ≡ r
-    plusMono : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
+    decreasing+ : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
 
 
     timesLeft : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_*R_ R r1 r2) s)
@@ -189,8 +156,8 @@ timesLeftSym {{R}} {{R'}} {r1} {r2} {s} pre = subst (\h -> _≤_ R h s) (com* R'
 
 -- # Some more derived properties
 
-plusMonoSym : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {r1 r2 s : grade R} -> (_≤_ R r2 s) -> (_≤_ R (_+R_ R r1 r2) s)
-plusMonoSym {{R}} {{R'}} {r1} {r2} {s} pre rewrite comm+ R {r1} {r2} = plusMono R' pre
+decreasing+Sym : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {r1 r2 s : grade R} -> (_≤_ R r2 s) -> (_≤_ R (_+R_ R r1 r2) s)
+decreasing+Sym {{R}} {{R'}} {r1} {r2} {s} pre rewrite comm+ R {r1} {r2} = decreasing+ R' pre
 
 propInvTimesMonoAsym : {{ R : Semiring }} {{ R' : InformationFlowSemiring R }}
                        {r s adv : grade R}

@@ -8,7 +8,7 @@ open import Relation.Binary.PropositionalEquality
 open import Data.Product
 open import Data.Empty
 
-open import Sec hiding (_≤_ ; _+R_ ; _*R_ ; propInvTimesMonoAsym ; propertyConditionalNI; propertyConditionalNI2 ; plusMonoInv)
+open import Sec hiding (_≤_ ; _+R_ ; _*R_ ; propInvTimesMonoAsym ; propertyConditionalNI; propertyConditionalNI2 ; decreasing+Inv)
 
 -------------------------------------
 -- Theorems that definitely cannot hold

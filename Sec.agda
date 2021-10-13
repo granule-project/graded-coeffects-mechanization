@@ -171,41 +171,15 @@ instance
                 ; transitive≤ = transitive≤
                 }
 
-plusMono : {r1 r2 adv : Sec} -> (SecOrder r1 adv) -> (SecOrder (r1 +R r2) adv)
-plusMono {Hi} {Hi} {Hi} ReflHi = ReflHi
-plusMono {Hi} {Hi} {Lo} ()
-plusMono {Hi} {Lo} {Hi} ReflHi = LoHi
-plusMono {Hi} {Lo} {Lo} ()
-plusMono {Lo} {Hi} {Hi} LoHi   = LoHi
-plusMono {Lo} {Hi} {Lo} ReflLo = ReflLo
-plusMono {Lo} {Lo} {Hi} LoHi   = LoHi
-plusMono {Lo} {Lo} {Lo} ReflLo = ReflLo
-
-propertyConditionalNI : {r1 r2 r adv : Sec}
-                     -> ¬ (SecOrder ((r *R r1) +R r2) adv)
-                     ->   (SecOrder r  1r)
-                     -> ¬ (SecOrder r1 adv)
-propertyConditionalNI {Hi} {Hi} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI {Hi} {Hi} {Lo} {Lo} pre1 pre2 = pre1
-propertyConditionalNI {Hi} {Lo} {Lo} {Hi} pre1 pre2 = ⊥-elim (pre1 LoHi)
-propertyConditionalNI {Hi} {Lo} {Lo} {Lo} pre1 pre2 = ⊥-elim (pre1 ReflLo)
-propertyConditionalNI {Lo} {Hi} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI {Lo} {Hi} {Lo} {Lo} pre1 pre2 = pre1
-propertyConditionalNI {Lo} {Lo} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI {Lo} {Lo} {Lo} {Lo} pre1 pre2 = pre1
-
-propertyConditionalNI2 : {r1 r2 r adv : Sec}
-                     -> ¬ (SecOrder ((r *R r1) +R r2) adv)
-                     ->   (SecOrder r 1r)
-                     -> ¬ (SecOrder r2 adv)
-propertyConditionalNI2 {Hi} {Hi} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Hi} {Lo} {Lo} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Lo} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Hi} {Lo} {Lo} {Lo} pre1 pre2 = pre1
-propertyConditionalNI2 {Lo} {Hi} {Lo} {Hi} pre1 pre2 = ⊥-elim (pre1 LoHi)
-propertyConditionalNI2 {Lo} {Hi} {Lo} {Lo} pre1 pre2 = ⊥-elim (pre1 ReflLo)
-propertyConditionalNI2 {Lo} {Lo} {Lo} {Hi} pre1 pre2 = pre1
-propertyConditionalNI2 {Lo} {Lo} {Lo} {Lo} pre1 pre2 = pre1
+decreasing+ : {r1 r2 adv : Sec} -> (SecOrder r1 adv) -> (SecOrder (r1 +R r2) adv)
+decreasing+ {Hi} {Hi} {Hi} ReflHi = ReflHi
+decreasing+ {Hi} {Hi} {Lo} ()
+decreasing+ {Hi} {Lo} {Hi} ReflHi = LoHi
+decreasing+ {Hi} {Lo} {Lo} ()
+decreasing+ {Lo} {Hi} {Hi} LoHi   = LoHi
+decreasing+ {Lo} {Hi} {Lo} ReflLo = ReflLo
+decreasing+ {Lo} {Lo} {Hi} LoHi   = LoHi
+decreasing+ {Lo} {Lo} {Lo} ReflLo = ReflLo
 
 propTimesIdem : {r : Sec} -> (r *R r) ≡ r
 propTimesIdem {Hi} = refl
@@ -225,8 +199,6 @@ secSemiringNI : NonInterferingSemiring secSemiring
 secSemiringNI = record
                   { oneIsBottom            = oneIsBot
                   ; antisymmetry           = antisym
-                  ; plusMono               = plusMono
-                  ; propertyConditionalNI  = propertyConditionalNI
-                  ; propertyConditionalNI2 = propertyConditionalNI2
+                  ; decreasing+               = decreasing+
                   ; idem*   = propTimesIdem
                   }

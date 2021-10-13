@@ -349,20 +349,20 @@ binaryPlusElimRightBox {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 
 ... | no eqo  | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
 ... | yes eqo | yes eq' = boxInterpBiobs   eq' v1 v2 arg
 ... | yes eqo | no eq'  = boxInterpBiunobs  eq' v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} arg)
-binaryPlusElimRightBox {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv eq) v1 v2 argInterp
+binaryPlusElimRightBox {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (decreasing+Inv eq) v1 v2 argInterp
 
 binaryPlusElimLeftBox : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
 binaryPlusElimLeftBox {{R}} {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
 ... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
 ... | yes eqo = boxInterpBiobs eqo v1 v2 arg
-binaryPlusElimLeftBox {{R}} {{R'}} {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv {R} {R'} {r1} {r2} {adv} eq) v1 v2 argInterp
+binaryPlusElimLeftBox {{R}} {{R'}} {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (decreasing+Inv {R} {R'} {r1} {r2} {adv} eq) v1 v2 argInterp
 
 
 convertValNISemiring : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)
 convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
 ... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {A} {v1} {v2} {adv} arg))
 ... | yes eqo = boxInterpBiobs eqo v1 v2 arg
-convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (plusMonoInv eq) v1 v2 argInterp
+convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (decreasing+Inv eq) v1 v2 argInterp
 
 binaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} {r adv : grade} -> 
      (convertVal : {s : grade} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2))
@@ -541,17 +541,17 @@ absInj1 refl = refl
 
 -------------------------
 
-propInvPlusMono1 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
+propInvdecreasing+1 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> {r1 r2 r adv : grade}
                 -> ¬((r1 +R (r *R r2)) ≤ adv)
                 -> ¬(r1 ≤ adv)
-propInvPlusMono1 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = plusMonoInv {R} {R'} {r1} {r *R r2} {adv} pre
+propInvdecreasing+1 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = decreasing+Inv {R} {R'} {r1} {r *R r2} {adv} pre
 
-propInvPlusMono2 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
+propInvdecreasing+2 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> {r1 r2 r adv : grade}
                 -> ¬((r1 +R (r *R r2)) ≤ adv)
                 -> ¬((r *R r2) ≤ adv)
-propInvPlusMono2 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = plusMonoInv' {R} {R'} {r1} {r *R r2} {adv} pre
+propInvdecreasing+2 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = decreasing+Inv' {R} {R'} {r1} {r *R r2} {adv} pre
 
 
 {-# TERMINATING #-}
@@ -780,6 +780,13 @@ biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {
        ... | boxInterpBiobs   eq' t1 t2 inner | yes eq  = boxInterpBiobs eq t1 t2 inner
        ... | boxInterpBiobs   eq' t1 t2 inner | no eq   = boxInterpBiunobs eq t1 t2 (binaryImpliesUnary {A} {t1} {t2} {adv} inner)
        ... | boxInterpBiunobs eq' t1 t2 inner | yes eq  = ⊥-elim ((propertyConditionalNI eq' used) eq)
+         where
+           propertyConditionalNI : {r1 r2 r adv : grade}
+                     -> ¬ (((r *R r1) +R r2) ≤ adv)
+                     ->   (r ≤ 1R)
+                     -> ¬ (r1 ≤ adv)
+           propertyConditionalNI {r1} {r2} {r} {adv} npre pre1 pre2 =
+                           npre (decreasing+ (transitive≤ (monotone* pre1 pre2) (leftUnit* {adv})))
        ... | boxInterpBiunobs eq' t1 t2 inner | no eq   = boxInterpBiunobs eq t1 t2 inner
 
        convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ1 γ2 : List Term} -> ⟦ (r · Γ1) ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2

@@ -604,19 +604,19 @@ instance
   antisymmetry levelSemiringNonInterfering {Unused} {Dunno} () pre2
   antisymmetry levelSemiringNonInterfering {Unused} {Unused} (Refl .Unused) pre2 = refl
 
-  plusMono levelSemiringNonInterfering {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
-  plusMono levelSemiringNonInterfering {Public} {Public} {adv}  pre = pre
-  plusMono levelSemiringNonInterfering {Private} {Public} {adv} pre = transitive≤ levelSemiring PrivPub pre
-  plusMono levelSemiringNonInterfering {Dunno} {Public} {adv}   pre = transitive≤ levelSemiring DunnoPub  pre
-  plusMono levelSemiringNonInterfering {Unused} {Public} {Unused} pre = 0Pub
-  plusMono levelSemiringNonInterfering {Public} {Private} {adv} pre = pre
-  plusMono levelSemiringNonInterfering {Private} {Private} {adv} pre = pre
-  plusMono levelSemiringNonInterfering {Dunno} {Private} {adv} pre = pre
-  plusMono levelSemiringNonInterfering {Unused} {Private} {Unused} pre = 0Priv
-  plusMono levelSemiringNonInterfering {Unused} {Dunno} {Unused} pre = 0Dunno
-  plusMono levelSemiringNonInterfering {Public} {Dunno} {adv}  pre = pre
-  plusMono levelSemiringNonInterfering {Private} {Dunno} {adv} pre = transitive≤ levelSemiring PrivDunno pre
-  plusMono levelSemiringNonInterfering {Dunno} {Dunno} {adv}   pre = pre
+  decreasing+ levelSemiringNonInterfering {r1} {Unused} {adv} pre rewrite rightUnit+ levelSemiring {r1} = pre
+  decreasing+ levelSemiringNonInterfering {Public} {Public} {adv}  pre = pre
+  decreasing+ levelSemiringNonInterfering {Private} {Public} {adv} pre = transitive≤ levelSemiring PrivPub pre
+  decreasing+ levelSemiringNonInterfering {Dunno} {Public} {adv}   pre = transitive≤ levelSemiring DunnoPub  pre
+  decreasing+ levelSemiringNonInterfering {Unused} {Public} {Unused} pre = 0Pub
+  decreasing+ levelSemiringNonInterfering {Public} {Private} {adv} pre = pre
+  decreasing+ levelSemiringNonInterfering {Private} {Private} {adv} pre = pre
+  decreasing+ levelSemiringNonInterfering {Dunno} {Private} {adv} pre = pre
+  decreasing+ levelSemiringNonInterfering {Unused} {Private} {Unused} pre = 0Priv
+  decreasing+ levelSemiringNonInterfering {Unused} {Dunno} {Unused} pre = 0Dunno
+  decreasing+ levelSemiringNonInterfering {Public} {Dunno} {adv}  pre = pre
+  decreasing+ levelSemiringNonInterfering {Private} {Dunno} {adv} pre = transitive≤ levelSemiring PrivDunno pre
+  decreasing+ levelSemiringNonInterfering {Dunno} {Dunno} {adv}   pre = pre
 
   propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Public} {adv} inp1 inp2 = inp1
   propertyConditionalNI levelSemiringNonInterfering {Public} {Public} {Private} {adv} inp1 inp2 = inp1
@@ -995,7 +995,7 @@ instance
   idem* levelIFstructure {Dunno} = refl
   idem* levelIFstructure {Unused} = refl
 
-  plusMono levelIFstructure = plusMono levelSemiringNonInterfering
+  decreasing+ levelIFstructure = decreasing+ levelSemiringNonInterfering
 
   timesLeft levelIFstructure {Public} {Public} {Public} (Refl .Public) = ?
   timesLeft levelIFstructure {Public} {Public} {Private} PrivPub = ?
