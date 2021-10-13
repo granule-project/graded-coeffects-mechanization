@@ -284,6 +284,59 @@ mutual
                -> [ Box ghost A ]e (Promote (multisubst γ1 e))
                -> [ Box ghost A ]e (Promote (multisubst γ2 e))
                -> ⟦ Box ghost A ⟧e adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      with ghost ≤d adv
+    -- In the case that ¬(ghost ≤ adv) then this a simple repackaging of the unary interpretations
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      | no ¬p rewrite sym v1redux | sym v2redux =
+          boxInterpBiunobs ¬p (multisubst γ1 e) (multisubst γ2 e) (inner1 u1 , inner2 u2)
+            where
+              inner1 : {e : Term} -> [ Box ghost A ]e (Promote (multisubst γ1 e)) -> [ A ]e (multisubst γ1 e)
+              inner1 {e} u1 v1 v1reduxA with u1 (Promote (multisubst γ1 e)) refl
+              ... | boxInterpV e' inner rewrite sym v1reduxA = inner (multiRedux (multisubst γ1 e)) refl
+
+              inner2 : {e : Term} -> [ Box ghost A ]e (Promote (multisubst γ2 e)) -> [ A ]e (multisubst γ2 e)
+              inner2 {e} u2 v1 v2reduxA with u2 (Promote (multisubst γ2 e)) refl
+              ... | boxInterpV e' inner rewrite sym v2reduxA = inner (multiRedux (multisubst γ2 e)) refl
+
+    -- ... otherwise heavy lifting ensues
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      | yes p with typ | e
+
+    -- ### Var case
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) | (Var 0) with γ1 | γ2
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) | (Var 0) | a1 ∷ γ1' | a2 ∷ γ2' rewrite (injPair1 pos) with context | r · Γ
+      
+      
+     -- Case where
+    --  (x : A, ghost) ⊢ x : A
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) | .(Var 0) | a1 ∷ γ1' | a2 ∷ γ2' | visible pre2 (arg , _) | Ext ad (Grad A' r₁)
+         rewrite sym v1redux | sym v2redux | isSimultaneous'' {a1} {γ1'} | isSimultaneous'' {a2} {γ2'} = conc
+        where
+          conc : ⟦ Box ghost A ⟧v adv (Promote a1) (Promote a2)
+          conc with arg (Promote a1) (Promote a2) refl refl
+          ... | boxInterpBiobs _ .a1 .a2 argInner = boxInterpBiobs p a1 a2 argInner
+
+          ... | boxInterpBiunobs preN .a1 .a2 argInner = ? --
+          -- ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) {!   !} preN) pre)  -- used to use equality rightUnit*
+
+       -- Here we have that `r ≤ adv` but `¬ ((r * ghost) ≤ adv)`
+    -- ah but we also know that `ghost = 1` so ... we get a contradiction
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) | .(Var 0) | a1 ∷ γ1' | a2 ∷ γ2' | invisible pre2 inner | Ext ad x =
+      ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) {!   !}) pre2) pre) -- NEXT: rightUnit* used to be
+
+
+    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var _)} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+     | yes p | (var {Γ1 = _} {Γ2} pos) | (Var _) =
+      {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
+
+    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {.B} typ pre context u1 u2 v1 v2 v1redux v2redux
+     | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {_} {_} typ1 typ2 {ctxtP}) | (App t1 t2) = ?
+
     -- split on whether ghost ⟨= adv first as no case easy, then induct for yes case
   {-
     -- Case where
