@@ -320,22 +320,22 @@ mutual
           conc with arg (Promote a1) (Promote a2) refl refl
           ... | boxInterpBiobs _ .a1 .a2 argInner = boxInterpBiobs p a1 a2 argInner
 
-          ... | boxInterpBiunobs preN .a1 .a2 argInner = ? --
-          -- ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) {!   !} preN) pre)  -- used to use equality rightUnit*
+          ... | boxInterpBiunobs preN .a1 .a2 argInner = ⊥-elim (preN (transitive≤ rightUnit* pre))
+            -- Previous version when we had equalities
+            -- ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) rightUnit* preN) pre) 
 
        -- Here we have that `r ≤ adv` but `¬ ((r * ghost) ≤ adv)`
     -- ah but we also know that `ghost = 1` so ... we get a contradiction
     intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
       | yes p | (var {Γ1 = Empty} {Γ2} pos) | .(Var 0) | a1 ∷ γ1' | a2 ∷ γ2' | invisible pre2 inner | Ext ad x =
-      ⊥-elim ((subst (\h -> h ≤ adv -> ⊥) (trans (cong (\h -> r *R h) (injPair2 pos)) {!   !}) pre2) pre) -- NEXT: rightUnit* used to be
-
+        ⊥-elim (pre2 (subst (\h -> (r *R ghost) ≤ h) (idem* R' {adv}) (monotone* pre p) ))
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var _)} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
      | yes p | (var {Γ1 = _} {Γ2} pos) | (Var _) =
       {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
 
     intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {.B} typ pre context u1 u2 v1 v2 v1redux v2redux
-     | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {_} {_} typ1 typ2 {ctxtP}) | (App t1 t2) = ?
+     | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {_} {_} typ1 typ2 {ctxtP}) | (App t1 t2) = {!!}
 
     -- split on whether ghost ⟨= adv first as no case easy, then induct for yes case
   {-
