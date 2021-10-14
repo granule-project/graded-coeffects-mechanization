@@ -352,42 +352,25 @@ mutual
      | yes p | (var {Γ1 = _} {Γ2} pos) =
       {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
 
+    -- ### App case
     intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(App t1 t2)} {.B} typ pre context u1 u2 v1 v2 v1redux v2redux
      | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {t1} {t2} typ1 typ2 {ctxtP}) rewrite sym v1redux | sym v2redux =
        let
          
-
-        -- 15 : ⟦ r ·g (Γ1 , g1) ⟧Γg adv _γ1_1161 _γ2_1162
-        --  (Γ , ghost) ≡ ((Γ1 , g1) ++g (s ·g (Γ2 , g2)))
-        -- i.e.  ghost  ≡ g1 + s * g2
-        -- p : ghost ≤ adv
-        -- context : ⟦ (r · Γ) , (R Semiring.*R r) ghost ⟧Γg adv γ1 γ2
-        -- which via the equality is really
-        --         : ⟦ (r · (Γ1 + s · Γ2)) , (R Semiring.*R r) (g1 + s * g2) ⟧Γg adv γ1 γ2
-        ih1 = intermediateSub typ1 pre subContext1 (proj₁ ih1evidence) (proj₂ ih1evidence)
-        -- ih2 = intermediateSub (pr {sz} {(Γ2 , g2)} {r = s} typ2) pre subContext2 (proj₁ ih2evidence) (proj₂ ih2evidence)
-        ih2 = {!!}
+        ih1 = biFundamentalTheoremGhost typ1 adv subContext1bi
+        ih2 = biFundamentalTheoremGhost (pr {sz} {(Γ2 , g2)} {r = s} typ2) adv subContext2bi
        in goal ih1 ih2
          where
-           {- goal : (x y : ℕ) (ta ta' bodyt bodyt' : Term)
-             -> ⟦ FunTy A s B ⟧v adv (Abs x bodyt) (Abs y bodyt')
-             -> ⟦ Box s A ⟧e adv (Promote ta) (Promote ta')
-             -> multiRedux (syntacticSubst ta x bodyt) ≡ v1
-             -> multiRedux (syntacticSubst ta' y bodyt') ≡ v2
-             -> ⟦ Box ghost B ⟧v adv v1 v2
-           goal x y ta ta' bodyt bodyt' ih1 ih2 v1redux' v2redux' with ih1
-           ... | funInterpBi {adv} {A} {B} {r} {x'} {y'} e1 e2 bodyBi bodyUn1 bodyUni2 =
-             let
-               bodySubst = bodyBi ta ta' ih2
-               result = bodySubst v1 v2 v1redux' v2redux'
-             in result
-           -}
 
            context' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
            context' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) context  
 
-           subContext1 : ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-           subContext1 = contextSplitLeft context'
+           subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
+           subContext1bi = contextElimTimesAlt pre (contextSplitLeft context')
+
+           subContext2bi : ⟦ s ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
+           subContext2bi = contextElimTimesAlt pre (contextSplitRight context')
+
 
            applyFun : {x y : ℕ} {ta ta' bodyt bodyt' v1 v2 : Term}
              -> ⟦ FunTy A s B ⟧v adv (Abs x bodyt) (Abs y bodyt')
@@ -476,21 +459,25 @@ mutual
                 result = intermediateSub typ pre context (promoteUnary res1) (promoteUnary res2)
              in result (Promote (multisubst' zero γ1 (App t1 t2))) (Promote (multisubst' zero γ2 (App t1 t2))) refl refl
  
-           subContext2 : ⟦ r ·g (s ·g ( Γ2 , g2 )) ⟧Γg adv γ1 γ2
-           subContext2 = contextSplitRight context'
 
-           subContext1bi : ⟦ ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
-           subContext1bi = contextElimTimesAlt pre subContext1
+    -- #### Abs case
+    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2}  {Abs .(Γlength Γ1 + 1) t} {FunTy A s B} typ pre context u1 u2 v1 v2 v1redux v2redux
+     | yes p | (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typBody {pos2}) rewrite sym v1redux | sym v2redux =
+         let
+           ih = intermediateSub typBody pre {!!} {!!} {!!}
+         in {!!}
+        where
+--          context' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
+--          context' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) context  
 
-           subContext2bi : ⟦ s ·g ( Γ2 , g2) ⟧Γg adv γ1 γ2
-           subContext2bi = contextElimTimesAlt pre (contextSplitRight context')
+          bodyContext : ⟦ r ·g (Γbody , gbody) ⟧Γg adv γ1 γ2
+          bodyContext = {!subst ? ? context!}
 
-           ih1evidence : [ Box g1 (FunTy A s B) ]e (Promote (multisubst γ1 t1)) × [ Box g1 (FunTy A s B) ]e (Promote (multisubst γ2 t1))
-           ih1evidence = binaryImpliesUnary (biFundamentalTheoremGhost typ1 adv subContext1bi)
-
-           ih2evidence : [ Box (s *R g2) (Box s A) ]e (Promote (multisubst γ1 (Promote t2))) × [ Box (s *R g2) (Box s A) ]e (Promote (multisubst γ2 (Promote t2)))
-           ih2evidence = binaryImpliesUnary (biFundamentalTheoremGhost (pr {sz} {(Γ2 , g2)} {r = s} typ2) adv subContext2bi)
-
+          goal : ⟦ Box ghost (FunTy A s B) ⟧e adv (Promote (multisubst γ1 (Abs (Γlength Γ1 + 1) t))) (Promote (multisubst γ2 (Abs (Γlength Γ1 + 1) t)))
+          goal v1 v2 v1redux v2redux = {!!} {- rewrite
+               trans (sym v1redux) (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t}))
+             | trans (sym v2redux) (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) = ? -}
+    
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {term} {A} type pre inp e1 e2 = {!!}
 
