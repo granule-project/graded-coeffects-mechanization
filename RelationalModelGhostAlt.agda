@@ -101,6 +101,14 @@ postulate
                  -> (Γ , ghost) ⊢ t1 ∶ FunTy A r B
                  -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1' × (((Ext Γ (Grad A r)) , ghost) ⊢ (Abs z v1') ∶  B))
 
+
+  reduxTheoremAppTyGSubst : {{R : Semiring}} {{R' : InformationFlowSemiring R }} {adv : grade} {γ1 γ2 : List Term}
+                     -> {t1 t2 v : Term} {s : ℕ} {Γ : ContextG s} {A B : Type} {r : grade}
+                 -> Γ ⊢ t1 ∶ FunTy A r B
+                 -> ⟦ Γ ⟧Γg adv γ1 γ2
+                 -> ((Σ (ℕ × Term) (\(z , t1') -> multiRedux (multisubst γ1 t1) ≡ Abs z t1')) ×
+                     (Σ (ℕ × Term) (\(z , t1') -> multiRedux (multisubst γ1 t1) ≡ Abs z t1')))
+
   multireduxPromoteLemma :
     {{ R : Semiring }}
     {adv r : grade}
@@ -273,6 +281,15 @@ mutual
     ... | yes p rewrite com* {R} {r} {g1} = ⊥-elim (pre (timesLeft p))
     ... | no ¬p = invisible ¬p ((unaryTimesElimRightΓ (proj₁ inner)) , (unaryTimesElimRightΓ (proj₂ inner)))
 
+    contextElimTimesAlt : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 : ContextG sz} {γ1 γ2 : List Term} {r adv : grade}
+                     -> (r ≤ adv) -> ⟦ r ·g Γ1 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
+    contextElimTimesAlt {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} pre0 (visible pre inner) with g1 ≤d adv
+    ... | yes p = visible p (binaryTimesElimRightΓ convertValR* inner)
+    ... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryTimesElimRightΓ convertValR* inner))
+    contextElimTimesAlt {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} pre0 (invisible pre inner) with g1 ≤d adv
+    ... | yes p rewrite com* {R} {r} {g1} = ⊥-elim (pre (subst (\h -> (g1 *R r) ≤ h) (idem* R' {adv}) (monotone* p pre0)))
+    ... | no ¬p = invisible ¬p ((unaryTimesElimRightΓ (proj₁ inner)) , (unaryTimesElimRightΓ (proj₂ inner)))
+
 
     intermediateSub : {{R : Semiring}} {{R' : InformationFlowSemiring R}}  {sz : ℕ}
                   {Γ : Context sz}
@@ -303,19 +320,19 @@ mutual
 
     -- ... otherwise heavy lifting ensues
     intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
-      | yes p with typ | e
+      | yes p with typ
 
     -- ### Var case
     intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
-      | yes p | (var {Γ1 = Empty} {Γ2} pos) | (Var 0) with γ1 | γ2
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) with γ1 | γ2
     intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
-      | yes p | (var {Γ1 = Empty} {Γ2} pos) | (Var 0) | a1 ∷ γ1' | a2 ∷ γ2' rewrite (injPair1 pos) with context | r · Γ
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) | a1 ∷ γ1' | a2 ∷ γ2' rewrite (injPair1 pos) with context | r · Γ
       
       
      -- Case where
     --  (x : A, ghost) ⊢ x : A
-    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
-      | yes p | (var {Γ1 = Empty} {Γ2} pos) | .(Var 0) | a1 ∷ γ1' | a2 ∷ γ2' | visible pre2 (arg , _) | Ext ad (Grad A' r₁)
+    intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var 0)} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) | a1 ∷ γ1' | a2 ∷ γ2' | visible pre2 (arg , _) | Ext ad (Grad A' r₁)
          rewrite sym v1redux | sym v2redux | isSimultaneous'' {a1} {γ1'} | isSimultaneous'' {a2} {γ2'} = conc
         where
           conc : ⟦ Box ghost A ⟧v adv (Promote a1) (Promote a2)
@@ -329,15 +346,15 @@ mutual
        -- Here we have that `r ≤ adv` but `¬ ((r * ghost) ≤ adv)`
     -- ah but we also know that `ghost = 1` so ... we get a contradiction
     intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
-      | yes p | (var {Γ1 = Empty} {Γ2} pos) | .(Var 0) | a1 ∷ γ1' | a2 ∷ γ2' | invisible pre2 inner | Ext ad x =
+      | yes p | (var {Γ1 = Empty} {Γ2} pos) | a1 ∷ γ1' | a2 ∷ γ2' | invisible pre2 inner | Ext ad x =
         ⊥-elim (pre2 (subst (\h -> (r *R ghost) ≤ h) (idem* R' {adv}) (monotone* pre p) ))
 
     intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(Var _)} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
-     | yes p | (var {Γ1 = _} {Γ2} pos) | (Var _) =
+     | yes p | (var {Γ1 = _} {Γ2} pos) =
       {!!} -- generalises the above, skipping for simplicity (just apply exchange basically)
 
-    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {.B} typ pre context u1 u2 v1 v2 v1redux v2redux
-     | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {t1} {t2} typ1 typ2 {ctxtP}) | _ =
+    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {.(App t1 t2)} {.B} typ pre context u1 u2 v1 v2 v1redux v2redux
+     | yes p | (app {Γ1 = (Γ1 , g1)} {Γ2 = (Γ2 , g2)} {s} {A} {B} {t1} {t2} typ1 typ2 {ctxtP}) rewrite sym v1redux | sym v2redux =
        let
          
 
@@ -373,6 +390,48 @@ mutual
            subContext1 : ⟦ r ·g ( Γ1 ,  g1) ⟧Γg adv γ1 γ2
            subContext1 = contextSplitLeft context'
 
+           applyFun : {x y : ℕ} {ta ta' bodyt bodyt' v1 v2 : Term}
+             -> ⟦ FunTy A s B ⟧v adv (Abs x bodyt) (Abs y bodyt')
+             -> ⟦ Box s A ⟧e adv (Promote ta) (Promote ta')
+             -> multiRedux (syntacticSubst ta x bodyt) ≡ v1
+             -> multiRedux (syntacticSubst ta' y bodyt') ≡ v2
+             -> ⟦ B ⟧v adv v1 v2
+           applyFun {x} {y} {ta} {ta'} {bodyt} {bodyt'} {v1} {v2} fun arg v1redux' v2redux' with fun
+           ... | funInterpBi {adv} {A} {B} {r} {x'} {y'} e1 e2 bodyBi bodyUn1 bodyUni2 =
+             let
+               bodySubst = bodyBi ta ta' arg
+               result = bodySubst v1 v2 v1redux' v2redux'
+             in result
+
+           innerGoal : ⟦ FunTy A s B ⟧e adv (multisubst γ1 t1) (multisubst γ2 t1)
+                   ->  ⟦ Box s A ⟧e adv (multisubst γ1 (Promote t2)) (multisubst γ2 (Promote t2))
+                   ->  ⟦ B ⟧e adv (multisubst γ1 (App t1 t2)) (multisubst γ2 (App t1 t2))
+           innerGoal funIn argIn v1a v2a v1aredux v2aredux =
+            let
+                v1redux' = trans (sym (cong multiRedux (substPresApp {0} {γ1} {t1} {t2}))) v1aredux
+                ((x , t) , (funRed , substRed)) = reduxTheoremAll {multisubst γ1 t1} {multisubst γ1 t2} {v1a} v1redux'
+
+                v2redux' = trans (sym (cong multiRedux (substPresApp {0} {γ2} {t1} {t2}))) v2aredux
+                ((x' , t') , (funRed' , substRed')) = reduxTheoremAll {multisubst γ2 t1} {multisubst γ2 t2} {v2a} v2redux'
+
+                body = funIn (Abs x t) (Abs x' t') funRed funRed'
+                argument = subst₂ (\h1 h2 -> ⟦ Box s A ⟧e adv h1 h2) (substPresProm {0} {γ1} {t2}) (substPresProm {0} {γ2} {t2}) argIn
+
+            in applyFun body argument substRed substRed' 
+          
+           goal : ⟦ Box g1 (FunTy A s B) ⟧e adv (Promote (multisubst γ1 t1)) (Promote (multisubst γ2 t1))
+               -> ⟦ Box (s *R g2) (Box s A) ⟧e adv (Promote (multisubst γ1 (Promote t2))) (Promote (multisubst γ2 (Promote t2)))
+               -> ⟦ Box ghost B ⟧v adv (Promote (multisubst' 0 γ1 (App t1 t2))) (Promote (multisubst' 0 γ2 (App t1 t2)))
+           goal inp1 inp2 with inp1 (Promote (multisubst γ1 t1)) (Promote (multisubst γ2 t1)) refl refl | inp2 (Promote (multisubst γ1 (Promote t2))) (Promote (multisubst γ2 (Promote t2))) refl refl
+           ... | boxInterpBiobs pre1 _ _ inner1 | boxInterpBiobs pre2 _ _ inner2 =
+               boxInterpBiobs p (multisubst γ1 (App t1 t2)) (multisubst γ2 (App t1 t2)) (innerGoal inner1 inner2)
+
+           ... | boxInterpBiobs pre1 _ _ inner1 | boxInterpBiunobs pre2 _ _ inner2 = {!!}
+           ... | boxInterpBiunobs pre1 _ _ inner1 | boxInterpBiobs pre2 _ _ inner2 = {!!}
+           ... | boxInterpBiunobs pre1 _ _ inner1 | boxInterpBiunobs pre2 _ _ inner2 = {!!}
+
+    
+ 
            subContext2 : ⟦ r ·g (s ·g ( Γ2 , g2 )) ⟧Γg adv γ1 γ2
            subContext2 = contextSplitRight context'
 
@@ -483,7 +542,7 @@ mutual
 
       Need to build a [[ FunTy A s B ]]e witness
       from [ FunTy A s B ]e ... witnesses
-      which means I need to build something like ([[ Box s A ]] -> [[ B ]]) function
+      which means I need to build something like ([[ Box s A ]] -> [[ B ]]) functicontexton
       induction on intermediateSub will require a context with Box (r*s) A added which
       we can get from the [[ Box s A ]] here (I think) adding to the context and doing induction
       on... on what... well...we have [ Box s A ]e -> [ B ]e witnesses, so we need to map

@@ -227,6 +227,7 @@ postulate -- postulate now for development speed
                  -> multiRedux (App t1 t2) ≡ v
                  -> Γ ⊢ t1 ∶ FunTy A r B
                  -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1' × ((Ext Γ (Grad A r)) ⊢ (Abs z v1') ∶  B))
+  
   reduxTheoremBool : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> (multiRedux tg ≡ vtrue) ⊎ (multiRedux tg ≡ vfalse)
   reduxTheoremBool1 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
   reduxTheoremBool2 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
@@ -552,7 +553,6 @@ propInvdecreasing+2 : {{R : Semiring}} {{R' : NonInterferingSemiring R}}
                 -> ¬((r1 +R (r *R r2)) ≤ adv)
                 -> ¬((r *R r2) ≤ adv)
 propInvdecreasing+2 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = decreasing+Inv' {R} {R'} {r1} {r *R r2} {adv} pre
-
 
 {-# TERMINATING #-}
 biFundamentalTheorem : {{R : Semiring}} {{R' : NonInterferingSemiring R}} {sz : ℕ}
