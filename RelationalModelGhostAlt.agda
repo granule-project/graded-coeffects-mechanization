@@ -101,14 +101,6 @@ postulate
                  -> (Γ , ghost) ⊢ t1 ∶ FunTy A r B
                  -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1' × (((Ext Γ (Grad A r)) , ghost) ⊢ (Abs z v1') ∶  B))
 
-
-  reduxTheoremAppTyGSubst : {{R : Semiring}} {{R' : InformationFlowSemiring R }} {adv : grade} {γ1 γ2 : List Term}
-                     -> {t1 t2 v : Term} {s : ℕ} {Γ : ContextG s} {A B : Type} {r : grade}
-                 -> Γ ⊢ t1 ∶ FunTy A r B
-                 -> ⟦ Γ ⟧Γg adv γ1 γ2
-                 -> ((Σ (ℕ × Term) (\(z , t1') -> multiRedux (multisubst γ1 t1) ≡ Abs z t1')) ×
-                     (Σ (ℕ × Term) (\(z , t1') -> multiRedux (multisubst γ1 t1) ≡ Abs z t1')))
-
   multireduxPromoteLemma :
     {{ R : Semiring }}
     {adv r : grade}
@@ -429,7 +421,11 @@ mutual
            ... | boxInterpBiobs pre1 _ _ inner1 | boxInterpBiunobs pre2 _ _ inner2 = {!!}
            ... | boxInterpBiunobs pre1 _ _ inner1 | boxInterpBiobs pre2 _ _ inner2 = {!!}
            ... | boxInterpBiunobs pre1 _ _ inner1 | boxInterpBiunobs pre2 _ _ inner2 = {!!}
-
+           -- pre2    : ¬ (R Semiring.≤ (R Semiring.*R s) g2) adv
+           -- pre1    : ¬ (R Semiring.≤ g1) adv
+           -- pre     : (R Semiring.≤ r) adv
+           -- p       : (R Semiring.≤ ghost) adv
+           -- ghost = g1 + s * g2
     
  
            subContext2 : ⟦ r ·g (s ·g ( Γ2 , g2 )) ⟧Γg adv γ1 γ2
