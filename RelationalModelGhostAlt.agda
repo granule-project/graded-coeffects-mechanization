@@ -461,17 +461,75 @@ mutual
  
 
     -- #### Abs case
-    intermediateSub {sz = sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2}  {Abs .(Γlength Γ1 + 1) t} {FunTy A s B} typ pre context u1 u2 v1 v2 v1redux v2redux
-     | yes p | (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typBody {pos2}) rewrite sym v1redux | sym v2redux =
+    intermediateSub {{R}} {{R'}} {sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2}  {Abs .(Γlength Γ1 + 1) t} {FunTy A s B} typ pre context u1 u2 v1 v2 v1redux v2redux
+     | yes p | (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typBody {pos2}) rewrite sym v1redux | sym v2redux | pos =
          let
-           ih = intermediateSub typBody pre {!!} {!!} {!!}
+           ih = biFundamentalTheoremGhost typBody adv {!!}
          in {!!}
         where
 --          context' : ⟦ (r ·g (Γ1 , g1)) ++g (r ·g (s ·g (Γ2 , g2))) ⟧Γg adv γ1 γ2
 --          context' = subst (\h -> ⟦ h ⟧Γg adv γ1 γ2) (trans (cong (_·g_ r) ctxtP) Γg-distrib*+) context  
 
+          ihcontext : {t t' : Term} {γ1 γ2 : List Term}
+               -> ⟦ Box r A ⟧e adv (Promote t) (Promote t')
+               -> ⟦ r ·g ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2 -> ⟦ (r · ((Ext Γ1 (Grad A r)) ,, Γ2) , r *R ghost) ⟧Γg adv (t ∷ γ1) (t' ∷ γ2)
+          ihcontext {t} {t'} {γ1} {γ2} inp ctxt rewrite multConcatDistr {r = r} {Γ1} {Γ2} with ctxt
+          ... | visible pre' inner   rewrite idem* R' {r} = visible (timesLeft pre) (inp , inner)
+          ... | invisible pre' inner = ⊥-elim (pre' (timesLeft pre))
+
+          convert : {t t' : Term} -> ⟦ Box s A ⟧e adv (Promote t) (Promote t') -> ⟦ Box (r *R s) A ⟧e adv (Promote t) (Promote t')
+          convert {t} {t'} inp v1 v2 v1redux v2redux with inp v1 v2 v1redux v2redux
+          ... | boxInterpBiobs preA t1 t2 inner = boxInterpBiobs (subst (\h -> h ≤ adv) com* (timesLeft preA)) t1 t2 inner
+          ... | boxInterpBiunobs preA t1 t2 inner = boxInterpBiunobs {!!} t1 t2 inner
+
+          ihcontextAlt : {t t' : Term} {γ1 γ2 : List Term}
+                 -> ⟦ Box s A ⟧e adv (Promote t) (Promote t')
+                 -> ⟦ ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2 -> ⟦ (((Ext Γ1 (Grad A s)) ,, Γ2) , ghost) ⟧Γg adv (t ∷ γ1) (t' ∷ γ2)
+          ihcontextAlt {t} {t'} {γ1} {γ2} inp ctxt with ctxt
+          ... | visible pre' inner   = visible pre' (inp , inner)
+          ... | invisible pre' (inner1 , inner2) =
+            let
+              (arg1 , arg2) = binaryImpliesUnary { Box s A } {Promote t} {Promote t'} {adv} inp
+            in invisible pre' ((arg1 , inner1) , (arg2 , inner2))
+
+          ihcontextAlt2 : {t t' : Term} {γ1 γ2 : List Term}
+               -> ⟦ Box s A ⟧e adv (Promote t) (Promote t')
+               -> ⟦ (r · (Γ1 ,, Γ2) , r *R ghost) ⟧Γg adv γ1 γ2 -> ⟦ (((Ext (r · Γ1) (Grad A (r *R s))) ,, (r · Γ2)) , r *R ghost) ⟧Γg adv (t ∷ γ1) (t' ∷ γ2)
+          ihcontextAlt2 {t} {t'} {γ1} {γ2} inp ctxt rewrite multConcatDistr {r = r} {Γ1} {Γ2} with ctxt
+          ... | visible pre' inner   = visible pre' (convert inp , inner)
+          ... | invisible pre' (inner1 , inner2) =
+            let
+              (arg1 , arg2) = binaryImpliesUnary { Box (r *R s) A } {Promote t} {Promote t'} {adv} (convert inp)
+            in invisible pre' ((arg1 , inner1) , (arg2 , inner2))
+
           bodyContext : ⟦ r ·g (Γbody , gbody) ⟧Γg adv γ1 γ2
           bodyContext = {!subst ? ? context!}
+
+          goalBiInnner : ⟦ (Γ1 ,, Γ2) , ghost ⟧Γg adv γ1 γ2
+                  -> (v3 v4 : Term)
+                  -> ⟦ Box s A ⟧e adv (Promote v3) (Promote v4)
+                  -> ⟦ Box ghost B ⟧e adv (Promote (syntacticSubst v3 (Γlength Γ1 + 1) (multisubst' zero γ1 t))) (Promote (syntacticSubst v4 (Γlength Γ1 + 1) (multisubst' zero γ2 t)))
+          goalBiInnner = {!!} {- outer v3 v4 arg v1' v2' v1redux' v2redux' 
+            with u1 (Abs (Γlength Γ1 + 1) (multisubst γ1 t)) ? -- (trans (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t})) reduxAbs)
+               | u2 (Abs (Γlength Γ1 + 1) (multisubst γ2 t)) ? -- (trans (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) reduxAbs)
+          ... | funInterpV bod1 innerFun1 | funInterpV bod2 innerFun2 =
+           let
+            ihcontext' = (ihcontextAlt {v3} {v4} {γ1} {γ2} arg outer)
+
+            {-
+            eq1 = trans (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t})) reduxAbs
+            innerFun1 = e1 (Abs (Γlength Γ1 + 1) (multisubst γ1 t)) eq1
+            eq2 = trans (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) reduxAbs
+            innerFun2 = e2 (Abs (Γlength Γ1 + 1) (multisubst γ2 t)) eq2
+            -}
+
+            (arg1 , arg2) = binaryImpliesUnary arg
+            -- pos : (Γbody , gbody) ≡ (Ext (Γ1 ,, Γ2) (Grad A s) , g)
+            -- goal 15 is ⟦ r ·g (Γbody , gbody) ⟧Γg adv _γ1_1729 _γ2_1730
+            context = ihcontextAlt2 {v3} {v4} {γ1} {γ2} {!   !} {!   !} -- arg outer
+            context' = subst (\ h -> ⟦ h ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)) {!    !} context
+            ih = intermediateSub typ pre {!!} (innerFun1 t arg1) (innerFun2 t arg2)
+           in ih v1' v2' {!   !} {!   !}  -}
 
           goal : ⟦ Box ghost (FunTy A s B) ⟧e adv (Promote (multisubst γ1 (Abs (Γlength Γ1 + 1) t))) (Promote (multisubst γ2 (Abs (Γlength Γ1 + 1) t)))
           goal v1 v2 v1redux v2redux = {!!} {- rewrite
