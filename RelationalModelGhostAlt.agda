@@ -537,18 +537,20 @@ mutual
              | trans (sym v2redux) (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) = ? -}
     
 
-    intermediateSub {Γ = .Γ'} {.ghost} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} (pr {_} {Γ} {(Γ' , ghost)} {s} {A} {t} typ {ctxtPre}) pre inp e1 e2 =
+    intermediateSub {Γ = Γ'} {ghost} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
+     | yes p | (pr {_} {(Γ , g)} {(.Γ' , .ghost)} {s} {A} {t} typInner {ctxtPre}) =
       {!!}
 
-    intermediateSub {Γ = .(0R · Γ)} {.1R} {r} {adv} {γ1} {γ2} {.unit} {.Unit} (unitConstr {_} {Γ}) pre inp e1 e2 = {!!} 
+    intermediateSub {_} {.1R} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2
+     | yes p | (unitConstr {_} {Γ}) = {!!} 
 
-    intermediateSub {Γ = .(0R · Γ)} {.1R} {r} {adv} {γ1} {γ2} {.vtrue} {.BoolTy} (trueConstr {_} {Γ}) pre inp e1 e2 = {!!}
+    -- intermediateSub {Γ = .(0R · Γ)} {.1R} {r} {adv} {γ1} {γ2} {.vtrue} {.BoolTy} (trueConstr {_} {Γ}) pre inp e1 e2 = {!!}
 
-    intermediateSub {Γ = .(0R · Γ)} {.1R} {r} {adv} {γ1} {γ2} {.vfalse} {.BoolTy} (falseConstr {_} {Γ}) pre inp e1 e2 = {!!}
+    -- intermediateSub {Γ = .(0R · Γ)} {.1R} {r} {adv} {γ1} {γ2} {.vfalse} {.BoolTy} (falseConstr {_} {Γ}) pre inp e1 e2 = {!!}
 
-    intermediateSub {Γ = .Γ} {.ghost} {r} {adv} {γ1} {γ2} {.(If t1 t2 t3)} {.B} (if {_} {Γ} {Γ1} {Γ2} {ghost} {B} {t1} {t2} {t3} {s} {pre} typG typ1 typ2 {ctxtPre}) pre inp e1 e2 = {!!}
+    -- intermediateSub {_} {_} {r} {adv} {γ1} {γ2} {_} {_} (if {_} {Γ} {Γ1} {Γ2} {ghost} {B} {t1} {t2} {t3} {s} {pre} typG typ1 typ2 {ctxtPre}) pre inp e1 e2 = {!!}
 
---    intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {term} {A} type pre inp e1 e2 = {!!}
+    -- intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {term} {A} type pre inp e1 e2 = {!!}
 
     {- intermediate : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ}
                 {Γ : Context sz}
