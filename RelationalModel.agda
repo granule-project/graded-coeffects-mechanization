@@ -207,6 +207,9 @@ reduxFalse = refl
 reduxTrue : multiRedux vtrue ≡ vtrue
 reduxTrue = refl
 
+reduxUnit : multiRedux unit ≡ unit
+reduxUnit = refl
+
 postulate -- postulate now for development speed
   reduxTheoremApp : {t1 t2 t v : Term} -> multiRedux (App t1 t2) ≡ v -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1')
 

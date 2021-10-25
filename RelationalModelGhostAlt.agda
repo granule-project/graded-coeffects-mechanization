@@ -541,14 +541,33 @@ mutual
      | yes p | (pr {_} {(Γ , g)} {(.Γ' , .ghost)} {s} {A} {t} typInner {ctxtPre}) =
       {!!}
 
-    intermediateSub {_} {.1R} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2
-     | yes p | (unitConstr {_} {Γ}) = {!!} 
+    intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2 v1 v2 v1redux v2redux
+     | yes p | (unitConstr {_} {Γ}) rewrite sym v1redux | sym v2redux with 1R ≤d adv
+    ... | yes qp =  boxInterpBiobs qp (multisubst γ1 unit) (multisubst γ2 unit) (goal e1 e2)
+        where
+          goal : [ Box ghost Unit ]e (Promote (multisubst γ1 unit))
+              -> [ Box ghost Unit ]e (Promote (multisubst γ2 unit))
+              -> ⟦ Unit ⟧e adv (multisubst γ1 unit) (multisubst γ2 unit)
+          goal u1 u2 v3 v4 v3redux v4redux with u1 (Promote (multisubst γ1 unit)) reduxProm | u2 (Promote (multisubst γ2 unit)) reduxProm
+          ... | boxInterpV .(multisubst' 0 γ1 unit) x1 | boxInterpV .(multisubst' 0 γ2 unit) x2 rewrite sym v3redux | sym v4redux | substPresUnit {γ1} {0} | substPresUnit {γ2} {0} | reduxUnit = unitInterpBi
 
-    -- intermediateSub {Γ = .(0R · Γ)} {.1R} {r} {adv} {γ1} {γ2} {.vtrue} {.BoolTy} (trueConstr {_} {Γ}) pre inp e1 e2 = {!!}
+    ... | no gp = boxInterpBiunobs gp (multisubst γ1 unit) (multisubst γ2 unit) ( goaleo e1 , goaleo e2)
+       where
+         goaleo : {γ :  List Term}
+              -> [ Box ghost Unit ]e (Promote (multisubst γ unit))
+              -> [ Unit ]e (multisubst γ unit)
+         goaleo {γ} u1 v3 v3redux with u1 (Promote (multisubst γ unit)) reduxProm
+         ... | boxInterpV _ _ rewrite sym v3redux | substPresUnit {γ} {0} | reduxUnit = unitInterpV 
+           
 
-    -- intermediateSub {Γ = .(0R · Γ)} {.1R} {r} {adv} {γ1} {γ2} {.vfalse} {.BoolTy} (falseConstr {_} {Γ}) pre inp e1 e2 = {!!}
+    intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.vtrue} {.BoolTy} type pre inp e1 e2 v1 v2 v1redux v2redux
+     | yes p | (trueConstr {_} {Γ}) = {!!}
 
-    -- intermediateSub {_} {_} {r} {adv} {γ1} {γ2} {_} {_} (if {_} {Γ} {Γ1} {Γ2} {ghost} {B} {t1} {t2} {t3} {s} {pre} typG typ1 typ2 {ctxtPre}) pre inp e1 e2 = {!!}
+    intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.vfalse} {.BoolTy} type pre inp e1 e2 v1 v2 v1redux v2redux
+     | yes p | (falseConstr {_} {Γ}) = {!!}
+
+    intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {_} {_} type pre inp e1 e2 v1 v2 v1redux v2redux
+     | yes p | (if {_} {Γ} {Γ1} {Γ2} {ghost} {B} {t1} {t2} {t3} {s} {pre'} typG typ1 typ2 {ctxtPre}) = {!!}
 
     -- intermediateSub {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2} {term} {A} type pre inp e1 e2 = {!!}
 
