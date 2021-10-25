@@ -251,30 +251,20 @@ contextSplitRight {{R}} {{R'}} {sz = sz} {Γ1 , g1} {Γ2 , g2} {γ1} {γ2} {adv}
 ... | yes p = ⊥-elim (pre (decreasing+NFSym p))
 ... | no ¬p = invisible ¬p ((unaryPlusElimRightΓ (proj₁ inner)) , (unaryPlusElimRightΓ (proj₂ inner)))
 
--- WARNING- really hope we don't need this one!
+
 convertValR* : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
-            -> {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 *R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2)
-convertValR* {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs pre .v1 .v2 inner)   with r2 ≤d adv
+            -> {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> (r1 ≤ adv) -> ⟦ Box (r1 *R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2)
+convertValR* {r1 = r1} {r2} {adv} {v1} {v2} {A} preA (boxInterpBiobs pre .v1 .v2 inner)   with r2 ≤d adv
 ... | yes p = boxInterpBiobs p v1 v2 inner
 ... | no ¬p = boxInterpBiunobs ¬p v1 v2 (binaryImpliesUnary {A} {v1} {v2} {adv} inner)
-convertValR* {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs pre .v1 .v2 inner) =
-  boxInterpBiunobs (\pre' -> pre (subst (\h -> h ≤ adv) com* (timesLeft pre'))) v1 v2 inner
+convertValR* {{R}} {{R'}} {r1 = r1} {r2} {adv} {v1} {v2} {A} preA (boxInterpBiunobs pre .v1 .v2 inner) =
+  boxInterpBiunobs (\preB -> pre (subst (\h -> (r1 *R r2) ≤ h) (idem* R' {adv}) (monotone* preA preB))) v1 v2 inner
 
--- WARNING- really hope we don't need this one!
-{-contextElimTimes : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 : ContextG sz} {γ1 γ2 : List Term} {r adv : grade}
--> ⟦ r ·g Γ1 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
-contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (visible pre inner) with g1 ≤d adv
-... | yes p = visible p (binaryTimesElimRightΓ convertValR* inner)
-... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryTimesElimRightΓ convertValR* inner))
-contextElimTimes {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} (invisible pre inner) with g1 ≤d adv
-... | yes p rewrite com* {R} {r} {g1} = ⊥-elim (pre (timesLeft p))
-... | no ¬p = invisible ¬p ((unaryTimesElimRightΓ (proj₁ inner)) , (unaryTimesElimRightΓ (proj₂ inner)))
--}
 contextElimTimesAlt : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {sz : ℕ} {Γ1 : ContextG sz} {γ1 γ2 : List Term} {r adv : grade}
                     -> (r ≤ adv) -> ⟦ r ·g Γ1 ⟧Γg adv γ1 γ2 -> ⟦ Γ1 ⟧Γg adv γ1 γ2
 contextElimTimesAlt {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} pre0 (visible pre inner) with g1 ≤d adv
-... | yes p = visible p (binaryTimesElimRightΓ convertValR* inner)
-... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryTimesElimRightΓ convertValR* inner))
+... | yes p = visible p (binaryTimesElimRightΓ (convertValR* pre0) inner)
+... | no ¬p = invisible ¬p (binaryImpliesUnaryG (binaryTimesElimRightΓ (convertValR* pre0) inner))
 contextElimTimesAlt {{R}} {{R'}} {sz = sz} {Γ1 , g1} {γ1} {γ2} {r} {adv} pre0 (invisible pre inner) with g1 ≤d adv
 ... | yes p rewrite com* {R} {r} {g1} = ⊥-elim (pre (subst (\h -> (g1 *R r) ≤ h) (idem* R' {adv}) (monotone* p pre0)))
 ... | no ¬p = invisible ¬p ((unaryTimesElimRightΓ (proj₁ inner)) , (unaryTimesElimRightΓ (proj₂ inner)))
