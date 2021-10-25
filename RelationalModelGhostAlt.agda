@@ -529,7 +529,27 @@ mutual
 
     intermediateSub {Γ = Γ'} {ghost} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
      | yes p | (pr {_} {(Γ , g)} {(.Γ' , .ghost)} {s} {A} {t} typInner {ctxtPre}) =
+     {-
+
+      (Γ , g) |- t : A
+     ----------------------------
+     r . (Γ , g) |- [t] : Box r A
+
+    need ⟦ Box (r * g) (Box r A) ⟧
+
+    induction will gives us ⟦ Box g A ⟧
+
+    -- inp      : ⟦ (r · Γ') , (R Semiring.*R r) ghost ⟧Γg adv γ1 γ2
+
+    -}
+     let
+       bif = biFundamentalTheoremGhost typInner {γ1} {γ2} adv {!!}
+       ih = intermediateSub typInner {!!} {!!} {!!} {!!}
+     in
       {!!}
+      where
+       contextForInner : ⟦ Γ , g ⟧Γg adv γ1 γ2
+       contextForInner = {!!}
 
     intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2 v1 v2 v1redux v2redux
      | yes p | (unitConstr {_} {Γ}) rewrite sym v1redux | sym v2redux with 1R ≤d adv
@@ -541,7 +561,7 @@ mutual
           goal u1 u2 v3 v4 v3redux v4redux with u1 (Promote (multisubst γ1 unit)) reduxProm | u2 (Promote (multisubst γ2 unit)) reduxProm
           ... | boxInterpV .(multisubst' 0 γ1 unit) x1 | boxInterpV .(multisubst' 0 γ2 unit) x2 rewrite sym v3redux | sym v4redux | substPresUnit {γ1} {0} | substPresUnit {γ2} {0} | reduxUnit = unitInterpBi
 
-    ... | no gp = boxInterpBiunobs gp (multisubst γ1 unit) (multisubst γ2 unit) ( goaleo e1 , goaleo e2)
+    ... | no gp = boxInterpBiunobs gp (multisubst γ1 unit) (multisubst γ2 unit) (goaleo {γ1} e1 , goaleo {γ2} e2)
        where
          goaleo : {γ :  List Term}
               -> [ Box ghost Unit ]e (Promote (multisubst γ unit))
