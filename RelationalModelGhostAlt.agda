@@ -527,30 +527,55 @@ mutual
              | trans (sym v2redux) (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) = ? -}
     
 
-    intermediateSub {Γ = Γ'} {ghost} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
-     | yes p | (pr {_} {(Γ , g)} {(.Γ' , .ghost)} {s} {A} {t} typInner {ctxtPre}) =
+    intermediateSub {Γ = Γ'} {g} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
+     | yes p | (pr {_} {(Γ , g')} {(.Γ' , .g)} {s} {A} {t} typInner {ctxtPre}) with s ≤d adv
+    ... | no sobs = {!!}
+    ... | yes sobs rewrite sym v1redux | sym v2redux = 
      {-
 
-      (Γ , g) |- t : A
+      (Γ , g') |- t : A
      ----------------------------
-     r . (Γ , g) |- [t] : Box r A
+     s . (Γ , g') |- [t] : Box s A
 
-    need ⟦ Box (r * g) (Box r A) ⟧
 
-    induction will gives us ⟦ Box g A ⟧
+
+    Goal ⟦ Box (s * g') (Box s A) ⟧
+    -- g = s * g'
+
+    we have an input context
+    - [[ r * (s * (G , g')) ]]
+    and unary interpretations
+    - [ Box (s * g') (Box s A) ]
+    and orderings
+    - r ≤ adv
+    - s * g' <= adv
 
     -- inp      : ⟦ (r · Γ') , (R Semiring.*R r) ghost ⟧Γg adv γ1 γ2
 
-    -}
-     let
-       bif = biFundamentalTheoremGhost typInner {γ1} {γ2} adv {!!}
-       ih = intermediateSub typInner {!!} {!!} {!!} {!!}
-     in
-      {!!}
-      where
-       contextForInner : ⟦ Γ , g ⟧Γg adv γ1 γ2
-       contextForInner = {!!}
+    -- ctxtPre  : (Γ' , g) ≡ ((s · Γ) , (R Semiring.*R s) g')
 
+    -}
+      let
+        bif = biFundamentalTheoremGhost typInner {γ1} {γ2} adv contextForInner
+        (u1 , u2) = binaryImpliesUnary bif
+        ih = intermediateSub typInner sobs contextForInnerAlt u1 u2
+        -- ih' = intermediateSub typInner ? inp u1 u2
+        bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt'
+        bifAlt' = bifAlt (Promote (multisubst' zero γ1 (Promote t))) (Promote (multisubst' zero γ2 (Promote t))) refl refl
+      in
+        ?
+       where
+ 
+        contextForInnerAlt : ⟦ s · Γ , s *R g' ⟧Γg adv γ1 γ2
+        contextForInnerAlt rewrite injPair1 ctxtPre | injPair2 ctxtPre = contextElimTimesAlt pre inp
+
+        contextForInnerAlt' : ⟦ Γ' , g ⟧Γg adv γ1 γ2
+        contextForInnerAlt' rewrite (injPair1 ctxtPre) | (injPair2 ctxtPre) = contextForInnerAlt
+         
+        contextForInner : ⟦ Γ , g' ⟧Γg adv γ1 γ2
+        contextForInner rewrite injPair1 ctxtPre | injPair2 ctxtPre
+          = let inp' = contextElimTimesAlt pre inp in contextElimTimesAlt sobs inp'
+    
     intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2 v1 v2 v1redux v2redux
      | yes p | (unitConstr {_} {Γ}) rewrite sym v1redux | sym v2redux with 1R ≤d adv
     ... | yes qp =  boxInterpBiobs qp (multisubst γ1 unit) (multisubst γ2 unit) (goal e1 e2)
