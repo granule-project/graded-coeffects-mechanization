@@ -556,14 +556,22 @@ mutual
 
     -}
       let
+        -- One option seems to be
         bif = biFundamentalTheoremGhost typInner {γ1} {γ2} adv contextForInner
         (u1 , u2) = binaryImpliesUnary bif
+
+        -- Another would be
+        p' = subst (\h -> h ≤ adv) (injPair2 ctxtPre) p
         ih = intermediateSub typInner sobs contextForInnerAlt u1 u2
+
+        -- Can wrap
+        ih' = boxInterpBiobs p' (Promote (multisubst γ1 t)) ((Promote (multisubst γ2 t))) ih
+
         -- ih' = intermediateSub typInner ? inp u1 u2
-        bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt'
+        bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt' -- <- bad, creates a loop I think?
         bifAlt' = bifAlt (Promote (multisubst' zero γ1 (Promote t))) (Promote (multisubst' zero γ2 (Promote t))) refl refl
       in
-        ?
+        {!!}
        where
  
         contextForInnerAlt : ⟦ s · Γ , s *R g' ⟧Γg adv γ1 γ2
