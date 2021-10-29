@@ -533,9 +533,16 @@ mutual
     ... | yes sobs rewrite sym v1redux | sym v2redux = 
      {-
 
+
       (Γ , g') |- t : A
      ----------------------------
      s . (Γ , g') |- [t] : Box s A
+
+
+    (Γ , g') |- t : A      g' <= g''
+    --------------------------------------
+     (Γ , g'') |- t : A
+
 
 
 
@@ -557,15 +564,22 @@ mutual
     -}
       let
         -- One option seems to be
+        -- bif : : ⟦ Box g' A ⟧e adv (Promote (multisubst γ1 t))  (Promote (multisubst γ2 t))
         bif = biFundamentalTheoremGhost typInner {γ1} {γ2} adv contextForInner
         (u1 , u2) = binaryImpliesUnary bif
 
         -- Another would be
         p' = subst (\h -> h ≤ adv) (injPair2 ctxtPre) p
+        
+        -- ih : : ⟦ Box g' A ⟧e adv (Promote (multisubst γ1 t))  (Promote (multisubst γ2 t))
         ih = intermediateSub typInner sobs contextForInnerAlt u1 u2
 
         -- Can wrap
         ih' = boxInterpBiobs p' (Promote (multisubst γ1 t)) ((Promote (multisubst γ2 t))) ih
+        -- possibly we have a commutativity results which let's us swap expand and swap the boxes here, with judicious idempotence
+
+        -- ih' : Box (s * g') Box g A
+        --  -->  
 
         -- ih' = intermediateSub typInner ? inp u1 u2
         bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt' -- <- bad, creates a loop I think?
