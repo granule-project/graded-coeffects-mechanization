@@ -582,11 +582,14 @@ mutual
         --  -->  
 
         -- ih' = intermediateSub typInner ? inp u1 u2
-        bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt' -- <- bad, creates a loop I think?
-        bifAlt' = bifAlt (Promote (multisubst' zero γ1 (Promote t))) (Promote (multisubst' zero γ2 (Promote t))) refl refl
+--        bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt' -- <- bad, creates a loop I think?
+--        bifAlt' = bifAlt (Promote (multisubst' zero γ1 (Promote t))) (Promote (multisubst' zero γ2 (Promote t))) refl refl
       in
         {!!}
        where
+        convert : ⟦ Box g' A ⟧e adv (Promote (multisubst γ1 t)) (Promote (multisubst γ2 t))
+                -> ⟦ Box (g' *R s) (Box s A) ⟧e adv (Promote (multisubst γ1 t)) (Promote (multisubst γ2 t))
+        convert inp = ?
  
         contextForInnerAlt : ⟦ s · Γ , s *R g' ⟧Γg adv γ1 γ2
         contextForInnerAlt rewrite injPair1 ctxtPre | injPair2 ctxtPre = contextElimTimesAlt pre inp
