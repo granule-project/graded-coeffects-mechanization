@@ -633,47 +633,7 @@ instance
   idem* levelIFstructure {Dunno} = refl
   idem* levelIFstructure {Unused} = refl
 
-  decreasing+ levelIFstructure {r2 = Public} 0Pub = 0Pub
-  decreasing+ levelIFstructure {r2 = Private} 0Pub = 0Pub
-  decreasing+ levelIFstructure {r2 = Dunno} 0Pub = 0Pub
-  decreasing+ levelIFstructure {r2 = Unused} 0Pub = 0Pub
-  decreasing+ levelIFstructure {r2 = Public} 0Priv = 0Pub
-  decreasing+ levelIFstructure {r2 = Private} 0Priv = 0Priv
-  decreasing+ levelIFstructure {r2 = Dunno} 0Priv = 0Dunno
-  decreasing+ levelIFstructure {r2 = Unused} 0Priv = 0Priv
-  decreasing+ levelIFstructure {r2 = Public} PrivPub = PrivPub
-  decreasing+ levelIFstructure {r2 = Private} PrivPub = PrivPub
-  decreasing+ levelIFstructure {r2 = Dunno} PrivPub = PrivPub
-  decreasing+ levelIFstructure {r2 = Unused} PrivPub = PrivPub
-  decreasing+ levelIFstructure {r2 = Public} 0Dunno = 0Pub
-  decreasing+ levelIFstructure {r2 = Private} 0Dunno = 0Dunno
-  decreasing+ levelIFstructure {r2 = Dunno} 0Dunno = 0Dunno
-  decreasing+ levelIFstructure {r2 = Unused} 0Dunno = 0Dunno
-  decreasing+ levelIFstructure {r2 = Public} PrivDunno = PrivPub
-  decreasing+ levelIFstructure {r2 = Private} PrivDunno = PrivDunno
-  decreasing+ levelIFstructure {r2 = Dunno} PrivDunno = PrivDunno
-  decreasing+ levelIFstructure {r2 = Unused} PrivDunno = PrivDunno
-  decreasing+ levelIFstructure {r2 = Public} DunnoPub = DunnoPub
-  decreasing+ levelIFstructure {r2 = Private} DunnoPub = DunnoPub
-  decreasing+ levelIFstructure {r2 = Dunno} DunnoPub = DunnoPub
-  decreasing+ levelIFstructure {r2 = Unused} DunnoPub = DunnoPub
-  decreasing+ levelIFstructure {r2 = Public} (Refl Public) = Refl Public
-  decreasing+ levelIFstructure {r2 = Public} (Refl Private) = PrivPub
-  decreasing+ levelIFstructure {r2 = Public} (Refl Dunno) = DunnoPub
-  decreasing+ levelIFstructure {r2 = Public} (Refl Unused) = 0Pub
-  decreasing+ levelIFstructure {r2 = Private} (Refl Public) = Refl Public
-  decreasing+ levelIFstructure {r2 = Private} (Refl Private) = Refl Private
-  decreasing+ levelIFstructure {r2 = Private} (Refl Dunno) = Refl Dunno
-  decreasing+ levelIFstructure {r2 = Private} (Refl Unused) = 0Priv
-  decreasing+ levelIFstructure {r2 = Dunno} (Refl Public) = Refl Public
-  decreasing+ levelIFstructure {r2 = Dunno} (Refl Private) = PrivDunno
-  decreasing+ levelIFstructure {r2 = Dunno} (Refl Dunno) = Refl Dunno
-  decreasing+ levelIFstructure {r2 = Dunno} (Refl Unused) = 0Dunno
-  decreasing+ levelIFstructure {r2 = Unused} (Refl Public) = Refl Public
-  decreasing+ levelIFstructure {r2 = Unused} (Refl Private) = Refl Private
-  decreasing+ levelIFstructure {r2 = Unused} (Refl Dunno) = Refl Dunno
-  decreasing+ levelIFstructure {r2 = Unused} (Refl Unused) = Refl Unused
-
+  
   timesLeft levelIFstructure {Public} {Public} {Public} (Refl .Public) = Refl Public
   timesLeft levelIFstructure {Public} {Public} {Private} PrivPub = PrivPub
   timesLeft levelIFstructure {Public} {Public} {Dunno} DunnoPub = DunnoPub
