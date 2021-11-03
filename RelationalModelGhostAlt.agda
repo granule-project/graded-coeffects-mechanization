@@ -275,6 +275,8 @@ promoteUnary {_} {_} {e} inp v1 v1redux rewrite sym v1redux = boxInterpV e inp
 promoteUnaryPair : {{R : Semiring}} {A : Type} {r : grade} {e e' : Term} -> ([ A ]e e × [ A ]e e') -> ([ Box r A ]e (Promote e)) × ([ Box r A ]e (Promote e'))
 promoteUnaryPair {_} {_} {e} (u1 , u2) = (promoteUnary u1 , promoteUnary u2)
 
+promoteInj : {t1 t2 : Term} -> Promote t1 ≡ Promote t2 -> t1 ≡ t2
+promoteInj {t1} {.t1} refl = refl
 
 
 mutual
@@ -289,21 +291,21 @@ mutual
                -> (Γ , ghost) ⊢ e ∶ A
                -> r ≤ adv
                -> ⟦ r ·g (Γ , ghost) ⟧Γg adv γ1 γ2
-               -> [ Box ghost A ]e (Promote (multisubst γ1 e))
-               -> [ Box ghost A ]e (Promote (multisubst γ2 e))
-               -> ⟦ Box ghost A ⟧e adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
+               -> [ Box (r *R ghost) A ]e (Promote (multisubst γ1 e))
+               -> [ Box (r *R ghost) A ]e (Promote (multisubst γ2 e))
+               -> ⟦ Box (r *R ghost) A ⟧e adv (Promote (multisubst γ1 e)) (Promote (multisubst γ2 e))
     intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
       with ghost ≤d adv
     -- In the case that ¬(ghost ≤ adv) then this a simple repackaging of the unary interpretations
     intermediateSub {{R}} {{R'}} {sz} {Γ} {ghost} {r} {adv} {γ1} {γ2} {e} {A} typ pre context u1 u2 v1 v2 v1redux v2redux
       | no ¬p rewrite sym v1redux | sym v2redux =
-          boxInterpBiunobs ¬p (multisubst γ1 e) (multisubst γ2 e) (inner1 u1 , inner2 u2)
+          boxInterpBiunobs ? (multisubst γ1 e) (multisubst γ2 e) (inner1 u1 , inner2 u2)
             where
-              inner1 : {e : Term} -> [ Box ghost A ]e (Promote (multisubst γ1 e)) -> [ A ]e (multisubst γ1 e)
+              inner1 : {e : Term} -> [ Box (r *R ghost) A ]e (Promote (multisubst γ1 e)) -> [ A ]e (multisubst γ1 e)
               inner1 {e} u1 v1 v1reduxA with u1 (Promote (multisubst γ1 e)) refl
               ... | boxInterpV e' inner rewrite sym v1reduxA = inner (multiRedux (multisubst γ1 e)) refl
 
-              inner2 : {e : Term} -> [ Box ghost A ]e (Promote (multisubst γ2 e)) -> [ A ]e (multisubst γ2 e)
+              inner2 : {e : Term} -> [ Box (r *R ghost) A ]e (Promote (multisubst γ2 e)) -> [ A ]e (multisubst γ2 e)
               inner2 {e} u2 v1 v2reduxA with u2 (Promote (multisubst γ2 e)) refl
               ... | boxInterpV e' inner rewrite sym v2reduxA = inner (multiRedux (multisubst γ2 e)) refl
 
@@ -324,9 +326,9 @@ mutual
       | yes p | (var {Γ1 = Empty} {Γ2} pos) | a1 ∷ γ1' | a2 ∷ γ2' | visible pre2 (arg , _) | Ext ad (Grad A' r₁)
          rewrite sym v1redux | sym v2redux | isSimultaneous'' {a1} {γ1'} | isSimultaneous'' {a2} {γ2'} = conc
         where
-          conc : ⟦ Box ghost A ⟧v adv (Promote a1) (Promote a2)
+          conc : ⟦ Box (r *R ghost) A ⟧v adv (Promote a1) (Promote a2)
           conc with arg (Promote a1) (Promote a2) refl refl
-          ... | boxInterpBiobs _ .a1 .a2 argInner = boxInterpBiobs p a1 a2 argInner
+          ... | boxInterpBiobs _ .a1 .a2 argInner = boxInterpBiobs ? a1 a2 argInner
 
           ... | boxInterpBiunobs preN .a1 .a2 argInner = ⊥-elim (preN (transitive≤ rightUnit* pre))
             -- Previous version when we had equalities
@@ -527,9 +529,15 @@ mutual
              | trans (sym v2redux) (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) = ? -}
     
 
-    intermediateSub {Γ = Γ'} {g} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
+    intermediateSub {{R}} {{R'}} {Γ = Γ'} {g} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
      | yes p | (pr {_} {(Γ , g')} {(.Γ' , .g)} {s} {A} {t} typInner {ctxtPre}) with s ≤d adv
-    ... | no sobs = {!!}
+    ... | no sobs rewrite sym v1redux | sym v2redux  =
+      boxInterpBiobs ? (multisubst' zero γ1 (Promote t)) (multisubst' zero γ2 (Promote t)) (subst₂ (\h1 h2 -> ⟦ Box s A ⟧e adv h1 h2) (sym substPresProm) (sym substPresProm) inner)
+      where
+        inner : ⟦ Box s A ⟧e adv (Promote (multisubst γ1 t)) (Promote (multisubst γ2 t))
+        inner v1a v2a v1aredux v2aredux rewrite sym v1aredux | sym v2aredux =
+           boxInterpBiunobs sobs (multisubst' zero γ1 t) (multisubst' zero γ2 t) {!!}
+
     ... | yes sobs rewrite sym v1redux | sym v2redux = 
      {-
 
@@ -572,7 +580,7 @@ mutual
         p' = subst (\h -> h ≤ adv) (injPair2 ctxtPre) p
         
         -- ih : : ⟦ Box g' A ⟧e adv (Promote (multisubst γ1 t))  (Promote (multisubst γ2 t))
-        ih = intermediateSub typInner sobs contextForInnerAlt u1 u2
+        ih = intermediateSub typInner sobs contextForInnerAlt ? ?
 
         -- Can wrap
         ih' = boxInterpBiobs p' (Promote (multisubst γ1 t)) ((Promote (multisubst γ2 t))) ih
@@ -582,14 +590,19 @@ mutual
         --  -->  
 
         -- ih' = intermediateSub typInner ? inp u1 u2
---        bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt' -- <- bad, creates a loop I think?
---        bifAlt' = bifAlt (Promote (multisubst' zero γ1 (Promote t))) (Promote (multisubst' zero γ2 (Promote t))) refl refl
+        --bifAlt = biFundamentalTheoremGhost typ {γ1} {γ2} adv contextForInnerAlt' -- <- bad, creates a loop I think?
+        --bifAlt' = bifAlt (Promote (multisubst' zero γ1 (Promote t))) (Promote (multisubst' zero γ2 (Promote t))) refl refl
       in
-        {!!}
+        ?
        where
         convert : ⟦ Box g' A ⟧e adv (Promote (multisubst γ1 t)) (Promote (multisubst γ2 t))
-                -> ⟦ Box (g' *R s) (Box s A) ⟧e adv (Promote (multisubst γ1 t)) (Promote (multisubst γ2 t))
-        convert inp = ?
+                -> ⟦ Box (g' *R s) (Box s A) ⟧e adv (Promote (Promote (multisubst γ1 t))) (Promote (Promote (multisubst γ2 t)))
+        convert inp (Promote (Promote v1)) (Promote (Promote v2)) va1redux va2redux with inp (Promote v1) (Promote v2) (trans reduxProm (promoteInj (trans (sym reduxProm) va1redux))) (trans reduxProm (promoteInj (trans (sym reduxProm) va2redux)))
+        ... | boxInterpBiobs   pre .v1 .v2 inner = boxInterpBiobs (InformationFlowSemiring.timesLeft R' pre) (Promote v1) (Promote v2) inner'
+           where
+             inner' : ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
+             inner' v1' v2' v1redux' v2redux' rewrite sym v1redux' | sym v2redux' = boxInterpBiobs sobs v1 v2 inner
+        ... | boxInterpBiunobs pre t1 t2 inner = {!!}
  
         contextForInnerAlt : ⟦ s · Γ , s *R g' ⟧Γg adv γ1 γ2
         contextForInnerAlt rewrite injPair1 ctxtPre | injPair2 ctxtPre = contextElimTimesAlt pre inp
@@ -603,18 +616,18 @@ mutual
     
     intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2 v1 v2 v1redux v2redux
      | yes p | (unitConstr {_} {Γ}) rewrite sym v1redux | sym v2redux with 1R ≤d adv
-    ... | yes qp =  boxInterpBiobs qp (multisubst γ1 unit) (multisubst γ2 unit) (goal e1 e2)
+    ... | yes qp =  boxInterpBiobs ? (multisubst γ1 unit) (multisubst γ2 unit) (goal e1 e2)
         where
-          goal : [ Box ghost Unit ]e (Promote (multisubst γ1 unit))
-              -> [ Box ghost Unit ]e (Promote (multisubst γ2 unit))
+          goal : [ Box (r *R ghost) Unit ]e (Promote (multisubst γ1 unit))
+              -> [ Box (r *R ghost) Unit ]e (Promote (multisubst γ2 unit))
               -> ⟦ Unit ⟧e adv (multisubst γ1 unit) (multisubst γ2 unit)
           goal u1 u2 v3 v4 v3redux v4redux with u1 (Promote (multisubst γ1 unit)) reduxProm | u2 (Promote (multisubst γ2 unit)) reduxProm
           ... | boxInterpV .(multisubst' 0 γ1 unit) x1 | boxInterpV .(multisubst' 0 γ2 unit) x2 rewrite sym v3redux | sym v4redux | substPresUnit {γ1} {0} | substPresUnit {γ2} {0} | reduxUnit = unitInterpBi
 
-    ... | no gp = boxInterpBiunobs gp (multisubst γ1 unit) (multisubst γ2 unit) (goaleo {γ1} e1 , goaleo {γ2} e2)
+    ... | no gp = boxInterpBiunobs ? (multisubst γ1 unit) (multisubst γ2 unit) (goaleo {γ1} e1 , goaleo {γ2} e2)
        where
          goaleo : {γ :  List Term}
-              -> [ Box ghost Unit ]e (Promote (multisubst γ unit))
+              -> [ Box (r *R ghost) Unit ]e (Promote (multisubst γ unit))
               -> [ Unit ]e (multisubst γ unit)
          goaleo {γ} u1 v3 v3redux with u1 (Promote (multisubst γ unit)) reduxProm
          ... | boxInterpV _ _ rewrite sym v3redux | substPresUnit {γ} {0} | reduxUnit = unitInterpV 
@@ -867,9 +880,9 @@ mutual
             ihu1c'' = subst (\h -> [ Box ghost (Box r A) ]e (Promote h)) (sym (substPresProm {0} {γ1} {t})) ihu1c'
             ihu2c'' = subst (\h -> [ Box ghost (Box r A) ]e (Promote h)) (sym (substPresProm {0} {γ2} {t})) ihu2c'
 
-            out = intermediateSub {ghost = ghost} (pr {sz} {Γ , ghost'} {Γ' , ghost} {r} typ {prf}) eq contextInterpG6 ihu1c'' ihu2c''
-
-          in out (Promote (multisubst γ1 (Promote t))) (Promote (multisubst γ2 (Promote t))) (reduxProm {multisubst γ1 (Promote t)}) (reduxProm {multisubst γ2 (Promote t)})
+            out = intermediateSub {ghost = ghost} (pr {sz} {Γ , ghost'} {Γ' , ghost} {r} typ {prf}) {!!} contextInterpG6 ? ? -- ihu1c'' ihu2c''
+            goalOld = out (Promote (multisubst γ1 (Promote t))) (Promote (multisubst γ2 (Promote t))) (reduxProm {multisubst γ1 (Promote t)}) (reduxProm {multisubst γ2 (Promote t)})
+          in ?
 
 
     ... | no ¬req rewrite sym v1redux | sym v2redux = main
