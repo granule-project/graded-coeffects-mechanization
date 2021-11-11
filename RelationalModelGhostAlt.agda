@@ -517,7 +517,7 @@ mutual
           goalBiInner ctxt v3 v4 arg b1 b2 b1redux b2redux rewrite injPair1 pos = --  rewrite injPair1 pos2 | injPair2 pos2 =
            let
               ctxt' = ihcontextAlt {v3} {v4} {γ1} {γ2} arg ctxt
-              ctxt'' = subst (\h ->  ⟦ Ext (Γ1 ,, Γ2) (Grad A s) , h ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)) (injPair2 pos2) ctxt'
+              ctxt'' = subst₂ (\h' h ->  ⟦ h' , h ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)) {!!} (injPair2 pos2) ctxt'
               bih = biFundamentalTheoremGhost {{R}} {{R'}} {suc sz} {((Ext Γ1 (Grad A s)) ,, Γ2)} {g} {t} typBody {v3 ∷ γ1} {v4 ∷ γ2} adv {!ctxt''!}
            
            in {!!} {- outer v3 v4 arg v1' v2' v1redux' v2redux' 
@@ -555,7 +555,52 @@ mutual
     
 
     intermediateSub {{R}} {{R'}} {Γ = Γ'} {g} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
-     |  (pr {_} {(Γ , g')} {(.Γ' , .g)} {s} {A} {t} typInner {ctxtPre}) with s ≤d adv
+     |  (pr {_} {(Γ , g')} {(.Γ' , .g)} {s} {A} {t} typInner {ctxtPre}) rewrite sym v1redux | sym v2redux =
+     {-
+
+              (Γ , g') |- t : A
+     ----------------------------
+      (s . Γ , s . g') |- [t] : Box s A
+
+    ctxtPre  : (Γ' , g) ≡ ((s · Γ) , (R Semiring.*R s) g')
+
+    -}
+     let
+       ih = intermediateSub typInner {!!} {!ihContext!} {!!} {!!}
+     in 
+     {!!}
+      where
+        -- Γ = 
+        ihContext : ⟦ r ·g (Γ , g') ⟧Γg adv γ1 γ2
+        ihContext = {!!}
+
+        convert : {r₁ : grade} {x1 x2 : Term} {A : Type}
+               -> ⟦ Box ((R Semiring.*R (R Semiring.*R r) s) r₁) A ⟧e adv (Promote x1) (Promote x2)
+               -> ⟦ Box ((R Semiring.*R r) r₁) A ⟧e adv (Promote x1) (Promote x2)
+        convert {r₁} {x1} {x2} inp v1a v2a v1aredux v2aredux rewrite sym v1aredux | sym v2aredux with inp (Promote x1) (Promote x2) refl refl
+        ... | boxInterpBiobs pre0 .x1 .x2 inner   = boxInterpBiobs (InformationFlowSemiring.timesLeft R' pre) x1 x2 inner
+        -- 
+        ... | boxInterpBiunobs pre0 .x1 .x2 inner =
+          ⊥-elim (pre0 (InformationFlowSemiring.timesLeft R'
+                            (InformationFlowSemiring.timesLeft R' pre)))
+
+        peelΓ : {sz : ℕ} {Γ : Context sz} {γ1 γ2 : List Term}
+             -> ⟦ (r *R s) · Γ ⟧Γ adv γ1 γ2 -> ⟦ r · Γ ⟧Γ adv γ1 γ2
+        peelΓ {.0} {Empty} {[]} {[]} inp = tt
+        peelΓ {.(1 + _)} {Ext Γ (Grad A r)} {[]} {[]} ()
+        peelΓ {.(1 + _)} {Ext Γ (Grad A r)} {[]} {x2 ∷ γ2} ()
+        peelΓ {.(1 + _)} {Ext Γ (Grad A r)} {x1 ∷ γ1} {[]} ()
+        peelΓ {.(1 + _)} {Ext Γ (Grad A r₁)} {x1 ∷ γ1} {x2 ∷ γ2} (arg , rest) = convert arg , peelΓ {Γ = Γ} {γ1} {γ2} rest
+
+        peel : {sz : ℕ} {Γ : Context sz} {γ1 γ2 : List Term}
+             -> ⟦ (r · (s · Γ)) , r *R (s *R g') ⟧Γg adv γ1 γ2 -> ⟦ (r · Γ , r *R g') ⟧Γg adv γ1 γ2
+        peel {sz} {Γ} {γ1} {γ2} (invisible pre0 inner) = ⊥-elim (pre0 (InformationFlowSemiring.timesLeft R' pre))
+        peel {sz} {Γ} {γ1} {γ2} (visible pre0 inner)   = visible (InformationFlowSemiring.timesLeft R' pre) (peelΓ {!!})        
+
+        goal : ⟦ Box ((R Semiring.*R r) g) (Box s A) ⟧v adv (Promote (multisubst γ1 (Promote t))) (Promote (multisubst γ2 (Promote t)))
+        goal = boxInterpBiobs (timesLeft pre) (multisubst γ1 (Promote t)) (multisubst γ2 (Promote t)) {!!} 
+
+{- with s ≤d adv
     ... | no sobs rewrite sym v1redux | sym v2redux  =
       boxInterpBiobs (timesLeft pre) (multisubst' zero γ1 (Promote t)) (multisubst' zero γ2 (Promote t)) (subst₂ (\h1 h2 -> ⟦ Box s A ⟧e adv h1 h2) (sym substPresProm) (sym substPresProm) inner)
       where
@@ -572,20 +617,13 @@ mutual
      s . (Γ , g') |- [t] : Box s A
 
 
-    (Γ , g') |- t : A      g' <= g''
-    --------------------------------------
-     (Γ , g'') |- t : A
-
-
-
-
-    Goal ⟦ Box (s * g') (Box s A) ⟧
+    Goal ⟦ Box (r * (s * g')) (Box s A) ⟧
     -- g = s * g'
 
     we have an input context
     - [[ r * (s * (G , g')) ]]
     and unary interpretations
-    - [ Box (s * g') (Box s A) ]
+    - [ Box (r * (s * g')) (Box s A) ]
     and orderings
     - r ≤ adv
     - s * g' <= adv
@@ -638,7 +676,8 @@ mutual
         contextForInner : ⟦ Γ , g' ⟧Γg adv γ1 γ2
         contextForInner rewrite injPair1 ctxtPre | injPair2 ctxtPre
           = let inp' = contextElimTimesAlt pre inp in contextElimTimesAlt sobs inp'
-    
+-}
+
     intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2 v1 v2 v1redux v2redux
      | (unitConstr {_} {Γ}) rewrite sym v1redux | sym v2redux with 1R ≤d adv
     ... | yes qp =  boxInterpBiobs {!!} (multisubst γ1 unit) (multisubst γ2 unit) (goal e1 e2)
