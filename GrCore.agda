@@ -59,6 +59,13 @@ _·_ : {{R : Semiring}} {s : ℕ} -> grade -> Context s -> Context s
 r · Empty = Empty
 r · Ext g (Grad A s) = Ext (r · g) (Grad A (r *R s))
 
+actionAssoc : {{R : Semiring}} {sz : ℕ} {r s : grade}
+            -> (Γ : Context sz)
+            -> r · (s · Γ) ≡ (r *R s) · Γ
+actionAssoc Empty = refl
+actionAssoc {{R}} {suc sz} {r} {s} (Ext Γ (Grad A r'))
+ rewrite actionAssoc {{R}} {sz} {r} {s} Γ | assoc* {r} {s} {r'} = refl
+
 -- Context addition
 _++_ : {{R : Semiring}} {s : ℕ} -> Context s -> Context s -> Context s
 Empty ++ Empty = Empty

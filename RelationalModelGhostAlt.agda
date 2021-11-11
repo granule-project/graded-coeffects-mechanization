@@ -554,6 +554,7 @@ mutual
              | trans (sym v2redux) (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) = ? -}
     
 
+    -- #### pr
     intermediateSub {{R}} {{R'}} {Γ = Γ'} {g} {r} {adv} {γ1} {γ2} {.(Promote t)} {.(Box s A)} typ pre inp e1 e2 v1 v2 v1redux v2redux
      |  (pr {_} {(Γ , g')} {(.Γ' , .g)} {s} {A} {t} typInner {ctxtPre}) rewrite sym v1redux | sym v2redux =
      {-
@@ -566,13 +567,11 @@ mutual
 
     -}
      let
-       ih = intermediateSub typInner {!!} {!ihContext!} {!!} {!!}
+       ih = intermediateSub typInner pre ihContext {!!} {!!}
      in 
      {!!}
       where
         -- Γ = 
-        ihContext : ⟦ r ·g (Γ , g') ⟧Γg adv γ1 γ2
-        ihContext = {!!}
 
         convert : {r₁ : grade} {x1 x2 : Term} {A : Type}
                -> ⟦ Box ((R Semiring.*R (R Semiring.*R r) s) r₁) A ⟧e adv (Promote x1) (Promote x2)
@@ -595,7 +594,11 @@ mutual
         peel : {sz : ℕ} {Γ : Context sz} {γ1 γ2 : List Term}
              -> ⟦ (r · (s · Γ)) , r *R (s *R g') ⟧Γg adv γ1 γ2 -> ⟦ (r · Γ , r *R g') ⟧Γg adv γ1 γ2
         peel {sz} {Γ} {γ1} {γ2} (invisible pre0 inner) = ⊥-elim (pre0 (InformationFlowSemiring.timesLeft R' pre))
-        peel {sz} {Γ} {γ1} {γ2} (visible pre0 inner)   = visible (InformationFlowSemiring.timesLeft R' pre) (peelΓ {!!})        
+        peel {sz} {Γ} {γ1} {γ2} (visible pre0 inner)
+          = visible (InformationFlowSemiring.timesLeft R' pre) (peelΓ (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) (actionAssoc Γ) inner))
+
+        ihContext : ⟦ r ·g (Γ , g') ⟧Γg adv γ1 γ2
+        ihContext rewrite injPair1 ctxtPre | injPair2 ctxtPre = peel inp
 
         goal : ⟦ Box ((R Semiring.*R r) g) (Box s A) ⟧v adv (Promote (multisubst γ1 (Promote t))) (Promote (multisubst γ2 (Promote t)))
         goal = boxInterpBiobs (timesLeft pre) (multisubst γ1 (Promote t)) (multisubst γ2 (Promote t)) {!!} 
