@@ -444,8 +444,7 @@ mutual
 
     -- #### Abs case
     intermediateSub {{R}} {{R'}} {sz} {Γ = Γ} {ghost} {r} {adv} {γ1} {γ2}  {Abs .(Γlength Γ1 + 1) t} {FunTy A s B} typ pre context u1 u2 v1 v2 v1redux v2redux
-     | (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typBody {pos2}) rewrite sym v1redux | sym v2redux | injPair2 pos =
-         let
+     | (abs {_} {_} {Γbody  , gbody} {Γ1} {Γ2} {_} {.s} {g} {.A} {.B} {.t} pos typBody {pos2}) rewrite sym v1redux | sym v2redux =
          {-
 
          ((G1 ,, Grad A r ,, G2) , ghost) |- t : B
@@ -453,8 +452,7 @@ mutual
          (G1 ,, G2), ghost |- \x . t : A r -> B
 
          -}
-           ih = biFundamentalTheoremGhost typBody adv {!bodyContext!}
-         in {!!}
+         goal
         where
           
 
@@ -503,58 +501,71 @@ mutual
               (arg1 , arg2) = binaryImpliesUnary { Box s A } {Promote t} {Promote t'} {adv} inp
             in invisible pre' ((arg1 , inner1) , (arg2 , inner2))
 
-          bodyContext : ⟦ r ·g (Γbody , gbody) ⟧Γg adv γ1 γ2
+          bodyContext : {v3 v4 : Term}
+                     -> ⟦ Box s A ⟧e adv (Promote v3) (Promote v4)
+                     -> ⟦ r ·g (Γbody , gbody) ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)
           bodyContext = {!subst ? ? context!}
 
           bodyContextMain : ⟦ (Γ1 ,, Γ2) , ghost ⟧Γg adv γ1 γ2
-          bodyContextMain = {!!}
+          bodyContextMain rewrite injPair1 pos2 | injPair2 pos2 = contextElimTimesAlt pre context
 
-          -- pos2    : (Γ , ghost) ≡ ((Γ1 ,, Γ2) , g)
-          -- pos        : (Γbody , gbody) ≡ (Ext (Γ1 ,, Γ2) (Grad A s) , g)
+          unwrap2 : {v3 v4 : Term}
+                 -> ⟦ Box ((R Semiring.*R r) gbody) B ⟧e adv (Promote (multisubst (v3 ∷ γ1) t)) (Promote (multisubst (v4 ∷ γ2) t))
+                 -> ⟦ B ⟧e adv (multisubst (v3 ∷ γ1) t) (multisubst (v4 ∷ γ2) t)
+          unwrap2 inp with inp {!!} {!!}  refl refl
+          ... | boxInterpBiobs preA _ _ inner   = inner
+          ... | boxInterpBiunobs preA _ _ inner = ⊥-elim (preA (timesLeft pre))
 
+          goalUInner : { γ1 : List Term }
+                    -> [ Box ((R Semiring.*R r) ghost) (FunTy A s B) ]e (Promote (multisubst γ1 (Abs (Γlength Γ1 + 1) t)))
+                    -> (v : Term)
+                    -> [ Box s A ]e (Promote v)
+                    -> [ B ]e (syntacticSubst v (Γlength Γ1 + 1) (multisubst γ1 t))
+          goalUInner {γ1} fun v arg with fun (Promote (multisubst γ1 (Abs (Γlength Γ1 + 1) t))) refl
+          ... | boxInterpV _ inner with subst (\h -> [ FunTy A s B ]e h) (substPresAbs {_} {γ1} {Γlength Γ1 + 1} {t}) inner (Abs (Γlength Γ1 + 1) (multisubst γ1 t)) refl
+          ... | funInterpV _ body = body v arg
+
+          goalUInner' : {v3 : Term} {γ1 : List Term}
+           -> [ Box ((R Semiring.*R r) ghost) (FunTy A s B) ]e (Promote (multisubst γ1 (Abs (Γlength Γ1 + 1) t)))
+           -> [ Box s A ]e (Promote v3)
+           -> [ Box ((R Semiring.*R r) gbody) B ]e (Promote (multisubst (v3 ∷ γ1) t))
+          goalUInner' {v3} {γ1} fun arg v0 v0redux =
+            let result = goalUInner {γ1} fun v3 arg
+                result' = subst (\h -> [ B ]e h) ((substitutionResult {{R}} {_} {v3} {γ1} {t} {Γ1})) result
+            in subst (\h -> [ Box (r *R gbody) B ]v h) v0redux (boxInterpV (multisubst (v3 ∷ γ1) t) result')
+          
           goalBiInner : ⟦ (Γ1 ,, Γ2) , ghost ⟧Γg adv γ1 γ2
                   -> (v3 v4 : Term) →
                   ⟦ Box s A ⟧e adv (Promote v3) (Promote v4) →
                   ⟦ B ⟧e adv (syntacticSubst v3 (Γlength Γ1 + 1) (multisubst γ1 t)) (syntacticSubst v4 (Γlength Γ1 + 1) (multisubst γ2 t))
 
-          goalBiInner ctxt v3 v4 arg b1 b2 b1redux b2redux rewrite injPair1 pos = --  rewrite injPair1 pos2 | injPair2 pos2 =
+          goalBiInner ctxt v3 v4 arg b1 b2 b1redux b2redux rewrite sym b1redux | sym b2redux = --  rewrite injPair1 pos2 | injPair2 pos2 =
            let
-              ctxt' = ihcontextAlt {v3} {v4} {γ1} {γ2} arg ctxt
-              ctxt'' = subst₂ (\h' h ->  ⟦ h' , h ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)) {!!} (injPair2 pos2) ctxt'
-              bih = biFundamentalTheoremGhost {{R}} {{R'}} {suc sz} {((Ext Γ1 (Grad A s)) ,, Γ2)} {g} {t} typBody {v3 ∷ γ1} {v4 ∷ γ2} adv {!ctxt''!}
+              --ctxt' = ihcontextAlt {v3} {v4} {γ1} {γ2} arg ctxt
+              --ctxt2 = subst (\h -> ⟦ Ext (Γ1 ,, Γ2) (Grad A s) , h ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)) (injPair2 pos2) ctxt'
+
+              --typBody' = subst₂ (\h1 h2 -> (h1 , h2) ⊢ t ∶ B) (injPair1 pos) (injPair2 pos) typBody
+              --bih = biFundamentalTheoremGhost {{R}} {{R'}} {suc sz} {((Ext Γ1 (Grad A s)) ,, Γ2)} {g} {t} typBody' {v3 ∷ γ1} {v4 ∷ γ2} adv ctxt2
+
+              (uarg1 , uarg2) = binaryImpliesUnary {{R}} {Box s A} {Promote v3} {Promote v4} {adv} arg
+              iih = intermediateSub {γ1 = v3 ∷ γ1} {γ2 = v4 ∷ γ2} typBody pre (bodyContext {v3} {v4} arg) (goalUInner' {v3} {γ1} u1 uarg1) (goalUInner' {v4} {γ2} u2 uarg2)
+              goala = unwrap2 iih (multiRedux (multisubst (v3 ∷ γ1) t)) (multiRedux (multisubst (v4 ∷ γ2) t)) refl refl 
            
-           in {!!} {- outer v3 v4 arg v1' v2' v1redux' v2redux' 
-            with u1 (Abs (Γlength Γ1 + 1) (multisubst γ1 t)) ? -- (trans (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t})) reduxAbs)
-               | u2 (Abs (Γlength Γ1 + 1) (multisubst γ2 t)) ? -- (trans (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) reduxAbs)
-          ... | funInterpV bod1 innerFun1 | funInterpV bod2 innerFun2 =
-           let
-            ihcontext' = (ihcontextAlt {v3} {v4} {γ1} {γ2} arg outer)
-
-            {-
-            eq1 = trans (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t})) reduxAbs
-            innerFun1 = e1 (Abs (Γlength Γ1 + 1) (multisubst γ1 t)) eq1
-            eq2 = trans (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) reduxAbs
-            innerFun2 = e2 (Abs (Γlength Γ1 + 1) (multisubst γ2 t)) eq2
-            -}
-
-            (arg1 , arg2) = binaryImpliesUnary arg
-            -- pos : (Γbody , gbody) ≡ (Ext (Γ1 ,, Γ2) (Grad A s) , g)
-            -- goal 15 is ⟦ r ·g (Γbody , gbody) ⟧Γg adv _γ1_1729 _γ2_1730
-            context = ihcontextAlt2 {v3} {v4} {γ1} {γ2} {!   !} {!   !} -- arg outer
-            context' = subst (\ h -> ⟦ h ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)) {!    !} context
-            ih = intermediateSub typ pre {!!} (innerFun1 t arg1) (innerFun2 t arg2)
-           in ih v1' v2' {!   !} {!   !}  -}
+           in subst₂ (\h1 h2 -> ⟦ B ⟧v adv h1 h2) (cong multiRedux (sym (substitutionResult {{R}} {_} {v3} {γ1} {t} {Γ1})))
+                                                  (cong multiRedux (sym (substitutionResult {{R}} {_} {v4} {γ2} {t} {Γ1}))) goala
 
           goalAbs : ⟦ FunTy A s B ⟧e adv (multisubst γ1 (Abs (Γlength Γ1 + 1) t)) (multisubst γ2 (Abs (Γlength Γ1 + 1) t))
-          goalAbs v1a v2a v1aredux v2aredux rewrite
-              sym v1aredux | sym v2aredux
-            | substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t} | substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t} =
-              funInterpBi (multisubst' zero γ1 t) (multisubst' zero γ2 t) (goalBiInner bodyContextMain) {!!} {!!}
-
+          goalAbs v1a v2a v1aredux v2aredux =
+              let
+                goal = funInterpBi (multisubst' zero γ1 t) (multisubst' zero γ2 t) (goalBiInner bodyContextMain) (goalUInner {γ1} u1) (goalUInner {γ2} u2)
+              in
+                subst₂ (\h1 h2 -> ⟦ FunTy A s B ⟧v adv h1 h2)
+                  (trans (trans (sym reduxAbs) (cong multiRedux (sym (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t})))) v1aredux)
+                  (trans (trans (sym reduxAbs) (cong multiRedux (sym (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})))) v2aredux)
+                  goal
+                  
           goal : ⟦ Box ((R Semiring.*R r) ghost) (FunTy A s B) ⟧v adv (Promote (multisubst γ1 (Abs (Γlength Γ1 + 1) t))) (Promote (multisubst γ2 (Abs (Γlength Γ1 + 1) t)))
-          goal = boxInterpBiobs (timesLeft pre) (multisubst γ1 (Abs (Γlength Γ1 + 1) t)) (multisubst γ2 (Abs (Γlength Γ1 + 1) t)) goalAbs {- rewrite
-               trans (sym v1redux) (cong multiRedux (substPresAbs {0} {γ1} {Γlength Γ1 + 1} {t}))
-             | trans (sym v2redux) (cong multiRedux (substPresAbs {0} {γ2} {Γlength Γ1 + 1} {t})) = ? -}
+          goal = boxInterpBiobs (timesLeft pre) (multisubst γ1 (Abs (Γlength Γ1 + 1) t)) (multisubst γ2 (Abs (Γlength Γ1 + 1) t)) goalAbs
     
 
     -- #### pr
@@ -605,7 +616,7 @@ mutual
           subst₂ (\h1 h2 -> ⟦ (h1 , h2) ⟧Γg adv γ1 γ2) (actionAssoc Γ) (sym (assoc* {r} {s} {g'})) inp 
 
 
-    intermediateSub {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2 v1 v2 v1redux v2redux
+    intermediateSub {{R}} {{R'}} {_} {_} {ghost} {r} {adv} {γ1} {γ2} {.unit} {.Unit} type pre inp e1 e2 v1 v2 v1redux v2redux
      | (unitConstr {_} {Γ}) rewrite sym v1redux | sym v2redux with 1R ≤d adv
     ... | yes qp =  boxInterpBiobs (InformationFlowSemiring.timesLeft R' pre) (multisubst γ1 unit) (multisubst γ2 unit) (goal e1 e2)
         where
