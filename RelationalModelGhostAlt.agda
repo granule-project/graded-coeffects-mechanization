@@ -501,10 +501,23 @@ mutual
               (arg1 , arg2) = binaryImpliesUnary { Box s A } {Promote t} {Promote t'} {adv} inp
             in invisible pre' ((arg1 , inner1) , (arg2 , inner2))
 
+          upgrade : {v3 v4 : Term}
+                  -> ⟦ Box s A ⟧e adv (Promote v3) (Promote v4)
+                  -> ⟦ Box (r *R s) A ⟧e adv (Promote v3) (Promote v4)
+          upgrade {v3} {v4} inp vb1 vb2 vb1redux vb2redux
+           with inp vb1 vb2 vb1redux vb2redux
+          ... | boxInterpBiobs x t1 t2 inner   = boxInterpBiobs (timesLeftSym x) t1 t2 inner
+          ... | boxInterpBiunobs x t1 t2 inner with (r *R s) ≤d adv
+          ... | no ¬p = boxInterpBiunobs ¬p t1 t2 inner
+          ... | yes p = {!!} --hmph
+
           bodyContext : {v3 v4 : Term}
+                     -> ⟦ ((Γ1 ,, Γ2) , ghost) ⟧Γg adv γ1 γ2
                      -> ⟦ Box s A ⟧e adv (Promote v3) (Promote v4)
                      -> ⟦ r ·g (Γbody , gbody) ⟧Γg adv (v3 ∷ γ1) (v4 ∷ γ2)
-          bodyContext = {!subst ? ? context!}
+          bodyContext {v3} {v4} ctxt arg rewrite injPair1 pos | injPair2 pos with ctxt
+          ... | visible pre'  inner = visible (timesLeft pre) ({!!} , {!inner!})
+          ... | invisible pre' inner = {!!}
 
           bodyContextMain : ⟦ (Γ1 ,, Γ2) , ghost ⟧Γg adv γ1 γ2
           bodyContextMain rewrite injPair1 pos2 | injPair2 pos2 = contextElimTimesAlt pre context
@@ -548,7 +561,7 @@ mutual
               --bih = biFundamentalTheoremGhost {{R}} {{R'}} {suc sz} {((Ext Γ1 (Grad A s)) ,, Γ2)} {g} {t} typBody' {v3 ∷ γ1} {v4 ∷ γ2} adv ctxt2
 
               (uarg1 , uarg2) = binaryImpliesUnary {{R}} {Box s A} {Promote v3} {Promote v4} {adv} arg
-              iih = intermediateSub {γ1 = v3 ∷ γ1} {γ2 = v4 ∷ γ2} typBody pre (bodyContext {v3} {v4} arg) (goalUInner' {v3} {γ1} u1 uarg1) (goalUInner' {v4} {γ2} u2 uarg2)
+              iih = intermediateSub {γ1 = v3 ∷ γ1} {γ2 = v4 ∷ γ2} typBody pre (bodyContext {v3} {v4} ctxt arg) (goalUInner' {v3} {γ1} u1 uarg1) (goalUInner' {v4} {γ2} u2 uarg2)
               goala = unwrap2 iih (multiRedux (multisubst (v3 ∷ γ1) t)) (multiRedux (multisubst (v4 ∷ γ2) t)) refl refl 
            
            in subst₂ (\h1 h2 -> ⟦ B ⟧v adv h1 h2) (cong multiRedux (sym (substitutionResult {{R}} {_} {v3} {γ1} {t} {Γ1})))
