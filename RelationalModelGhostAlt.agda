@@ -899,12 +899,32 @@ mutual
     -- ## if
     biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {B} (if {_} {.Γ} {Γ1} {Γ2} {ghost} {.B} {t1} {t2} {t3} {r} {used} ty1 ty2 ty3 {pre})  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
-    -- ## constant true
-    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {.Unit} (unitConstr {s} {Γa}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
-      {!!}
+    -- ## constant unit
+    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {.Unit} (unitConstr {s} {Γa}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux
+      rewrite sym v1redux | sym v2redux with 1R ≤d adv
+    ... | yes p = boxInterpBiobs p (multisubst' zero γ1 unit) (multisubst' zero γ2 unit) unitInner
+      where
+        unitInner : ⟦ Unit ⟧e adv (multisubst γ1 unit) (multisubst γ2 unit)
+        unitInner v1u v2u v1uredux v2uredux rewrite sym v1uredux | sym v2uredux | substPresUnit {γ1} {0} | substPresUnit {γ2} {0} | valuesDontReduce unitValue = unitInterpBi
+    ... | no ¬p rewrite substPresUnit {γ1} {0} | substPresUnit {γ2} {0} =
+      boxInterpBiunobs ¬p unit unit (unitInnerU , unitInnerU)
+       where
+        unitInnerU : [ Unit ]e unit
+        unitInnerU v1u v1uredux rewrite sym v1uredux = unitInterpV
  
-    {- -- ## constants false
-    biFundamentalTheoremGhost {sz} {.(0R · Γ)} {.1R} {t} {.BoolTy} (trueConstr {s} {Γ}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+    -- ## constants true
+    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {.BoolTy} (trueConstr {s} {Γa}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux
+      rewrite sym v1redux | sym v2redux with 1R ≤d adv
+    ... | yes p = boxInterpBiobs p (multisubst' zero γ1 vtrue) (multisubst' zero γ2 vtrue) unitInner
+      where
+        unitInner : ⟦ BoolTy ⟧e adv (multisubst γ1 vtrue) (multisubst γ2 vtrue)
+        unitInner v1u v2u v1uredux v2uredux rewrite sym v1uredux | sym v2uredux | substPresTrue {γ1} {0} | substPresTrue {γ2} {0} | valuesDontReduce trueValue = boolInterpTrueBi
+    ... | no ¬p rewrite substPresTrue {γ1} {0} | substPresTrue {γ2} {0} =
+      boxInterpBiunobs ¬p vtrue vtrue (unitInnerU , unitInnerU)
+       where
+        unitInnerU : [ BoolTy ]e vtrue
+        unitInnerU v1u v1uredux rewrite sym v1uredux = boolInterpTrue
+ 
 
 {-
     -- ## constants false
