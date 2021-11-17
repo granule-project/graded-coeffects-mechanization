@@ -683,6 +683,7 @@ mutual
 
             -- another idea is `Box 1 τ` here
 
+    -- ## var
     biFundamentalTheoremGhost {_} {Γ} {ghost} {.(Var (Γlength Γ1))} {τ} (var {_} {_} {.τ} {(.Γ , .ghost)} {Γ1} {Γ2} pos) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux
      rewrite injPair1 pos | sym (injPair2 pos) with Γ1 | γ1 | γ2 | contextInterp
     -- var at head of context (key idea, without out loss of generality as position in context is irrelevant
@@ -711,6 +712,7 @@ mutual
     -- var generalisation here
     ... | _ | _ | _ | _ = {!!}
 
+    -- ## pr
     biFundamentalTheoremGhost {{R}} {{R'}} {sz} {Γ'} {ghost} {Promote t} {Box r A} (pr {sz} {Γ , ghost'} {Γ' , .ghost} {.r} typ {prf}) {γ1} {γ2} adv contextInterpG v1 v2 v1redux v2redux rewrite prf with r ≤d adv
     {-
       G, ghost g' |- t : A
@@ -862,6 +864,14 @@ mutual
                 ih2 = utheoremG {sz} {γ2} {Γ} {ghost'} {t} {A} typ uinterp2
               in boxInterpV (multisubst γ2 t) ih2
 
+    -- ## abs
+    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {.(FunTy A s B)} (abs {_} {_} {Γa} {Γ1} {Γ2} {.(Γ , ghost)} {s} {ghost'} {A} {B} {t'} pos ty {pre}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym v1redux | sym v2redux =
+      goal
+     where
+      goal : ⟦ Box ghost (FunTy A s B) ⟧v adv (Promote (multisubst γ1 (Abs (Γlength Γ1 + 1) t'))) (Promote (multisubst γ2 (Abs (Γlength Γ1 + 1) t')))
+      goal = {!!}
+
+
     -- ## app
     biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {B} (app {_} {.(Γ , ghost)} {Γ1} {Γ2} {s} {A} {.B} {t1} {t2} ty1 ty2 {pre})  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
@@ -875,7 +885,8 @@ mutual
     {- -- ## constants false
     biFundamentalTheoremGhost {sz} {.(0R · Γ)} {.1R} {t} {.BoolTy} (trueConstr {s} {Γ}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
-    -- ## constants unit
+{-
+    -- ## constants false
     biFundamentalTheoremGhost {sz} {.(0R · Γ)} {.1R} {t} {.BoolTy} (falseConstr {s} {Γ}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!} -}
 
 

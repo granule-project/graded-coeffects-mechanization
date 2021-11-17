@@ -592,7 +592,7 @@ biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1}
    let
     -- Reducability of `App t1 t2` implies that there exists a value `Abs var1 bod1` which can be obtained by
     -- reducing `t1` underneath context `γ1` and `Abs var2 bod2` underneath context `γ2`
-    ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst' 0 γ1 t1} {multisubst' 0 γ1 t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ1} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ1} typ1)
+    ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst' 0 γ1 t1} {multisubst' 0 γ1 t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ1} {t1} {t2}) {!v1redux!}) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ1} typ1)
     ((var2 , bod2) , (fun2redux , bodTy2)) = reduxTheoremAppTy {multisubst' 0 γ2 t1} {multisubst' 0 γ2 t2} {v2} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v2) (substPresApp {0} {γ2} {t1} {t2}) v2redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ2} typ1)
     fun1 = Abs var1 bod1
     fun2 = Abs var2 bod2
