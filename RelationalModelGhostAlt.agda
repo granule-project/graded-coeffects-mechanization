@@ -873,7 +873,28 @@ mutual
 
 
     -- ## app
-    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {B} (app {_} {.(Γ , ghost)} {Γ1} {Γ2} {s} {A} {.B} {t1} {t2} ty1 ty2 {pre})  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+    biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {B} (app {_} {.(Γ , ghost)} {Γ1 , g1} {Γ2 , g2} {s} {A} {.B} {t1} {t2} ty1 ty2 {pre})  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym v1redux | sym v2redux = 
+       goal
+      where
+       goal : ⟦ Box ghost B ⟧v adv (multiRedux (Promote (multisubst γ1 (App t1 t2)))) (multiRedux (Promote (multisubst γ2 (App t1 t2))))
+       goal rewrite valuesDontReduce (promoteValue (multisubst γ1 (App t1 t2)))
+                  | valuesDontReduce (promoteValue (multisubst γ2 (App t1 t2)))
+                  | injPair1 pre | injPair2 pre =
+         let ih1 = biFundamentalTheoremGhost ty1 adv (contextSplitLeft contextInterp) 
+             ih2 = biFundamentalTheoremGhost (pr ty2) adv (contextSplitRight contextInterp)
+
+             -- Reducability of `App t1 t2` implies that there exists a value `Abs var1 bod1` which can be obtained by
+             -- reducing `t1` underneath context `γ1` and `Abs var2 bod2` underneath context `γ2`
+             ((var1 , bod1) , (fun1redux , bodTy1)) =
+               reduxTheoremAppTyG {multisubst' 0 γ1 t1} {multisubst' 0 γ1 t2} {v1} {0} {Empty} {A} {B} {!!} {!!}
+             --(subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ1} {t1} {t2}) {!!}) {!!} -- (multiSubstTy {sz} {Γ1} {t1} {FunTy A s B} {γ1} ty1)
+             ((var2 , bod2) , (fun2redux , bodTy2)) =
+               reduxTheoremAppTyG {multisubst' 0 γ2 t1} {multisubst' 0 γ2 t2} {v2} {0} {Empty} {A} {B} {!!} {!!}
+             -- (subst (\r -> multiRedux r ≡ v2) (substPresApp {0} {γ2} {t1} {t2}) {!!}) {!!} -- (multiSubstTy {sz} {Γ1} {t1} {FunTy A s B} {γ2} ty1)
+             fun1 = Abs var1 bod1
+             fun2 = Abs var2 bod2
+
+         in {!!}
 
     -- ## if
     biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {B} (if {_} {.Γ} {Γ1} {Γ2} {ghost} {.B} {t1} {t2} {t3} {r} {used} ty1 ty2 ty3 {pre})  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
