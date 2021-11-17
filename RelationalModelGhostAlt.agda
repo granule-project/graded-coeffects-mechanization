@@ -934,20 +934,31 @@ mutual
     biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
 
-{-
-nonInterferenceGhostAlt :
+nonInterferenceGhost :
    {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}}
-   {e : Term} {r s : grade} {pre : r ≤ s} {nonEq : r ≢ s}
-        -> (Ext Empty (Grad BoolTy s) , r) ⊢ e ∶ Box r BoolTy
+   {A : Type} {e : Term} {r s g : grade} {pre : r ≤ s} {nonEq : r ≢ s}
+        -> (Ext Empty (Grad A s) , r) ⊢ e ∶ Box r BoolTy
 
         -> (v1 v2 : Term)
-        -> (Empty , default) ⊢ v1 ∶ BoolTy
-        -> (Empty , default) ⊢ v2 ∶ BoolTy
+        -> (Empty , g) ⊢ v1 ∶ A
+        -> (Empty , g) ⊢ v2 ∶ A
         -> Value v1
         -> Value v2
 
         -> multiRedux (syntacticSubst v1 0 e) == multiRedux (syntacticSubst v2 0 e)
 
-nonInterferenceGhostAlt {{R}} {{R'}} {{R''}} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 =
- {!!}
--}
+nonInterferenceGhost {{R}} {{R'}} {{R''}} {A} {e} {r} {s} {g} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
+    -- Apply fundamental binary theorem to v1
+    biFundamentalTheoremGhost {zero} {Empty} {r *R g} {Promote v1} {Box r A}
+                  (pr v1typing {refl}) {[]} {[]} r {!!} (Promote v1) (Promote v1)
+                  (trans substPresProm (valuesDontReduce (promoteValue v1))) 
+                  (trans substPresProm (valuesDontReduce (promoteValue v1))) 
+    -- Apply fundamental binary theorem to v2
+  | biFundamentalTheoremGhost {zero} {Empty} {r *R g} {Promote v2} {Box r A}
+                  (pr v2typing {refl})  {[]} {[]} r {!!} (Promote v2) (Promote v2)
+                  (trans substPresProm (valuesDontReduce (promoteValue v2))) 
+                  (trans substPresProm (valuesDontReduce (promoteValue v2)))
+... | boxInterpBiobs x .v1 .v1 x₁ | boxInterpBiobs x₂ .v2 .v2 x₃ = {!!}
+... | boxInterpBiobs x .v1 .v1 x₁ | boxInterpBiunobs x₂ .v2 .v2 x₃ = {!!}
+... | boxInterpBiunobs x .v1 .v1 x₁ | boxInterpBiobs x₂ .v2 .v2 x₃ = {!!}
+... | boxInterpBiunobs x .v1 .v1 x₁ | boxInterpBiunobs x₂ .v2 .v2 x₃ = {!!}
