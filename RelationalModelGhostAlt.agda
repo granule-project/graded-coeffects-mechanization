@@ -958,7 +958,7 @@ nonInterferenceGhost {{R}} {{R'}} {{R''}} {A} {e} {r} {s} {g} {pre} {nonEq} typi
                   (pr v2typing {refl})  {[]} {[]} r {!!} (Promote v2) (Promote v2)
                   (trans substPresProm (valuesDontReduce (promoteValue v2))) 
                   (trans substPresProm (valuesDontReduce (promoteValue v2)))
-... | boxInterpBiobs x .v1 .v1 x₁ | boxInterpBiobs x₂ .v2 .v2 x₃ = {!!}
-... | boxInterpBiobs x .v1 .v1 x₁ | boxInterpBiunobs x₂ .v2 .v2 x₃ = {!!}
-... | boxInterpBiunobs x .v1 .v1 x₁ | boxInterpBiobs x₂ .v2 .v2 x₃ = {!!}
-... | boxInterpBiunobs x .v1 .v1 x₁ | boxInterpBiunobs x₂ .v2 .v2 x₃ = {!!}
+... | boxInterpBiobs pre1 .v1 .v1 inner1 | boxInterpBiobs pre2 .v2 .v2 inner2 = {!!}
+... | boxInterpBiobs pre .v1 .v1 inner1 | boxInterpBiunobs pre2 .v2 .v2 inner2 = {!!}
+... | boxInterpBiunobs pre .v1 .v1 inner1 | boxInterpBiobs pre2 .v2 .v2 inner2 = {!!}
+... | boxInterpBiunobs pre .v1 .v1 inner1 | boxInterpBiunobs pre2 .v2 .v2 inner2 = {!!}
