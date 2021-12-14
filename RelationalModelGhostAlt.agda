@@ -933,6 +933,11 @@ mutual
 
     biFundamentalTheoremGhost {sz} {Γ} {ghost} {t} {A} typ {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
+emptyContext : {{ R : Semiring }} {r g : grade} -> ⟦ Empty , (r *R g) ⟧Γg r [] []
+emptyContext {r} {g} with (r *R g) ≤d r
+... | yes p = visible p tt
+... | no ¬p = invisible ¬p (tt , tt)
+
 
 nonInterferenceGhost :
    {{R : Semiring}} {{R' : NonInterferingSemiring R}} {{R'' : InformationFlowSemiring R}}
@@ -950,12 +955,12 @@ nonInterferenceGhost :
 nonInterferenceGhost {{R}} {{R'}} {{R''}} {A} {e} {r} {s} {g} {pre} {nonEq} typing v1 v2 v1typing v2typing isvalv1 isvalv2 with
     -- Apply fundamental binary theorem to v1
     biFundamentalTheoremGhost {zero} {Empty} {r *R g} {Promote v1} {Box r A}
-                  (pr v1typing {refl}) {[]} {[]} r {!!} (Promote v1) (Promote v1)
+                  (pr v1typing {refl}) {[]} {[]} r (emptyContext {r} {g}) (Promote v1) (Promote v1)
                   (trans substPresProm (valuesDontReduce (promoteValue v1))) 
                   (trans substPresProm (valuesDontReduce (promoteValue v1))) 
     -- Apply fundamental binary theorem to v2
   | biFundamentalTheoremGhost {zero} {Empty} {r *R g} {Promote v2} {Box r A}
-                  (pr v2typing {refl})  {[]} {[]} r {!!} (Promote v2) (Promote v2)
+                  (pr v2typing {refl})  {[]} {[]} r (emptyContext {r} {g}) (Promote v2) (Promote v2)
                   (trans substPresProm (valuesDontReduce (promoteValue v2))) 
                   (trans substPresProm (valuesDontReduce (promoteValue v2)))
 ... | boxInterpBiobs pre1 .v1 .v1 inner1 | boxInterpBiobs pre2 .v2 .v2 inner2 = {!!}
