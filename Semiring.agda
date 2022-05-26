@@ -133,6 +133,8 @@ record InformationFlowSemiring (R : Semiring) : Set₁ where
     assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
     idem#   : {r : grade R}     -> r # r        ≡ r
 
+    oneIsKey : {r : grade R}    ->  (1R R) # r  ≡ 1R R
+
     idem* : {r : grade R} -> _*R_ R r r ≡ r
     zeroIsTop : {r : grade R} -> _≤_ R r (0R R)
 
