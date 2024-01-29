@@ -12,6 +12,7 @@ open import Relation.Nullary.Decidable
 open import Data.Maybe
 open import Data.Maybe.Properties
 
+-- # Semiring definition
 record Semiring : Set₁ where
   field
     grade : Set
@@ -28,16 +29,16 @@ record Semiring : Set₁ where
     rightUnit+  : {r : grade} -> r +R 0R ≡ r
     comm+       : {r s : grade} -> r +R s ≡ s +R r
 
-    leftUnit*    : {r : grade} -> (1R *R r) ≤ r
-    rightUnit*   : {r : grade} -> (r *R 1R) ≤ r
-    leftAbsorb   : {r : grade} -> (0R *R r) ≤ 0R
-    rightAbsorb  : {r : grade} -> (r *R 0R) ≤ 0R
+    leftUnit*    : {r : grade} -> (1R *R r) ≡ r
+    rightUnit*   : {r : grade} -> (r *R 1R) ≡ r
+    leftAbsorb   : {r : grade} -> (0R *R r) ≡ 0R
+    rightAbsorb  : {r : grade} -> (r *R 0R) ≡ 0R
 
     assoc*     : {r s t : grade} -> (r *R s) *R t ≡ r *R (s *R t)
     assoc+     : {r s t : grade} -> (r +R s) +R t ≡ r +R (s +R t)
 
-    distrib1    : {r s t : grade} -> (r *R (s +R t)) ≤ ((r *R s) +R (r *R t))
-    distrib2    : {r s t : grade} -> ((r +R s) *R t) ≤ ((r *R t) +R (s *R t))
+    distrib1    : {r s t : grade} -> (r *R (s +R t)) ≡ ((r *R s) +R (r *R t))
+    distrib2    : {r s t : grade} -> ((r +R s) *R t) ≡ ((r *R t) +R (s *R t))
 
     monotone*  : {r1 r2 s1 s2 : grade} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 *R s1) ≤ (r2 *R s2)
     monotone+  : {r1 r2 s1 s2 : grade} -> r1 ≤ r2 -> s1 ≤ s2 -> (r1 +R s1) ≤ (r2 +R s2)
@@ -45,7 +46,10 @@ record Semiring : Set₁ where
     reflexive≤ : {r : grade} -> r ≤ r
     transitive≤ : {r s t : grade} -> r ≤ s -> s ≤ t -> r ≤ t
 
-open Semiring
+open Semiring {{...}}
+
+≡-to-≤ : {{ R : Semiring }} {r s : grade} -> r ≡ s -> r ≤ s
+≡-to-≤ refl = reflexive≤
 
 {- May not need this anymore
 partialJoin : {{ R : Semiring }} -> grade R -> grade R -> Maybe (grade R)
@@ -79,97 +83,48 @@ partialJoinIdem {{R}} {r} with _≤d_ R r r
 ... | no ¬p = ⊥-elim (¬p (reflexive≤ R {r}))
 -}
 
-record NonInterferingSemiring (R : Semiring) : Set₁ where
+-- # Characterisation of what we need just to get non-interference
+record NonInterferingSemiring {{R : Semiring}} : Set₁ where
   field
-    oneIsBottom : {r : grade R} -> _≤_ R (1R R) r
-    zeroIsTop   : {r : grade R} -> _≤_ R r (0R R)
+    oneIsBottom : {r : grade} -> 1R ≤ r
+    zeroIsTop   : {r : grade} -> r ≤ 0R
 
-    antisymmetry : {r s : grade R} -> _≤_ R r s -> _≤_ R s r -> r ≡ s
+    antisymmetry : {r s : grade} -> r ≤ s -> s ≤ r -> r ≡ s
 
-    idem* : {r : grade R} -> _*R_ R r r ≡ r
+    idem* : {r : grade} -> r *R r ≡ r
 
 open NonInterferingSemiring
 
--- # Some derived properties
+-- ## Some derived properties
 
-decreasing+ : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }} {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
+decreasing+ : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }} {r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s)
 decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre =
-  subst (\h -> (_≤_ R (_+R_ R r1 r2) h)) (rightUnit+ R) (monotone+ R pre (zeroIsTop R'))
+  subst (\h -> ((r1 +R r2) ≤ h)) (rightUnit+) (monotone+ pre (zeroIsTop R'))
 
-propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring R }}
-                       {r s adv : grade R}
-                     -> ¬ (_≤_ R (_*R_ R r s) adv)
-                     ->   (_≤_ R r adv)
-                     -> ¬ (_≤_ R s adv)
+-- TODO: is zeroIsTop deriveable from decreaseing +?
+
+
+propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring }}
+                       {r s adv : grade}
+                     -> ¬ ((r *R s) ≤ adv)
+                     ->   (r ≤ adv)
+                     -> ¬ (s ≤ adv)
 propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
   ngoal
-    (subst (\h -> (_≤_ R (_*R_ R r s) h)) (idem* R') (monotone* R pre1 pre2))
+    (subst (\h -> ((r *R s) ≤ h)) (idem* R') (monotone* pre1 pre2))
 
 
-decreasing+Inv : {R : Semiring} {R' : NonInterferingSemiring R}
-              {r1 r2 s : grade R} -> ¬ (_≤_ R (_+R_ R r1 r2) s) -> ¬ (_≤_ R r1 s)
-decreasing+Inv {R} {R'} {r1} {r2} {s} pre pre0 =
+decreasing+Inv : {{ R : Semiring }} {{ R' : NonInterferingSemiring  }}
+              {r1 r2 s : grade} -> ¬ ((r1 +R r2) ≤ s) -> ¬ (r1 ≤ s)
+decreasing+Inv {{R}} {{R'}} {r1} {r2} {s} pre pre0 =
   pre (decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre0)
 
-decreasing+Inv' : {R : Semiring} {R' : NonInterferingSemiring R}
-                -> {r1 r2 s : grade R}
-                -> ¬ (_≤_ R (_+R_ R r1 r2)  s) -> ¬ (_≤_ R r2 s)
-decreasing+Inv' {R} {R'} {r1} {r2} {s} pre =
-  decreasing+Inv {R} {R'} {r2} {r1} {s} (\x -> pre (subst (\h -> _≤_ R h s) (comm+ R {r2} {r1}) x))
+decreasing+Inv' : {{ R : Semiring }} {{R' : NonInterferingSemiring }}
+                -> {r1 r2 s : grade}
+                -> ¬ ((r1 +R r2) ≤ s) -> ¬ (r2 ≤ s)
+decreasing+Inv' {{R}} {{R'}} {r1} {r2} {s} pre =
+  decreasing+Inv {{R}} {{R'}} {r2} {r1} {s} (\x -> pre (subst (\h -> h ≤ s) (comm+ {r2} {r1}) x))
 
 -- Derived alternate characterisation of antisymmetry
-antisymmetryAlt : {R : Semiring} {R' : NonInterferingSemiring R} {r s : grade R} -> _≤_ R r s -> r ≢ s -> ¬ (_≤_ R s r)
-antisymmetryAlt {R} {R'} {r} {s} pre1 pre2 pre3 = ⊥-elim (pre2 (antisymmetry R' {r} {s} pre1 pre3))
-
-record InformationFlowSemiring (R : Semiring) : Set₁ where
-  field
-    default : grade R
-    _#_     : grade R -> grade R -> grade R
-
-    -- this is a possibility for type preservation from a few of my sketches
-    --substProp : {r : grade R} -> _+R_ R (1R R) r ≡ (1R R) # r
-
-    comm#   : {r s : grade R}   -> r # s        ≡ s # r
-    assoc#  : {r s t : grade R} -> (r # s) # t  ≡ r # (s # t)
-    idem#   : {r : grade R}     -> r # r        ≡ r
-
-    oneIsKey : {r : grade R}    ->  (1R R) # r  ≡ 1R R
-
-    idem* : {r : grade R} -> _*R_ R r r ≡ r
-    zeroIsTop : {r : grade R} -> _≤_ R r (0R R)
-
-    timesLeft : {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_*R_ R r1 r2) s)
-    -- distributivity rules with other operators?
-    -- substitution theorem will tell us if we need these
-
-
-    com* : {r s : grade R} -> _*R_ R r s ≡ _*R_ R s r
-
-    -- 0 * r <= r
-    -- r * 0 <= r
-    leftAbsorbSub   : {r : grade R} -> _≤_ R (_*R_ R (0R R) r) (0R R)
-    rightAbsorbSub  : {r : grade R} -> _≤_ R (_*R_ R r (0R R)) (0R R)
-
-open InformationFlowSemiring
-
-timesLeftSym : {{R : Semiring}} {{R' : InformationFlowSemiring R}}
-             -> {r1 r2 s : grade R}
-             -> (_≤_ R r1 s) -> (_≤_ R (_*R_ R r2 r1) s)
-timesLeftSym {{R}} {{R'}} {r1} {r2} {s} pre = subst (\h -> _≤_ R h s) (com* R') (timesLeft R' pre)
-
--- # Some more derived properties
-decreasing+NF : {{ R : Semiring }} {{ R' : InformationFlowSemiring R }} {r1 r2 s : grade R} -> (_≤_ R r1 s) -> (_≤_ R (_+R_ R r1 r2) s)
-decreasing+NF {{R}} {{R'}} {r1} {r2} {s} pre =
-  subst (\h -> (_≤_ R (_+R_ R r1 r2) h)) (rightUnit+ R) (monotone+ R pre (zeroIsTop R'))
-
-decreasing+NFSym : {{R : Semiring}} {{R' : InformationFlowSemiring R}} {r1 r2 s : grade R} -> (_≤_ R r2 s) -> (_≤_ R (_+R_ R r1 r2) s)
-decreasing+NFSym {{R}} {{R'}} {r1} {r2} {s} pre rewrite comm+ R {r1} {r2} = decreasing+NF pre
-
-propInvTimesMonoAsym : {{ R : Semiring }} {{ R' : InformationFlowSemiring R }}
-                       {r s adv : grade R}
-                     -> ¬ (_≤_ R (_*R_ R r s) adv)
-                     ->   (_≤_ R r adv)
-                     -> ¬ (_≤_ R s adv)
-propInvTimesMonoAsym {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
-  ngoal
-    (subst (\h -> (_≤_ R (_*R_ R r s) h)) (idem* R') (monotone* R pre1 pre2))
+antisymmetryAlt : {{R : Semiring}} {{R' : NonInterferingSemiring}} {r s : grade} -> r ≤ s -> r ≢ s -> ¬ (s ≤ r)
+antisymmetryAlt {{R}} {{R'}} {r} {s} pre1 pre2 pre3 = ⊥-elim (pre2 (antisymmetry R' {r} {s} pre1 pre3))
