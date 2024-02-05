@@ -17,8 +17,6 @@ open import Data.Sum
 
 open import Semiring
 
-open NonInterferingSemiring {{...}} public
-
 open import OperationalModel
 
 -- Based on Vineet and Deepak's paper model but without

@@ -5,6 +5,7 @@ module GrCore where
 
 open import Data.Product
 open import Data.Sum
+open import Data.Nat.Properties
 open import Data.Nat hiding (_≤_)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
@@ -56,10 +57,10 @@ injExt2 refl = refl
 
 -- Disjoint context concatentation
 _,,_ : {{R : Semiring}} {s t : ℕ} -> Context s -> Context t -> Context (s + t)
-Empty      ,, G2 = G2
-(Ext G1 a) ,, G2 = Ext (G1 ,, G2) a
---G1 ,, Empty = G1
---G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
+_,,_ {s} G1 Empty rewrite +-identityʳ s = G1
+_,,_ {s} {n} G1 (Ext G2 a) rewrite +-suc s n =
+  let t = Ext (G1 ,, G2) a in {!!}
+  -- TODO Vilem^^^
 
 -- Context scalar multiplication
 _·_ : {{R : Semiring}} {s : ℕ} -> grade -> Context s -> Context s
@@ -74,9 +75,9 @@ Empty ++ Empty = Empty
 -- Context scalar multiplication distributes with context contactentation
 multConcatDistr : {{R : Semiring}} {s t : ℕ} {r : grade} {Γ1 : Context s} {Γ2 : Context t} ->
                   r · (Γ1 ,, Γ2) ≡ ((r · Γ1) ,, (r · Γ2))
-multConcatDistr ⦃ R ⦄ {.0} {t} {r} {Empty} {Γ2} = refl
+multConcatDistr ⦃ R ⦄ {.0} {t} {r} {Empty} {Γ2} = {!!}
 multConcatDistr ⦃ R ⦄ {suc n} {t} {r} {Ext Γ1 (Grad A s)} {Γ2} 
-  rewrite multConcatDistr {n} {t} {r} {Γ1} {Γ2} = refl
+  rewrite multConcatDistr {n} {t} {r} {Γ1} {Γ2} = {!!}
 
 postulate -- TODO: Vilem prove these
   -- keeps things simple with the above definition
@@ -93,15 +94,15 @@ postulate -- TODO: Vilem prove these
 -- # Term calculus
 
 data Term : Set where
-  Var : ℕ -> Term
-  App : Term -> Term -> Term
-  Abs : ℕ -> Term -> Term
-  unit : Term
+  Var     : ℕ -> Term
+  App     : Term -> Term -> Term
+  Abs     : ℕ -> Term -> Term
+  unit    : Term
   Promote : Term -> Term
   -- handling bools (TODO: generalise to sums)
-  vtrue : Term
-  vfalse : Term
-  If : Term -> Term -> Term -> Term
+  vtrue   : Term
+  vfalse  : Term
+  If      : Term -> Term -> Term -> Term
 
 
 syntacticSubst : Term -> ℕ -> Term -> Term
@@ -230,7 +231,7 @@ data Value : Term -> Set where
 -- TODO: Vilem
 substitution : {{R : Semiring}} {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : grade} {A B : Type} {t1 t2 : Term}
       -> Γ ⊢ t1 ∶ B
-      -> (pos : Γ ≡ ((Ext (0R · Γ1) (Grad A r)) ,, (0R · Γ3)))
+      -> (pos : Γ ≡ ((Ext Γ1 (Grad A r)) ,, Γ3))
       -> Γ2 ⊢ t2 ∶ A
       -> ((Γ1 ,, Γ3) ++ (r · Γ2)) ⊢ syntacticSubst t2 (Γlength Γ1) t1 ∶ B
 
@@ -248,7 +249,16 @@ redux : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
 
 redux {{_}} {s} {Γ} {A} {Var _} (var pos) = inj₁ varValue
 
-redux {{_}} {s} {Γ} {A} {.(App (Abs _ _) _)} (app (abs pos deriv) deriv₁) = {!!}
+-- Beta
+--
+--        deriv1 =  Γ₁ ⊢ t ∶ A
+--        Γ₁ = Ext (Γ1 ,, Γ2) (Grad A₁ r)
+--      --------------------------
+--            (\× . t) t2
+-- 
+redux {{_}} {s} {Γ} {A} {.(App (Abs _ _) _)} (app {t2 = t2} (abs {t = t} pos deriv1) deriv2 {ctxtPrf}) rewrite ctxtPrf  =
+  let derive' = substitution deriv1 pos deriv2
+  in inj₂ (syntacticSubst t2 {!!} t , {!derive'!})
 
 redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) with redux deriv1
 redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 with redux deriv2

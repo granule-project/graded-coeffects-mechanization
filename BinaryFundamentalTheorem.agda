@@ -21,6 +21,8 @@ open import OperationalModel
 open import RelationalModel
 open import UnaryFundamentalTheorem
 
+open NonInterferingSemiring {{...}}
+
 -------------------------------
 -- Binary fundamental theorem
 
