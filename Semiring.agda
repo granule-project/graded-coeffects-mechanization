@@ -97,7 +97,8 @@ open NonInterferingSemiring
 
 -- ## Some derived properties
 
-decreasing+ : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }} {r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s)
+decreasing+ : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
+             {r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s)
 decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre =
   subst (\h -> ((r1 +R r2) ≤ h)) (rightUnit+) (monotone+ pre (zeroIsTop R'))
 
