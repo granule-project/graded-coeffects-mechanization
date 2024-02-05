@@ -1,5 +1,5 @@
 
-{-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --allow-unsolved-metas --rewriting #-}
 
 module GrCore where
 
@@ -55,12 +55,15 @@ injExt2 refl = refl
 
 -- # Context operations
 
+open import Agda.Builtin.Equality
+open import Agda.Builtin.Equality.Rewrite
+
+{-# REWRITE +-identityʳ +-suc #-}
+
 -- Disjoint context concatentation
 _,,_ : {{R : Semiring}} {s t : ℕ} -> Context s -> Context t -> Context (s + t)
-_,,_ {s} G1 Empty rewrite +-identityʳ s = G1
-_,,_ {s} {n} G1 (Ext G2 a) rewrite +-suc s n =
-  let t = Ext (G1 ,, G2) a in {!!}
-  -- TODO Vilem^^^
+G1 ,, Empty = G1
+G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
 
 -- Context scalar multiplication
 _·_ : {{R : Semiring}} {s : ℕ} -> grade -> Context s -> Context s
@@ -76,7 +79,7 @@ Empty ++ Empty = Empty
 multConcatDistr : {{R : Semiring}} {s t : ℕ} {r : grade} {Γ1 : Context s} {Γ2 : Context t} ->
                   r · (Γ1 ,, Γ2) ≡ ((r · Γ1) ,, (r · Γ2))
 multConcatDistr ⦃ R ⦄ {.0} {t} {r} {Empty} {Γ2} = {!!}
-multConcatDistr ⦃ R ⦄ {suc n} {t} {r} {Ext Γ1 (Grad A s)} {Γ2} 
+multConcatDistr ⦃ R ⦄ {suc n} {t} {r} {Ext Γ1 (Grad A s)} {Γ2}
   rewrite multConcatDistr {n} {t} {r} {Γ1} {Γ2} = {!!}
 
 postulate -- TODO: Vilem prove these
@@ -255,7 +258,7 @@ redux {{_}} {s} {Γ} {A} {Var _} (var pos) = inj₁ varValue
 --        Γ₁ = Ext (Γ1 ,, Γ2) (Grad A₁ r)
 --      --------------------------
 --            (\× . t) t2
--- 
+--
 redux {{_}} {s} {Γ} {A} {.(App (Abs _ _) _)} (app {t2 = t2} (abs {t = t} pos deriv1) deriv2 {ctxtPrf}) rewrite ctxtPrf  =
   let derive' = substitution deriv1 pos deriv2
   in inj₂ (syntacticSubst t2 {!!} t , {!derive'!})
@@ -311,7 +314,7 @@ multiReduxProducesValues {A} {If t t₁ t₂} typing = {!!}
 postulate
   multReduxCongruence : {t1 v : Term} {C : Term -> Term}
                    -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
-  
+
   preservation : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
              -> Γ ⊢ t ∶ A
              -> Γ ⊢ multiRedux t ∶ A
@@ -319,11 +322,11 @@ postulate
   valuesDontReduce : {t : Term} -> Value t -> multiRedux t ≡ t
 
   determinism : {t t1 t2 : Term}
-             -> multiRedux t ≡ t1 
+             -> multiRedux t ≡ t1
              -> multiRedux t ≡ t2
              -> t1 ≡ t2
 
--- # Equality 
+-- # Equality
 
 data FullBetaEq : Term -> Term -> Set where
   VarEq     : {x : ℕ} -> FullBetaEq (Var x) (Var x)
