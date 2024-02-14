@@ -88,7 +88,12 @@ postulate -- TODO: Vilem prove these
             -> (Ext Γ1 (Grad A r1)) ++ (Ext Γ2 (Grad A' r2)) ≡ Γ -> A ≡ A'
 
   absorptionContext : {{R : Semiring}} {s : ℕ} {Γ Γ' : Context s} -> (0R · Γ) ++ Γ' ≡ Γ'
+  -- absorptionContext = ?
+
   leftUnitContext : {{R : Semiring}} {s : ℕ} {Γ : Context s} -> 1R · Γ ≡ Γ
+leftUnitContext {_} {Empty} = refl
+leftUnitContext {suc s} {Γ = Ext G (Grad A r)} rewrite leftUnitContext {s} {G} =
+  cong (λ r → Ext G (Grad A r)) leftUnit*
 
 Γlength : {{R : Semiring}} {s : ℕ} -> Context s -> ℕ
 Γlength Empty = 0
@@ -326,7 +331,7 @@ postulate
              -> multiRedux t ≡ t2
              -> t1 ≡ t2
 
--- # Equality
+-- # Equality
 
 data FullBetaEq : Term -> Term -> Set where
   VarEq     : {x : ℕ} -> FullBetaEq (Var x) (Var x)
