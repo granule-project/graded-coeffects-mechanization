@@ -38,7 +38,7 @@ data Assumption {{R : Semiring}} : Set where
 
 data Context {{R : Semiring}} : ℕ -> Set where
   Empty   : Context 0
-  Ext     : {n : ℕ} -> Context n -> Assumption -> Context (1 + n)
+  Ext     : {s : ℕ} -> Context s -> Assumption -> Context (1 + s)
 
 -- # Some properties of contexts
 
@@ -123,17 +123,17 @@ leftUnitContext {suc s} {Γ = Ext G (Grad A r)} rewrite leftUnitContext {s} {G} 
 -- # Term calculus
 
 data Term : ℕ -> Set where
-  Var     : {n : ℕ} -> Fin n -> Term n
-  App     : {n : ℕ} -> Term n -> Term n -> Term n
-  Abs     : {n : ℕ} -> Fin (suc n) -> Term (suc n) -> Term n
-  unit    : {n : ℕ} -> Term n
-  Promote : {n : ℕ} -> Term n -> Term n
+  Var     : {s : ℕ} -> Fin s -> Term s
+  App     : {s : ℕ} -> Term s -> Term s -> Term s
+  Abs     : {s : ℕ} -> Fin (suc s) -> Term (suc s) -> Term s
+  unit    : {s : ℕ} -> Term s
+  Promote : {s : ℕ} -> Term s -> Term s
   -- handling bools (TODO: generalise to sums)
-  vtrue   : {n : ℕ} -> Term n
-  vfalse  : {n : ℕ} -> Term n
-  If      : {n : ℕ} -> Term n -> Term n -> Term n -> Term n
+  vtrue   : {s : ℕ} -> Term s
+  vfalse  : {s : ℕ} -> Term s
+  If      : {s : ℕ} -> Term s -> Term s -> Term s -> Term s
 
-raiseTerm : {n : ℕ} -> Term n -> Term (suc n)
+raiseTerm : {s : ℕ} -> Term s -> Term (suc s)
 raiseTerm (Var x) = Var (raise 1 x)
 raiseTerm (App t t₁) = App (raiseTerm t) (raiseTerm t₁)
 raiseTerm (Abs x t) = Abs (raise 1 x) (raiseTerm t)
@@ -143,7 +143,7 @@ raiseTerm vtrue = vtrue
 raiseTerm vfalse = vfalse
 raiseTerm (If t t₁ t₂) = If (raiseTerm t) (raiseTerm t₁) (raiseTerm t₂)
 
-syntacticSubst : {n : ℕ} -> Term n -> Fin (suc n) -> Term (suc n) -> Term (suc n)
+syntacticSubst : {s : ℕ} -> Term s -> Fin (suc s) -> Term (suc s) -> Term (suc s)
 syntacticSubst t x (Var y) with x ≟ y
 ... | yes p = raiseTerm t
 ... | no ¬p = Var y
@@ -157,13 +157,13 @@ syntacticSubst t x vtrue = vtrue
 syntacticSubst t x vfalse = vfalse
 syntacticSubst t x (If t1 t2 t3) = If (syntacticSubst t x t1) (syntacticSubst t x t2) (syntacticSubst t x t3)
 
-discrimBool : {n : ℕ} -> vtrue {n} ≡ vfalse {n} -> ⊥
+discrimBool : {s : ℕ} -> vtrue {s} ≡ vfalse {s} -> ⊥
 discrimBool ()
 
-absInj2 : {n : ℕ} {x y : Fin (suc n)} {e1 e2 : Term (suc n)} -> Abs x e1 ≡ Abs y e2 -> e1 ≡ e2
+absInj2 : {s : ℕ} {x y : Fin (suc s)} {e1 e2 : Term (suc s)} -> Abs x e1 ≡ Abs y e2 -> e1 ≡ e2
 absInj2 refl = refl
 
-absInj1 : {n : ℕ} {x y : Fin (suc n)} {e1 e2 : Term (suc n)} -> Abs x e1 ≡ Abs y e2 -> x ≡ y
+absInj1 : {s : ℕ} {x y : Fin (suc s)} {e1 e2 : Term (suc s)} -> Abs x e1 ≡ Abs y e2 -> x ≡ y
 absInj1 refl = refl
 
 -- lookupCtx : {{R : Semiring}} -> {s : ℕ} -> (Γ : Context s) -> Fin s -> Assumption
@@ -173,6 +173,7 @@ absInj1 refl = refl
 -------------------------------------------------
 -- # Typing
 
+-- raise on the right
 raiseR : ∀ {m} n → Fin m → Fin (m + n)
 raiseR {m} n i rewrite +-comm m n = raise n i
 
@@ -205,71 +206,71 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
           Γ ⊢ App t1 t2 ∶ B
 
 
---   abs : {s1 s2 : ℕ}
---         { Γ : Context ((1 + s1) + s2) }
---         { Γ1 : Context s1 }
---         { Γ2 : Context s2 }
---         { Γ' : Context (s1 + s2) }
---         { r : grade }
---         { A B : Type }
---         { t : Term }
+  abs : {s1 s2 : ℕ}
+        { Γ : Context (s1 + 1 + s2) }
+        { Γ1 : Context s1 }
+        { Γ2 : Context s2 }
+        { Γ' : Context (s1 + s2) }
+        { r : grade }
+        { A B : Type }
+        { t : Term (s1 + 1 + s2) }
 
---       -> (pos : Γ ≡ (Ext Γ1 (Grad A r)) ,, Γ2)
---       -> Γ ⊢ t ∶ B
---       -> { Γ' ≡ (Γ1 ,, Γ2)}
---       -> --------------------------------------
---          Γ' ⊢ Abs (Γlength Γ1 + 1) t ∶ FunTy A r B
-
-
---   pr : {s : ℕ}
---     -> { Γ Γ' : Context s }
---     -> { r : grade }
---     -> { A : Type }
---     -> { t : Term }
-
---     -> Γ ⊢ t ∶ A
---     -> { Γ' ≡ r · Γ }
---     --------------------------------
---     -> Γ' ⊢ Promote t ∶ Box r A
+      -> (pos : Γ ≡ (Ext Γ1 (Grad A r)) ,, Γ2) -- TODO: why are we splitting into G1 and G2? aren't we adding the new variable at the end of G?
+      -> Γ ⊢ t ∶ B
+      -> { Γ' ≡ (Γ1 ,, Γ2)}
+      -> --------------------------------------
+         Γ' ⊢ Abs (raiseR s2 (fromℕ s1)) t ∶ FunTy A r B -- TODO: double-check x
 
 
---   unitConstr : {s : ℕ} { Γ : Context s }
---       -> --------------------------------
---           (0R · Γ) ⊢ unit ∶ Unit
+  pr : {s : ℕ}
+    -> { Γ Γ' : Context s }
+    -> { r : grade }
+    -> { A : Type }
+    -> { t : Term s }
 
---   trueConstr : {s : ℕ} { Γ : Context s }
---       -> --------------------------------
---           (0R · Γ) ⊢ vtrue ∶ BoolTy
-
---   falseConstr : {s : ℕ} { Γ : Context s }
---       -> --------------------------------
---           (0R · Γ) ⊢ vfalse ∶ BoolTy
-
---   if : {s : ℕ}
---        { Γ Γ1 Γ2 : Context s }
---        { B : Type }
---        { t1 t2 t3 : Term }
---        { r : grade }
---        { used : r ≤ 1R }
-
---     -> Γ1 ⊢ t1 ∶ BoolTy
---     -> Γ2 ⊢ t2 ∶ B
---     -> Γ2 ⊢ t3 ∶ B
---     -> { res : ((r · Γ1) ++ Γ2) ≡ Γ }
---    ----------------------------------
---     -> Γ ⊢ If t1 t2 t3 ∶ B
+    -> Γ ⊢ t ∶ A
+    -> { Γ' ≡ r · Γ }
+    --------------------------------
+    -> Γ' ⊢ Promote t ∶ Box r A
 
 
--- -- # Operational semantics
+  unitConstr : {s : ℕ} { Γ : Context s }
+      -> --------------------------------
+          (0R · Γ) ⊢ unit ∶ Unit
 
--- -- Value predicate
--- data Value : Term -> Set where
---   unitValue    : Value unit
---   varValue     : {n : ℕ} -> Value (Var n)
---   absValue     : {n : ℕ} -> (t : Term) -> Value (Abs n t)
---   promoteValue : (t : Term) -> Value (Promote t)
---   trueValue    : Value vtrue
---   falseValue   : Value vfalse
+  trueConstr : {s : ℕ} { Γ : Context s }
+      -> --------------------------------
+          (0R · Γ) ⊢ vtrue ∶ BoolTy
+
+  falseConstr : {s : ℕ} { Γ : Context s }
+      -> --------------------------------
+          (0R · Γ) ⊢ vfalse ∶ BoolTy
+
+  if : {s : ℕ}
+       { Γ Γ1 Γ2 : Context s }
+       { B : Type }
+       { t1 t2 t3 : Term s }
+       { r : grade }
+       { used : r ≤ 1R }
+
+    -> Γ1 ⊢ t1 ∶ BoolTy
+    -> Γ2 ⊢ t2 ∶ B
+    -> Γ2 ⊢ t3 ∶ B
+    -> { res : ((r · Γ1) ++ Γ2) ≡ Γ }
+   ----------------------------------
+    -> Γ ⊢ If t1 t2 t3 ∶ B
+
+
+-- # Operational semantics
+
+-- Value predicate
+data Value : {s : ℕ} -> Term s -> Set where
+  unitValue    : Value unit
+  varValue     : {s : ℕ} -> Value (Var (fromℕ s))
+  absValue     : {s : ℕ} -> (t : Term (suc s)) -> Value (Abs (fromℕ s) t)
+  promoteValue : {s : ℕ} -> (t : Term s) -> Value (Promote t)
+  trueValue    : Value vtrue
+  falseValue   : Value vfalse
 
 -- -- Substitution lemma
 -- -- TODO: Vilem
