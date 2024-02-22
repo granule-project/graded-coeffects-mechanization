@@ -107,6 +107,13 @@ decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre =
   subst (\h -> ((r1 +R r2) ≤ h)) (rightUnit+) (monotone+ pre (zeroIsTop R'))
 
 -- TODO: is zeroIsTop deriveable from decreaseing +?
+-- Vilem?
+zeroIsTopFromDecreasing : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
+  -> ({r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s))
+  -> ({r : grade} -> r ≤ 0R)
+zeroIsTopFromDecreasing decreasing {r} = {!!}
+  -- similar to the `zero` proof in `rel1`
+  -- sym (rightUnit+ {r}) = plusMeet2 {r} {0R}
 
 
 propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring }}
@@ -159,13 +166,16 @@ record Informational {{R : Semiring}} : Set₁ where
     multJoin1 : {r s : grade} -> r ≤ (r *R s)
     multJoin2 : {r s : grade} -> s ≤ (r *R s)
 
+    -- relationship between meet and ordering
+    -- which is usually part of meet-semilattice definition
+    meetOrderRel : {r s : grade} -> r ≤ s -> r ≡ r +R s
 
 open Informational
 
 rel1 : {{R : Semiring}} -> Informational -> NonInterferingSemiring
-rel1 record { idem* = idem* ; absorb1 = absorb1 ; absorb2 = absorb2 ; plusMeet1 = plusMeet1 ; plusMeet2 = plusMeet2 ; multJoin1 = multJoin1 ; multJoin2 = multJoin2 } =
+rel1 record { idem* = idem* ; absorb1 = absorb1 ; absorb2 = absorb2 ; plusMeet1 = plusMeet1 ; plusMeet2 = plusMeet2 ; multJoin1 = multJoin1 ; multJoin2 = multJoin2 ; meetOrderRel = meetOrderRel } =
   record
-    { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = {!!} ; idem* = idem* }
+    { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = antisym ; idem* = idem* }
   where
     one : {r : grade} → 1R ≤ r
     one {r} rewrite sym (leftUnit* {r}) = multJoin1 {1R} {r}
@@ -174,17 +184,16 @@ rel1 record { idem* = idem* ; absorb1 = absorb1 ; absorb2 = absorb2 ; plusMeet1 
     zero {r} rewrite sym (rightUnit+ {r}) = plusMeet2 {r} {0R}
 
     -- maybe a classical proof?
-    antisym : {r s : grade} -> r ≤ s -> s ≤ r -> (¬ (r ≡ s)) -> ⊥
-    antisym {r} {s} x y notEq =
-      -- r * (r + s) <= r * (s + r)
-      let b = monotone* (reflexive≤ {r}) (monotone+ x y)
-      -- r * (s + r)
-      -- = r * s + r * r
-      -- = r * s + r
-      -- =
-      in {!!}
+    antisym : {r s : grade} -> r ≤ s -> s ≤ r -> r ≡ s
+    antisym {r} {s} x y =
+      let prf1 = meetOrderRel x
+          prf2 = meetOrderRel y
+      in trans prf1 (trans (comm+ {r} {s}) (sym prf2))
 
 -- Looks like Informational semiring is much more general
+-- But we should try a bit harder
+-- TODO (Vilem) - try to get the Informational semiring from NonInterferingSemiring
+-- It looks like antisymmetry is the key to leverage in many cases?
 rel2 : {{R : Semiring}} -> NonInterferingSemiring -> Informational
 rel2 record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* } =
   record
