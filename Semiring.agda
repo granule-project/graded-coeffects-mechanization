@@ -12,6 +12,7 @@ open import Relation.Nullary.Decidable
 open import Data.Maybe
 open import Data.Maybe.Properties
 
+
 -- # Semiring definition
 record Semiring : Set₁ where
   field
@@ -47,6 +48,9 @@ record Semiring : Set₁ where
     transitive≤ : {r s t : grade} -> r ≤ s -> s ≤ t -> r ≤ t
 
 open Semiring {{...}}
+
+variable
+  R : Semiring
 
 ≡-to-≤ : {{ R : Semiring }} {r s : grade} -> r ≡ s -> r ≤ s
 ≡-to-≤ refl = reflexive≤
@@ -129,3 +133,99 @@ decreasing+Inv' {{R}} {{R'}} {r1} {r2} {s} pre =
 -- Derived alternate characterisation of antisymmetry
 antisymmetryAlt : {{R : Semiring}} {{R' : NonInterferingSemiring}} {r s : grade} -> r ≤ s -> r ≢ s -> ¬ (s ≤ r)
 antisymmetryAlt {{R}} {{R'}} {r} {s} pre1 pre2 pre3 = ⊥-elim (pre2 (antisymmetry R' {r} {s} pre1 pre3))
+
+-- From Abel&Bernardy (2021) §4.3
+-- The paper has a strong implication of lattice nature around here
+-- which would imply having a partial order => having an antisymmetric relation
+
+-- They also have an assumption in 4.3.2. that means everything "above 1 in
+-- the lattice is secret" though I don't think this needs codifying here
+-- but rather this is part of non-interference
+
+-- "The construction generalises however to any lattice of information
+-- modalities as specified above"
+record Informational {{R : Semiring}} : Set₁ where
+  field
+    -- note that a lattice has these by default...
+    idem* : {r : grade}     -> r *R r ≡ r
+    absorb1 : {r s : grade} -> r *R (r +R s) ≡ r
+    absorb2 : {r s : grade} -> r +R (r *R s) ≡ r
+
+    -- not made explicit in A&B but implicit in the lattice discusssion
+    -- + is meet
+    plusMeet1 : {r s : grade} -> (r +R s) ≤ r
+    plusMeet2 : {r s : grade} -> (r +R s) ≤ s
+    -- * is the join
+    multJoin1 : {r s : grade} -> r ≤ (r *R s)
+    multJoin2 : {r s : grade} -> s ≤ (r *R s)
+
+
+open Informational
+
+rel1 : {{R : Semiring}} -> Informational -> NonInterferingSemiring
+rel1 record { idem* = idem* ; absorb1 = absorb1 ; absorb2 = absorb2 ; plusMeet1 = plusMeet1 ; plusMeet2 = plusMeet2 ; multJoin1 = multJoin1 ; multJoin2 = multJoin2 } =
+  record
+    { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = {!!} ; idem* = idem* }
+  where
+    one : {r : grade} → 1R ≤ r
+    one {r} rewrite sym (leftUnit* {r}) = multJoin1 {1R} {r}
+
+    zero : {r : grade} -> r ≤ 0R
+    zero {r} rewrite sym (rightUnit+ {r}) = plusMeet2 {r} {0R}
+
+    -- maybe a classical proof?
+    antisym : {r s : grade} -> r ≤ s -> s ≤ r -> (¬ (r ≡ s)) -> ⊥
+    antisym {r} {s} x y notEq =
+      -- r * (r + s) <= r * (s + r)
+      let b = monotone* (reflexive≤ {r}) (monotone+ x y)
+      -- r * (s + r)
+      -- = r * s + r * r
+      -- = r * s + r
+      -- =
+      in {!!}
+
+-- Looks like Informational semiring is much more general
+rel2 : {{R : Semiring}} -> NonInterferingSemiring -> Informational
+rel2 record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* } =
+  record
+    { idem* = idem*
+    ; absorb1 = {!!}
+    ; absorb2 = {!!}
+    ; plusMeet1 = {!!}
+    ; plusMeet2 = {!!}
+    ; multJoin1 = {!!}
+    ; multJoin2 = {!!}
+    }
+  where
+    absorba : {r s : grade} → r *R (r +R s) ≡ r
+    absorba = {!!}
+    -- r * (r + s)
+    -- = r * r + r * s
+    -- = r + r * s
+    -- = r * s + r
+
+
+    plusMeeta : {r s : grade} -> (r +R s) ≤ r
+    plusMeeta = {!!}
+
+-- Abel et al. (2023) take a semiring with a meet operation
+-- to induce a partial order
+-- Antisymmetry come out of this? (see below)
+
+record Meety {{R : Semiring}} : Set₁ where
+  field
+    _∧R_ : grade -> grade -> grade
+    comm : {r s : grade} -> r ∧R s ≡ s ∧R r
+    assoc : {r s t : grade} -> (r ∧R s) ∧R t ≡ r ∧R (s ∧R t)
+    idem  : {r : grade} -> r ∧R r ≡ r
+
+open Meety {{...}}
+
+_<<=_ : {{  R : Semiring }} {{ m : Meety }} -> grade -> grade -> Set
+r <<= s = r ≡ r ∧R s
+
+antisym : {{ R : Semiring }} {{ m : Meety }} {r s : grade} ->
+          r <<= s -> s <<= r -> r ≡ s
+antisym {r} {s} prf1 prf2 = trans prf1 (trans (comm {r} {s}) (sym prf2))
+ -- prf1 = r ≡ r /\ s
+ -- prf2 = s ≡ s /\ r

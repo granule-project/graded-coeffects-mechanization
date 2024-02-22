@@ -1,4 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --rewriting #-}
 
 module OperationalModel where
 
@@ -108,12 +109,12 @@ postulate -- postulate now for development speed
                  -> multiRedux (App t1 t2) ≡ v
                  -> Γ ⊢ t1 ∶ FunTy A r B
                  -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1' × ((Ext Γ (Grad A r)) ⊢ (Abs z v1') ∶  B))
-  
+
   reduxTheoremBool : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> (multiRedux tg ≡ vtrue) ⊎ (multiRedux tg ≡ vfalse)
   reduxTheoremBool1 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
   reduxTheoremBool2 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
 
-  
+
 
 
 -- This is about the structure of substitutions and relates to abs
@@ -128,5 +129,3 @@ reduxAndSubstCombinedProm {v} {t} {γ} redux =
        let qr = cong multiRedux (substPresProm {0} {γ} {t})
            qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
-
-

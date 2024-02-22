@@ -1,4 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --rewriting #-}
 
 module NonInterference where
 
