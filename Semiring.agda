@@ -11,6 +11,8 @@ open import Relation.Unary
 open import Relation.Nullary.Decidable
 open import Data.Maybe
 open import Data.Maybe.Properties
+open import Data.Product
+open import Data.Sum
 
 
 -- # Semiring definition
@@ -88,6 +90,12 @@ partialJoinIdem {{R}} {r} with _≤d_ R r r
 -}
 
 -- # Characterisation of what we need just to get non-interference
+-- DAO (24/02/2024) - I'm worried becauase Abel et al. (2023) use
+-- the 'well-behaved zero' (positivity) class of semirings to get
+-- erasure, which gives a kind of non-interference- but this condition
+-- requires ¬ (0 ≡ 1).. but non-interfering semiring could allow this,
+-- which is then weird. Does non-interfering semiring admit singleton
+-- semiring?
 record NonInterferingSemiring {{R : Semiring}} : Set₁ where
   field
     oneIsBottom : {r : grade} -> 1R ≤ r
@@ -233,8 +241,35 @@ open Meety {{...}}
 _<<=_ : {{  R : Semiring }} {{ m : Meety }} -> grade -> grade -> Set
 r <<= s = r ≡ r ∧R s
 
+-- Meet produces antisymmetric ordering
 antisym : {{ R : Semiring }} {{ m : Meety }} {r s : grade} ->
           r <<= s -> s <<= r -> r ≡ s
 antisym {r} {s} prf1 prf2 = trans prf1 (trans (comm {r} {s}) (sym prf2))
  -- prf1 = r ≡ r /\ s
  -- prf2 = s ≡ s /\ r
+
+-- Section 6 of Abel et al. (2023) but also
+-- called 'quantitative' in Moon et al. (2021) (where we would collapse
+-- + and meet here
+
+record WellBehavedZero {{R : Semiring}} {{R' : Meety}} : Set₁ where
+  field
+    additionPositive : {p q : grade} -> p +R q ≡ 0R -> (p ≡ 0R) × (q ≡ 0R)
+    meetPositive     : {p q : grade} -> p ∧R q ≡ 0R -> (p ≡ 0R) × (q ≡ 0R)
+    zeroPositive     : {p q : grade} -> p *R q ≡ 0R -> (p ≡ 0R) ⊎ (q ≡ 0R)
+    zeroNoTOne       : ¬ (0R ≡ 1R)
+
+open WellBehavedZero {{...}}
+
+
+posToNi : {{R : Semiring}} {{R' : Meety}}
+       -> WellBehavedZero -> NonInterferingSemiring
+posToNi record { additionPositive = additionPositive ; meetPositive = meetPositive; zeroPositive = zeroPositive ; zeroNoTOne = zeroNoTOne } = record {
+    oneIsBottom = {!!}
+  ; zeroIsTop = {!!}
+  ; antisymmetry = {!!}
+  ; idem* = {!!} }
+
+niToPos : {{R : Semiring}} {{R' : Meety}}
+       -> NonInterferingSemiring -> WellBehavedZero
+niToPos record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* } = {!!}
