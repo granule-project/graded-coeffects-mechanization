@@ -90,12 +90,8 @@ partialJoinIdem {{R}} {r} with _≤d_ R r r
 -}
 
 -- # Characterisation of what we need just to get non-interference
--- DAO (24/02/2024) - I'm worried becauase Abel et al. (2023) use
--- the 'well-behaved zero' (positivity) class of semirings to get
--- erasure, which gives a kind of non-interference- but this condition
--- requires ¬ (0 ≡ 1).. but non-interfering semiring could allow this,
--- which is then weird. Does non-interfering semiring admit singleton
--- semiring?
+-- Not that we don't require 0 ≠ 1 because the NI theorem says that the observer is not equal
+-- to the observee grade
 record NonInterferingSemiring {{R : Semiring}} : Set₁ where
   field
     oneIsBottom : {r : grade} -> 1R ≤ r
