@@ -110,6 +110,13 @@ decreasing+ : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
 decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre =
   subst (\h -> ((r1 +R r2) ≤ h)) (rightUnit+) (monotone+ pre (zeroIsTop R'))
 
+-- NOT USED
+increasing* : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
+               {r1 r2 s : grade} -> (s ≤ r1) -> (s ≤ (r1 *R r2))
+increasing* {{R}} {{R'}} {r1} {r2} {s} pre =
+    subst (\h -> h ≤ (r1 *R r2)) (rightUnit*) (monotone* pre (oneIsBottom R'))
+
+
 -- TODO: is zeroIsTop deriveable from decreaseing +?
 -- Vilem?
 zeroIsTopFromDecreasing : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
@@ -119,6 +126,12 @@ zeroIsTopFromDecreasing decreasing {r} = {!!}
   -- similar to the `zero` proof in `rel1`
   -- sym (rightUnit+ {r}) = plusMeet2 {r} {0R}
 
+-- aha
+bottomIsOneFromIncrease* : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
+  ->  ({r1 r2 s : grade} -> (s ≤ r1) -> (s ≤ (r1 *R r2)))
+  -> ({r : grade} -> 1R ≤ r)
+bottomIsOneFromIncrease* increasy {r} =
+  subst (\h -> 1R ≤ h) leftUnit* (increasy (reflexive≤ {1R}))
 
 propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring }}
                        {r s adv : grade}
@@ -129,6 +142,16 @@ propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
   ngoal
     (subst (\h -> ((r *R s) ≤ h)) (idem* R') (monotone* pre1 pre2))
 
+{-
+-- can we prove the above without idem*
+propInvTimesMonoAsymNALT : {{ R : Semiring }} {{ R' : NonInterferingSemiring }}
+                       {r s adv : grade}
+                     -> ¬ ((r *R s) ≤ adv)
+                     ->   (r ≤ adv)
+                     -> ¬ (s ≤ adv)
+propInvTimesMonoAsymNALT {{R}} {{R'}} {r} {s} {adv} ngola pre1 pre2 = {!!}
+  where
+-}
 
 decreasing+Inv : {{ R : Semiring }} {{ R' : NonInterferingSemiring  }}
               {r1 r2 s : grade} -> ¬ ((r1 +R r2) ≤ s) -> ¬ (r1 ≤ s)
@@ -268,4 +291,24 @@ posToNi record { additionPositive = additionPositive ; meetPositive = meetPositi
 
 niToPos : {{R : Semiring}} {{R' : Meety}}
        -> NonInterferingSemiring -> WellBehavedZero
-niToPos record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* } = {!!}
+niToPos record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* } =
+  record
+    { additionPositive = {!!}
+    ; meetPositive = {!!}
+    ; zeroPositive = {!!}
+    ; zeroNoTOne = {!!}
+    }
+  where
+   addPos : {{R : Semiring}} {{R' : Meety}}
+          -> NonInterferingSemiring
+          -> {p q : Semiring.grade R} → (p +R q ≡ 0R) → p ≡ Semiring.0R R × q ≡ Semiring.0R R
+   addPos {{R}} {{R'}} (record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* }) {p} {Q} eq1 = left , {!!}
+     where
+       left : p ≡ 0R
+       left =
+         let x = increasing* {{R}} {{(record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* })}} (oneIsBottom {0R})
+         in antisymmetry zeroIsTop {!!}
+       -- p + q = 0
+       -- 0 <= p + q
+       -- ->
+       -- -> 0 <= p
