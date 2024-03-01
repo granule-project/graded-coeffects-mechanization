@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --allow-unsolved-metas --rewriting #-}
 
 module UnaryFundamentalTheorem where
 
@@ -70,7 +70,7 @@ utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} t
     extract {x} {e} pre with pre
     ... | funInterpV .e  inner = inner
 
-    argument : [ Box r A ]e (Promote (multisubst' zero γ t2))
+    argument : [ Box r A ]e (Promote (multisubst γ t2))
     argument =
       let
         ih2 = utheorem {sz} {γ} {r · Γ2} {Promote t2} {Box r A} (pr {Γ' = r · Γ2} {r} typ2 {refl}) (unaryPlusElimRightΓ context)

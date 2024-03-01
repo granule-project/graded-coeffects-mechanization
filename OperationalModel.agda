@@ -130,45 +130,49 @@ reduxTrue = refl
 reduxUnit : multiRedux unit ≡ unit
 reduxUnit = refl
 
-{-
 postulate -- postulate now for development speed
-  reduxTheoremApp : {t1 t2 t v : Term} -> multiRedux (App t1 t2) ≡ v -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1')
+  reduxTheoremApp : {sz : ℕ} {t1 t2 t v : Term sz}
+                 -> multiRedux (App t1 t2) ≡ v
+                 -> Σ (Term (suc sz)) (\v1' -> multiRedux t1 ≡ Abs v1')
 
    --  t1 ↓ \x.t   t2 ↓ v2   t[v2/x] ↓ v3
    -- --------------------------------------
    --   t1 t2 ⇣ v3
 
-  reduxTheoremAll : {t1 t2 v : Term}
+  reduxTheoremAll : {t1 t2 v : Term s}
                   -> multiRedux (App t1 t2) ≡ v
-                  -> Σ (ℕ × Term) (\(x , t) ->
-                      ((multiRedux t1 ≡ (Abs x t)) ×
-                        (multiRedux (syntacticSubst t2 x t) ≡ v)))
+                  -> Σ (Term (suc s)) (\t ->
+                      ((multiRedux t1 ≡ (Abs t)) ×
+                        (multiRedux (syntacticSubst t2 zero t) ≡ v)))
 
+  multiSubstTy : {{R : Semiring}}
+            -> {γ : List (Term 0)} {Γ : Context (length γ)} {A : Type} {t : Term (length γ)}
+            -> Γ ⊢ t ∶ A
+            -> Empty ⊢ multisubst γ t ∶ A
 
-  multiSubstTy : {{R : Semiring}} -> {n : ℕ} {Γ : Context n} {t : Term} {A : Type} {γ : List Term} -> Γ ⊢ t ∶ A -> Empty ⊢ multisubst' 0 γ t ∶ A
-  reduxTheoremAppTy : {{R : Semiring}}
-                 -> {t1 t2 v : Term} {s : ℕ} {Γ : Context s} {A B : Type} {r : grade}
-                 -> multiRedux (App t1 t2) ≡ v
-                 -> Γ ⊢ t1 ∶ FunTy A r B
-                 -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1' × ((Ext Γ (Grad A r)) ⊢ (Abs z v1') ∶  B))
+  reduxTheoremAppTy :
+           {{R : Semiring}}
+           {t1 t2 v : Term s} {Γ : Context s} {A B : Type} {r : grade}
+          -> multiRedux (App t1 t2) ≡ v
+          -> Γ ⊢ t1 ∶ FunTy A r B
+          -> Σ (Term (suc s)) (\v1' -> (multiRedux t1 ≡ Abs v1') × (Ext Γ (Grad A r) ⊢ v1' ∶  B))
 
-  reduxTheoremBool : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> (multiRedux tg ≡ vtrue) ⊎ (multiRedux tg ≡ vfalse)
-  reduxTheoremBool1 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
-  reduxTheoremBool2 : {tg t1 t2 v : Term} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
-
+  reduxTheoremBool : {tg t1 t2 v : Term s} -> multiRedux (If tg t1 t2) ≡ v -> (multiRedux tg ≡ vtrue) ⊎ (multiRedux tg ≡ vfalse)
+  reduxTheoremBool1 : {tg t1 t2 v : Term s} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
+  reduxTheoremBool2 : {tg t1 t2 v : Term s} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
 
 
 
 -- This is about the structure of substitutions and relates to abs
  -- there is some simplification here because of the definition of ,, being
  -- incorrect
-  substitutionResult : {{R : Semiring}} {sz : ℕ} {v1' : Term} {γ1 : List Term} {t : Term} {Γ1 : Context sz}
-   -> syntacticSubst v1' (Γlength Γ1 + 1) (multisubst' 0 γ1 t)
-    ≡ multisubst (v1' ∷ γ1) t
+  substitutionResult : {{R : Semiring}} {v1 : Term s} {γ1 : List (Term s)} {t : Term (suc (length γ1 + s))}
+   -> syntacticSubst v1 (fromℕ s) (multisubst {!γ1!} t)
+    ≡ multisubst (v1 ∷ γ1) t
 
-reduxAndSubstCombinedProm : {v t : Term} {γ : List Term} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
-reduxAndSubstCombinedProm {v} {t} {γ} redux =
-       let qr = cong multiRedux (substPresProm {0} {γ} {t})
-           qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
+
+reduxAndSubstCombinedProm : {γ : List (Term s)} {v : Term s} {t : Term (length γ + s)} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
+reduxAndSubstCombinedProm {_} {γ} {v} {t}  redux =
+       let qr = cong multiRedux (substPresProm {_} {γ} {t})
+           qr' = trans qr (valuesDontReduce {_} {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
--}
