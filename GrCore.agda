@@ -39,6 +39,11 @@ data Assumption {{R : Semiring}} : Set where
 --  Lin : (A : Type)                    -> Assumption A
   Grad : (A : Type) -> (r : grade) -> Assumption
 
+-- position 0 is Grad r A
+-- position 1 is Grade s B
+-- Ext (Ext Empty (Grad s B)) (Grad r A)
+-- . , x :_s B , y :_r A
+
 data Context {{R : Semiring}} : ℕ -> Set where
   Empty   : Context 0
   Ext     : {s : ℕ} -> Context s -> Assumption -> Context (1 + s)
@@ -151,39 +156,83 @@ raiseTerm (Let t1 t2) = Let (raiseTerm t1) (raiseTerm t2)
 -- `mathcVar` is used to enact substitution into a variable term
 -- i.e., the situation is that we have a receiver:
 
---  G, x : A, G' |- y : B
+--  G2, x : A, G3 |- y : B
 
 -- and a substitutee
 
---  G0 |- t : B
+--  G1 |- t : A
 
--- where |G0| = |G| + |G'|
+-- where |G1| = |G2| + |G3|
 
 -- The question is whether
---   (1) y matches x and so we enact a substitution
---   (2) y is in G so we do not substitute but instead return just y
---   (3) y is in G' so we do not substitute but instead return pred of y
+--   (1) y = x and so we do substitution
+--   (2) y is in G2 so we do not substitute but instead return pred of y position
+--   (3) y is in G3 so we do not substitute but instead return just y
 
 -- `matchVar x y t` computes the above
 
-matchVar : {s : ℕ} -> Fin (suc s) -> Fin (suc s) -> (t : Term s) -> Term s
-matchVar {zero} Fin.zero Fin.zero t = t
-matchVar {suc s} varx vary t with Data.Fin.compare vary varx
-... | Data.Fin.less .varx least    = Var (inject! least)
-... | Data.Fin.equal .var       x  = t
-... | Data.Fin.greater .vary least = Var {!!}
+-- Uses the following helper:
+-- `pred!` subtract 1 from an element of a finite set (shrinking its bound)
+pred! : Fin (suc (suc s)) -> Fin (suc s)
+pred! Fin.zero = Fin.zero
+pred! (Fin.suc x) = x
 
--- G1        |- t : A
--- G2, x : A |- t' : B
--- G1 + G2   |- t[t'/x] : B
+matchVar : {s : ℕ} -> (t : Term s) ->  Fin (suc s) -> Fin (suc s) -> Term s
+-- case (1) because we have singleton contexts
+matchVar {zero} t Fin.zero Fin.zero = t
+
+matchVar {suc s} t posx posy with Data.Fin.compare posy posx
+-- case (1)
+... | Data.Fin.equal .posx         = t
+
+-- case (2)
+... | Data.Fin.greater .posy least = Var (pred! posy)
+
+-- case (3)
+-- posx : Fin (suc (suc s))            | [[posx]]  = ix s.t., 0 <= ix < 2+s
+-- posy : Fin (suc (suc s))            | [[posy]]  = iy s.t., 0 <= iy < 2+s
+-- least : Fin' posx = Fin (toN posx)  | [[least]] = jy s.t., 0 <= jy < ix
+... | Data.Fin.less .posx least    = Var (inject! least)
+
+-- # Substitution
+
+-- `syntacticSubst {s} t x_pos t'` represents the situation:
+
+-- G1             |- t       : A  -- substitutee
+-- G2, x : A, G3  |- t'      : B  -- receiver
+-- G1 + (G2,G3)   |- [t/x]t' : B
+
+-- where |G1| = |G2|+|G3| = s
+
 syntacticSubst : {s : ℕ} -> (t : Term s) -> Fin (suc s) -> (t' : Term (suc s)) -> Term s
-syntacticSubst t x (Var y) = matchVar x y t
+syntacticSubst t x (Var y) = matchVar t x y
 syntacticSubst t x (App t1 t2) = App (syntacticSubst t x t1) (syntacticSubst t x t2)
 
-
 -- probably best if we don't allow abstraction anywhere in the term
-syntacticSubst t x (Abs y t1) with Data.Fin.compare (raise 1 x) y
+
+-- Ga, y : A', Gb , x : A, Gc  |- t1 : B'
+-- --------------------------------------------
+-- Ga, Gb , x : A, Gc          |- \y -> t1 : A' -> B'
+
+-- OR
+
+-- Ga, x : A, Gb , y : A', Gc  |- t1 : B'
+-- --------------------------------------------
+-- Ga, x : A, Gb , Gc          |- \y -> t1 : A' -> B'
+
+-- OR
+
+-- Ga, x : A , Gc  |- t1 : B'
+-- --------------------------------------------
+-- Ga, Gc          |- \y -> t1 : A' -> B'
+
+syntacticSubst {zero} t x (Abs t1) with Data.Fin.compare {{!!}} (raise 1 x) y
 ... | p = {!p!}
+
+syntacticSubst {suc s} t x (Abs y t1) with Data.Fin.compare {suc (suc (suc s))} (raise 1 x) y
+... | Data.Fin.equal posx = ?
+... | Data.Fin.greater posx least    = ?
+... | Data.Fin.less posx least    = ?
 --... | yes p = Abs {!!} {!!}
 --... | no p =
 --      let t1' = syntacticSubst (raiseTerm t) (raise 1 x) t1 in Abs {!!} t1'
