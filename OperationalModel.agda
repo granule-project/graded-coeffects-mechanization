@@ -15,50 +15,50 @@ open import Function
 open import Data.Maybe
 open import Relation.Nullary
 open import Data.Sum
+open import Data.Fin hiding (_+_; _≟_)
 
 open import Semiring
 
-multisubst' : ℕ -> List Term -> Term -> Term
+variable
+  s : ℕ
+
+multisubst' : ℕ -> List (Term s) -> Term (suc s) -> Term (suc s)
 multisubst' n [] t' = t'
 multisubst' n (t ∷ ts) t' =
-  multisubst' (n + 1) ts (syntacticSubst t n t')
-
-multisubst : List Term -> Term -> Term
+  multisubst' (n + 1) ts (syntacticSubst t ? t')
+multisubst : List (Term s) -> Term (suc s) -> Term (suc s)
 multisubst ts t' = multisubst' 0 ts t'
 
 postulate
-  -- not really but for simplicity
-  isSimultaneous : {t t' : Term} {γ : List Term}
-                 -> multiRedux (multisubst' 1 γ t') ≡ t
-                 -> multiRedux (multisubst' 0 (t' ∷ γ) (Var 0)) ≡ t
-
-  isSimultaneous' : {t t' : Term} {γ : List Term}
-    -> multiRedux (multisubst' 0 (t' ∷ γ) (Var 0)) ≡ t
+  isSimultaneous' : {t t' : Term s} {γ : List (Term s)}
+    -> multiRedux (multisubst' 0 (t' ∷ γ) (Var zero)) ≡ raiseTerm t
     -> multiRedux t' ≡ t
 
-  isSimultaneous'' : {t : Term} {γ : List Term}
-                 -> multisubst (t ∷ γ) (Var 0) ≡ t
+  isSimultaneous'' : {t : Term s} {γ : List (Term s)}
+                 -> multisubst (t ∷ γ) (Var zero) ≡ raiseTerm t
 
-  betaVariant1 : {bod t2 : Term} {x : ℕ} -> multiRedux (App (Abs x bod) t2) ≡ multiRedux (syntacticSubst t2 x bod)
+  betaVariant1 : {bod : Term (suc s)} {t2 : Term s} {x : Fin (suc s)}
+                -> multiRedux (raiseTerm (App (Abs x bod) t2))
+                 ≡ multiRedux (syntacticSubst t2 x bod)
 
 -- Various preservation results about substitutions and values
 
-substPresUnit : {γ : List Term} {n : ℕ} -> multisubst' n γ unit ≡ unit
-substPresUnit {[]}    {n} = refl
-substPresUnit {x ∷ g} {n} = substPresUnit {g} {n + 1}
+substPresUnit : {γ : List (Term s)} {n : ℕ} -> multisubst' n γ unit ≡ unit
+substPresUnit {γ = []}    {n} = refl
+substPresUnit {γ = x ∷ g} {n} = substPresUnit {_} {g} {n + 1}
 
-substPresTrue : {γ : List Term} {n : ℕ} -> multisubst' n γ vtrue ≡ vtrue
-substPresTrue {[]}    {n} = refl
-substPresTrue {x ∷ g} {n} = substPresTrue {g} {n + 1}
+substPresTrue : {γ : List (Term s)} {n : ℕ} -> multisubst' n γ vtrue ≡ vtrue
+substPresTrue {γ = []}    {n} = refl
+substPresTrue {γ = x ∷ g} {n} = substPresTrue {_} {g} {n + 1}
 
-substPresFalse : {γ : List Term} {n : ℕ} -> multisubst' n γ vfalse ≡ vfalse
-substPresFalse {[]}    {n} = refl
-substPresFalse {x ∷ g} {n} = substPresFalse {g} {n + 1}
+substPresFalse : {γ : List (Term s)} {n : ℕ} -> multisubst' n γ vfalse ≡ vfalse
+substPresFalse {γ = []}    {n} = refl
+substPresFalse {γ = x ∷ g} {n} = substPresFalse {_} {g} {n + 1}
 
-substPresProm : {n : ℕ} {γ : List Term} {t : Term}
+substPresProm : {n : ℕ} {γ : List (Term s)} {t : Term s}
              -> multisubst' n γ (Promote t) ≡ Promote (multisubst' n γ t)
-substPresProm {n} {[]} {t} = refl
-substPresProm {n} {x ∷ γ} {t} = substPresProm {n + 1} {γ} {syntacticSubst x n t}
+substPresProm {_} {n} {[]} {t} = refl
+substPresProm {_} {n} {x ∷ γ} {t} = substPresProm {_} {n + 1} {γ} {syntacticSubst x n t}
 
 substPresApp : {n : ℕ} {γ : List Term} {t1 t2 : Term} -> multisubst' n γ (App t1 t2) ≡ App (multisubst' n γ t1) (multisubst' n γ t2)
 substPresApp {n} {[]} {t1} {t2} = refl

@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --allow-unsolved-metas --rewriting #-}
 
 module RelationalModel where
 
@@ -254,7 +254,7 @@ convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 ar
 ... | yes eqo = boxInterpBiobs eqo v1 v2 arg
 convertValNISemiring {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (decreasing+Inv eq) v1 v2 argInterp
 
-binaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} {r adv : grade} -> 
+binaryTimesElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ1 γ2 : List Term} {Γ : Context sz} {r adv : grade} ->
      (convertVal : {s : grade} {v1 : Term} {v2 : Term} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2))
    -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
 binaryTimesElimRightΓ {_} {[]} {[]} {Empty} {r} {adv} _ g = tt

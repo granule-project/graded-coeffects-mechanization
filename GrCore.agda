@@ -252,6 +252,18 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
     -> Γ' ⊢ Promote t ∶ Box r A
 
 
+  unbox : {s : ℕ}
+      -> { Γ1 Γ2 Γ : Context s }
+      -> { r : grade }
+      -> { A B : Type }
+      -> (t1 : Term s)
+      -> (t2 : Term (suc s))
+      -> (Γ1 ⊢ t1 ∶ Box r A)
+      -> Ext Γ2 (Grad A r) ⊢ t2 ∶ B
+      -> { Γ ≡ Γ1 ++ Γ2 }
+      -> --------------------------
+         Γ ⊢ Let t1 t2 ∶ B
+
   unitConstr : {s : ℕ} { Γ : Context s }
       -> --------------------------------
           (0R · Γ) ⊢ unit ∶ Unit
@@ -339,24 +351,28 @@ data Value : {s : ℕ} -> Term s -> Set where
 -- redux {{_}} {s} {Γ} {A} {t} t1 = {!!}
 
 
--- -- Untyped reduction
--- untypedRedux : Term -> Maybe Term
--- untypedRedux (App (Abs x t) t') = just (syntacticSubst t' x t)
--- untypedRedux (App t1 t2) with untypedRedux t1
--- ... | just t1' = just (App t1' t2)
--- ... | nothing  = nothing
--- untypedRedux (If vtrue t1 _) = just t1
--- untypedRedux (If vfalse _ t2) = just t2
--- untypedRedux (If t t1 t2) with untypedRedux t
--- ... | just t' = just (If t' t1 t2)
--- ... | nothing = nothing
--- untypedRedux _ = nothing
+-- Untyped reduction
+untypedRedux : {s : ℕ} -> Term s -> Maybe (Term s)
+untypedRedux (App (Abs x t) t') = just {!syntacticSubst!} -- (syntacticSubst t' x t)
+untypedRedux (App t1 t2) with untypedRedux t1
+... | just t1' = just (App t1' t2)
+... | nothing  = nothing
+untypedRedux (If vtrue t1 _) = just t1
+untypedRedux (If vfalse _ t2) = just t2
+untypedRedux (If t t1 t2) with untypedRedux t
+... | just t' = just (If t' t1 t2)
+... | nothing = nothing
+untypedRedux _ = nothing
 
--- {-# TERMINATING #-}
--- multiRedux : Term -> Term
--- multiRedux t with untypedRedux t
--- ... | just t' = multiRedux t'
--- ... | nothing = t
+{-# TERMINATING #-}
+multiRedux : {s : ℕ} -> Term s -> Term s
+multiRedux t with untypedRedux t
+... | just t' = multiRedux t'
+... | nothing = t
+
+postulate
+   valuesDontReduce : {s : ℕ} {t : Term s} -> Value t -> multiRedux t ≡ t
+
 
 -- multiReduxProducesValues : {{R : Semiring}} {A : Type} {t : Term} -> Empty ⊢ t ∶ A -> Value (multiRedux t)
 -- multiReduxProducesValues {A} {Var _} ()
@@ -379,7 +395,6 @@ data Value : {s : ℕ} -> Term s -> Set where
 --              -> Γ ⊢ t ∶ A
 --              -> Γ ⊢ multiRedux t ∶ A
 
---   valuesDontReduce : {t : Term} -> Value t -> multiRedux t ≡ t
 
 --   determinism : {t t1 t2 : Term}
 --              -> multiRedux t ≡ t1
