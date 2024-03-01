@@ -13,11 +13,14 @@ open import Data.Bool hiding (_≟_; _≤_)
 open import Data.Maybe
 open import Data.Empty
 open import Data.Unit hiding (_≟_; _≤_)
-open import Data.Fin using (Fin; _≟_; raise; fromℕ)
+open import Data.Fin using (Fin; _≟_; raise; fromℕ; inject; inject!; compare)
 
 open import Semiring
 
 open Semiring.Semiring {{...}} public
+
+variable
+  s : ℕ
 
 -- # Types of GrCore
 
@@ -123,11 +126,12 @@ leftUnitContext {suc s} {Γ = Ext G (Grad A r)} rewrite leftUnitContext {s} {G} 
 -- # Term calculus
 
 data Term : ℕ -> Set where
-  Var     : {s : ℕ} -> Fin s -> Term s
+  Var     : {s : ℕ} -> Fin (suc s) -> Term (suc s)
   App     : {s : ℕ} -> Term s -> Term s -> Term s
   Abs     : {s : ℕ} -> Fin (suc s) -> Term (suc s) -> Term s
   unit    : {s : ℕ} -> Term s
   Promote : {s : ℕ} -> Term s -> Term s
+  Let     : {s : ℕ} -> Term s -> Term (suc s) -> Term s
   -- handling bools (TODO: generalise to sums)
   vtrue   : {s : ℕ} -> Term s
   vfalse  : {s : ℕ} -> Term s
@@ -142,20 +146,34 @@ raiseTerm (Promote t) = Promote (raiseTerm t)
 raiseTerm vtrue = vtrue
 raiseTerm vfalse = vfalse
 raiseTerm (If t t₁ t₂) = If (raiseTerm t) (raiseTerm t₁) (raiseTerm t₂)
+raiseTerm (Let t1 t2) = Let (raiseTerm t1) (raiseTerm t2)
 
-syntacticSubst : {s : ℕ} -> Term s -> Fin (suc s) -> Term (suc s) -> Term (suc s)
-syntacticSubst t x (Var y) with x ≟ y
-... | yes p = raiseTerm t
-... | no ¬p = Var y
+-- matchVar redexVar targetTerm
+matchVar : {s : ℕ} -> Fin (suc s) -> Fin (suc s) -> (t : Term s) -> Term s
+matchVar {zero} Fin.zero Fin.zero t = t
+matchVar {suc s} redexVar termVar t with Data.Fin.compare redexVar termVar
+... | Data.Fin.less .termVar least = Var (inject! least)
+... | Data.Fin.equal .redexVar = t
+... | Data.Fin.greater .redexVar least = Var (inject! least)
+
+-- G1        |- t : A
+-- G2, x : A |- t' : B
+-- G1 + G2   |- t[t'/x] : B
+syntacticSubst : {s : ℕ} -> (t : Term s) -> Fin (suc s) -> (t' : Term (suc s)) -> Term s
+syntacticSubst t x (Var y) = matchVar x y t
 syntacticSubst t x (App t1 t2) = App (syntacticSubst t x t1) (syntacticSubst t x t2)
-syntacticSubst t x (Abs y t1) with raise 1 x ≟ y
-... | yes p = Abs y t1
-... | no ¬p = let t1' = syntacticSubst (raiseTerm t) (raise 1 x) t1 in Abs y t1'
+-- probably best if we don't allow abstraction anywhere in the term
+syntacticSubst t x (Abs y t1) with Data.Fin.compare (raise 1 x) y
+... | p = {!p!}
+--... | yes p = Abs {!!} {!!}
+--... | no p =
+--      let t1' = syntacticSubst (raiseTerm t) (raise 1 x) t1 in Abs {!!} t1'
 syntacticSubst t x (Promote t1) = Promote (syntacticSubst t x t1)
 syntacticSubst t x unit = unit
 syntacticSubst t x vtrue = vtrue
 syntacticSubst t x vfalse = vfalse
 syntacticSubst t x (If t1 t2 t3) = If (syntacticSubst t x t1) (syntacticSubst t x t2) (syntacticSubst t x t3)
+syntacticSubst t x (Let t1 t2) = Let (syntacticSubst t x t1) (syntacticSubst (raiseTerm t) (raise 1 x) t2)
 
 discrimBool : {s : ℕ} -> vtrue {s} ≡ vfalse {s} -> ⊥
 discrimBool ()
