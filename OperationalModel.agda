@@ -19,17 +19,22 @@ open import Data.Fin hiding (_+_; _≟_)
 
 open import Semiring
 
+data Telescope : ℕ -> Set where
+  Empty : Telescope 0
+  Cons  : {s : ℕ} -> Term s -> Telescope s -> Telescope (suc s)
+
 {-
  Example
   G1 |- t1 : A1
   G2 |- t2 : A2
   G3 |- t3 : A3
-  Ga , x1 : A1 , Gb , x2 : A2 , Gc , x3 : A3 |- t : B
+  Ga , Gb , Gc , x1 : A1 , x2 : A2 , x3 : A3 |- t : B
 -------------------------------------------------------
   (Ga, Gb, Gc) + G1 + G2 + G3 |- t : B
 
 i.e., |G1| = |G2| = |G3| = |Ga|+|Gb|+|Gc|
 
+`multisubst` assumes it is substituting into head variables in the context
 -}
 
 multisubst : (xs : List (Term s)) -> Term (length xs + s) -> Term s
@@ -60,39 +65,60 @@ substPresUnit : {γ : List (Term s)} -> multisubst γ unit ≡ unit
 substPresUnit {s} {γ = []}    = refl
 substPresUnit {s} {γ = x ∷ g} = substPresUnit {s} {g}
 
-{-
+substPresTrue : {γ : List (Term s)} -> multisubst γ vtrue ≡ vtrue
+substPresTrue {γ = []}    = refl
+substPresTrue {γ = x ∷ g} = substPresTrue {_} {g}
 
-substPresTrue : {γ : List (Term s)} {n : ℕ} -> multisubst' n γ vtrue ≡ vtrue
-substPresTrue {γ = []}    {n} = refl
-substPresTrue {γ = x ∷ g} {n} = substPresTrue {_} {g} {n + 1}
+substPresFalse : {γ : List (Term s)} -> multisubst γ vfalse ≡ vfalse
+substPresFalse {γ = []}    = refl
+substPresFalse {γ = x ∷ g} = substPresFalse {_} {g}
 
-substPresFalse : {γ : List (Term s)} {n : ℕ} -> multisubst' n γ vfalse ≡ vfalse
-substPresFalse {γ = []}    {n} = refl
-substPresFalse {γ = x ∷ g} {n} = substPresFalse {_} {g} {n + 1}
+substPresProm : {γ : List (Term s)} {t : Term (length γ + s)}
+             -> multisubst γ (Promote t) ≡ Promote (multisubst γ t)
+substPresProm {_} {[]} {t} = refl
+substPresProm {_} {x ∷ γ} {t} =
+  substPresProm {_} {γ} {syntacticSubst (raiseTermℕ (length γ) x) zero t}
 
-substPresProm : {n : ℕ} {γ : List (Term s)} {t : Term s}
-             -> multisubst' n γ (Promote t) ≡ Promote (multisubst' n γ t)
-substPresProm {_} {n} {[]} {t} = refl
-substPresProm {_} {n} {x ∷ γ} {t} = substPresProm {_} {n + 1} {γ} {syntacticSubst x n t}
+substPresApp : {γ : List (Term s)} {t1 t2 : Term (length γ + s)}
+            -> multisubst γ (App t1 t2) ≡ App (multisubst γ t1) (multisubst γ t2)
+substPresApp {_} {[]} {t1} {t2} = refl
+substPresApp {_} {x ∷ γ} {t1} {t2} =
+  substPresApp {_} {γ} {syntacticSubst (raiseTermℕ (length γ) x) zero t1}
+                       {syntacticSubst (raiseTermℕ (length γ) x) zero t2}
 
-substPresApp : {n : ℕ} {γ : List Term} {t1 t2 : Term} -> multisubst' n γ (App t1 t2) ≡ App (multisubst' n γ t1) (multisubst' n γ t2)
-substPresApp {n} {[]} {t1} {t2} = refl
-substPresApp {n} {x ∷ γ} {t1} {t2} = substPresApp {n + 1} {γ} {syntacticSubst x n t1} {syntacticSubst x n t2}
+sidPrf : {s : ℕ} {γ : List (Term s)}
+       -> Term (suc (length γ + s))
+       -> Term (suc (length (Data.List.map raiseTerm γ) + s))
+sidPrf {s} {g} (Var x) = Var (aux {s} {g} x)
+  where
+    aux : {s : ℕ} -> {γ : List (Term s)} -> Fin (suc (length γ + s)) -> Fin (suc (length (Data.List.map raiseTerm γ) + s))
+    aux {_} {γ} zero = zero
+    aux {_} {[]} (suc x) = suc x
+    aux {_} {x ∷ γ} (suc n) = let k = aux {_} {γ} n in suc k
+sidPrf {s} {g} (App x x₁) = App (sidPrf {s} {g} x) (sidPrf {s} {g} x₁)
+sidPrf {s} {g} (Abs x) = let y = sidPrf {suc s} {{! !}} x in Abs y
+sidPrf {s} {g} unit = unit
+sidPrf {s} {g} (Promote x) = Promote (sidPrf x)
+sidPrf {s} {g} (Let x x₁) = Let (sidPrf x) (sidPrf x₁)
+sidPrf {s} {g} vtrue = vtrue
+sidPrf {s} {g} vfalse = vfalse
+sidPrf {s} {g} (If x x₁ x₂) = If (sidPrf x) (sidPrf x₁) (sidPrf x₂)
 
-substPresAbs : {n : ℕ} {γ : List Term} {x : ℕ} {t : Term} -> multisubst' n γ (Abs x t) ≡ Abs x (multisubst' n γ t)
-substPresAbs {n} {[]} {x} {t} = refl
-substPresAbs {n} {v ∷ γ} {x} {t} with n ≟ x
-... | yes refl = {!!}
-... | no ¬p = substPresAbs {n + 1} {γ} {x} {syntacticSubst v n t}
+substPresAbs : {γ : List (Term s)} {t : Term (suc (length γ + s))} -> multisubst γ (Abs t) ≡ Abs (multisubst (Data.List.map raiseTerm γ) (sidPrf t))
+substPresAbs {_} {[]} {t} = refl
+substPresAbs {_} {v ∷ γ} {t} = substPresAbs {_} {γ} {syntacticSubst (raiseTermℕ (length γ) {!!}) zero (sidPrf t)}
 
-substPresIf : {n : ℕ} {γ : List Term} {tg t1 t2 : Term} -> multisubst' n γ (If tg t1 t2) ≡ If (multisubst' n γ tg) (multisubst' n γ t1) (multisubst' n γ t2)
-substPresIf {n} {[]} {tg} {t1} {t2} = refl
-substPresIf {n} {x ∷ γ} {tg} {t1} {t2} = substPresIf {n + 1} {γ} {syntacticSubst x n tg} {syntacticSubst x n t1} {syntacticSubst x n t2}
+substPresIf : {γ : List (Term s)} {tg t1 t2 : Term (length γ + s)} -> multisubst γ (If tg t1 t2) ≡ If (multisubst γ tg) (multisubst γ t1) (multisubst γ t2)
+substPresIf {_} {[]} {tg} {t1} {t2} = refl
+substPresIf {_} {x ∷ γ} {tg} {t1} {t2} =
+  substPresIf {_} {γ} {syntacticSubst (raiseTermℕ (length γ) x) zero tg}
+                      {syntacticSubst (raiseTermℕ (length γ) x) zero t1}
+                      {syntacticSubst (raiseTermℕ (length γ) x) zero t2}
 
-reduxProm : {v : Term} -> multiRedux (Promote v) ≡ Promote v
+reduxProm : {v : Term s} -> multiRedux (Promote v) ≡ Promote v
 reduxProm {v} = refl
 
-reduxAbs : {x : ℕ} {t : Term} -> multiRedux (Abs x t) ≡ Abs x t
+reduxAbs : {t : Term (suc s)} -> multiRedux (Abs t) ≡ Abs t
 reduxAbs = refl
 
 reduxFalse : multiRedux vfalse ≡ vfalse
@@ -104,6 +130,7 @@ reduxTrue = refl
 reduxUnit : multiRedux unit ≡ unit
 reduxUnit = refl
 
+{-
 postulate -- postulate now for development speed
   reduxTheoremApp : {t1 t2 t v : Term} -> multiRedux (App t1 t2) ≡ v -> Σ (ℕ × Term) (\(z , v1') -> multiRedux t1 ≡ Abs z v1')
 

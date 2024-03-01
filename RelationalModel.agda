@@ -14,6 +14,7 @@ open import Function
 open import Data.Maybe
 open import Relation.Nullary
 open import Data.Sum
+open import Data.Fin hiding (_≤_)
 
 open import Semiring
 
@@ -29,29 +30,28 @@ open import OperationalModel
 mutual
 
   {-# NO_POSITIVITY_CHECK #-}
-  data [_]v {{R : Semiring}} : Type -> Term -> Set where
-    unitInterpV : [ Unit ]v unit
+  data [_]v {{R : Semiring}} : Type -> {s : ℕ} -> Term s -> Set where
+    unitInterpV : {s : ℕ} -> [ Unit ]v unit
 
-    funInterpV  : {A B : Type} {r : grade}
-               -> {x : ℕ}
-               -> (e : Term)
-               -> (forall (v : Term) ->
-                    [ Box r A ]e (Promote v) -> [ B ]e (syntacticSubst v x e))
+    funInterpV  : {A B : Type} {r : grade} {s : ℕ}
+               -> (e : Term (suc s))
+               -> (forall (v : Term s) ->
+                    [ Box r A ]e (Promote v) -> [ B ]e (syntacticSubst v zero e))
 
-               -> [ FunTy A r B ]v (Abs x e)
+               -> [ FunTy A r B ]v (Abs e)
 
-    boxInterpV  : {A : Type} {r : grade}
-               -> (e : Term)
+    boxInterpV  : {A : Type} {r : grade} {s : ℕ}
+               -> (e : Term s)
                -> [ A ]e e -> [ Box r A ]v (Promote e)
 
-    boolInterpTrue  : [ BoolTy ]v vtrue
-    boolInterpFalse : [ BoolTy ]v vfalse
+    boolInterpTrue  : {s : ℕ} -> [ BoolTy ]v vtrue
+    boolInterpFalse : {s : ℕ} -> [ BoolTy ]v vfalse
 
   -- # Unary interpretation of expressions in types
 
-  [_]e : {{R : Semiring}} -> Type -> Term -> Set
-  [ A ]e t =
-    forall (v : Term)
+  [_]e : {{R : Semiring}} -> Type -> {s : ℕ} -> Term s -> Set
+  [ A ]e {s} t =
+    forall (v : Term s)
     -> multiRedux t ≡ v -> [ A ]v v
 
 -- # Relational interpretation of types
@@ -63,29 +63,29 @@ mutual
   -- # Binary interpretation of values in types
 
   {-# NO_POSITIVITY_CHECK #-}
-  data ⟦_⟧v {{R : Semiring}} : Type -> (adv : grade) -> Rel Term Term where
-    unitInterpBi : {adv : grade} -> ⟦ Unit ⟧v adv unit unit
+  data ⟦_⟧v {{R : Semiring}} : Type -> {s : ℕ} -> (adv : grade) -> Rel (Term s) (Term s) where
+    unitInterpBi : {s : ℕ} {adv : grade} -> ⟦ Unit ⟧v {s} adv unit unit
 
-    funInterpBi : {adv : grade} {A B : Type} {r : grade}
+    funInterpBi : {s : ℕ} {adv : grade} {A B : Type} {r : grade}
              -> {x y : ℕ}
-             -> (e1 e2 : Term)
-             -> (forall (v1 : Term) (v2 : Term)
+             -> (e1 e2 : Term (suc s))
+             -> (forall (v1 : Term s) (v2 : Term s)
 
                -- In the original model this:
                -- -> ⟦ A ⟧v adv {W} {_≤_} w' v1 v2
                -- But we have graded arrows here
 
                  -> ⟦ Box r A ⟧e adv (Promote v1) (Promote v2)
-                 -> ⟦ B ⟧e adv (syntacticSubst v1 x e1) (syntacticSubst v2 y e2))
+                 -> ⟦ B ⟧e adv (syntacticSubst v1 zero e1) (syntacticSubst v2 zero e2))
              -- unary parts
-             -> (forall (v : Term)
+             -> (forall (v : Term s)
                   -> [ Box r A ]e (Promote v)
-                  -> [ B ]e (syntacticSubst v x e1))
-             -> (forall (v : Term)
+                  -> [ B ]e (syntacticSubst v zero e1))
+             -> (forall (v : Term s)
                   -> [ Box r A ]e (Promote v)
-                  -> [ B ]e (syntacticSubst v y e2))
+                  -> [ B ]e (syntacticSubst v zero e2))
              --------------
-             ->   ⟦ FunTy A r B ⟧v adv (Abs x e1) (Abs y e2)
+             ->   ⟦ FunTy A r B ⟧v adv (Abs e1) (Abs e2)
 
     -- Note:
     -- pre Hi Lo   false
@@ -94,24 +94,24 @@ mutual
 
     boxInterpBiobs : {adv : grade} -> {A : Type} {r : grade}
               -> (r ≤ adv)
-              -> (t1 t2 : Term)
+              -> (t1 t2 : Term s)
               -> ⟦ A ⟧e adv t1 t2
               -> ⟦ Box r A ⟧v adv (Promote t1) (Promote t2)
 
     boxInterpBiunobs : {adv : grade} -> {A : Type} {r : grade}
               -> ¬ (r ≤ adv)
-              -> (t1 t2 : Term)
+              -> (t1 t2 : Term s)
               -> ([ A ]e t1) × ([ A ]e t2)
               -> ⟦ Box r A ⟧v adv (Promote t1) (Promote t2)
 
-    boolInterpTrueBi  : {adv : grade} -> ⟦ BoolTy ⟧v adv vtrue vtrue
-    boolInterpFalseBi : {adv : grade} -> ⟦ BoolTy ⟧v adv vfalse vfalse
+    boolInterpTrueBi  : {s : ℕ} {adv : grade} -> ⟦ BoolTy ⟧v {s} adv vtrue vtrue
+    boolInterpFalseBi : {s : ℕ} {adv : grade} -> ⟦ BoolTy ⟧v {s} adv vfalse vfalse
 
   {-# TERMINATING #-}
   -- # Binary interpretation of expressions in types
-  ⟦_⟧e : {{R : Semiring}} -> Type -> (adv : grade) -> Rel Term Term
-  ⟦ tau ⟧e adv e1 e2 =
-       forall (v1 v2 : Term)
+  ⟦_⟧e : {{R : Semiring}} -> Type -> (adv : grade) -> {s : ℕ} -> Rel (Term s) (Term s)
+  ⟦ tau ⟧e adv {s} e1 e2 =
+       forall (v1 v2 : Term s)
     -> multiRedux e1 ≡ v1
     -> multiRedux e2 ≡ v2
     -> ⟦ tau ⟧v adv v1 v2
@@ -120,18 +120,14 @@ mutual
 -- Contexts
 
 -- unary
-[_]Γ : {{R : Semiring}} -> {s : ℕ} -> Context s -> List Term -> Set
-[ Empty            ]Γ _ = ⊤
-[ Ext g (Grad A r) ]Γ (v ∷ vs) = ([ Box r A ]e (Promote v)) × ([ g ]Γ vs)
-[ Ext _ _          ]Γ _ = ⊥
+[_]Γ : {{R : Semiring}} -> {s : ℕ} -> Context s -> Telescope s -> Set
+[ Empty            ]Γ Empty = ⊤
+[ Ext g (Grad A r) ]Γ (Cons v vs) = ([ Box r A ]e (Promote v)) × ([ g ]Γ vs)
 
 -- binary
-⟦_⟧Γ : {{R : Semiring}} -> {s : ℕ} -> Context s -> (adv : grade) -> List Term -> List Term -> Set
-⟦ Empty   ⟧Γ adv [] []  = ⊤
-⟦ Empty   ⟧Γ adv _ _  = ⊥
-⟦ Ext _ _ ⟧Γ adv _ [] = ⊥
-⟦ Ext _ _ ⟧Γ adv [] _ = ⊥
-⟦ Ext g (Grad A r) ⟧Γ adv (t1 ∷ ts1) (t2 ∷ ts2) =
+⟦_⟧Γ : {{R : Semiring}} -> {s : ℕ} -> Context s -> (adv : grade) -> Telescope s -> Telescope s -> Set
+⟦ Empty   ⟧Γ adv Empty Empty  = ⊤
+⟦ Ext g (Grad A r) ⟧Γ adv (Cons t1 ts1) (Cons t2 ts2) =
 
    ⟦ Box r A ⟧e adv (Promote t1) (Promote t2)
    ×
@@ -141,23 +137,23 @@ mutual
 -- # Binary interpretation implies unary interpretation
 
 mutual
-  binaryImpliesUnaryV : {{R : Semiring}} {A : Type} {t1 t2 : Term} {adv : grade}
+  binaryImpliesUnaryV : {{R : Semiring}} {s : ℕ} {A : Type} {t1 t2 : Term s} {adv : grade}
                     -> ⟦ A ⟧v adv t1 t2 -> [ A ]v t1 × [ A ]v t2
-  binaryImpliesUnaryV {FunTy A r B} {Abs x e1} {Abs x' e2} {adv} (funInterpBi e1 e2 body ubody1 ubody2) =
+  binaryImpliesUnaryV {_} {FunTy A r B} {Abs e1} {Abs e2} {adv} (funInterpBi e1 e2 body ubody1 ubody2) =
      (funInterpV e1 ubody1) , (funInterpV e2 ubody2)
 
-  binaryImpliesUnaryV {Unit} {.unit} {.unit} {adv} unitInterpBi = unitInterpV , unitInterpV
-  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiobs x t1 t2 inner)
-   with binaryImpliesUnary {A} {t1} {t2} {adv} inner
+  binaryImpliesUnaryV {s} {Unit} {.unit} {.unit} {adv} unitInterpBi = unitInterpV {s} , unitInterpV {s}
+  binaryImpliesUnaryV {_} {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiobs x t1 t2 inner)
+   with binaryImpliesUnary {_} {A} {t1} {t2} {adv} inner
   ... | (fst , snd) = (boxInterpV t1 fst) , (boxInterpV t2 snd)
-  binaryImpliesUnaryV {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiunobs x t1 t2 (fst , snd)) =
+  binaryImpliesUnaryV {_} {Box r A} {.(Promote t1)} {.(Promote t2)} {adv} (boxInterpBiunobs x t1 t2 (fst , snd)) =
     (boxInterpV t1 fst) , (boxInterpV t2 snd)
-  binaryImpliesUnaryV {BoolTy} {.vtrue} {.vtrue} {adv} boolInterpTrueBi = boolInterpTrue , boolInterpTrue
-  binaryImpliesUnaryV {BoolTy} {.vfalse} {.vfalse} {adv} boolInterpFalseBi = boolInterpFalse , boolInterpFalse
+  binaryImpliesUnaryV {s} {BoolTy} {.vtrue} {.vtrue} {adv} boolInterpTrueBi = boolInterpTrue {s} , boolInterpTrue {s}
+  binaryImpliesUnaryV {s} {BoolTy} {.vfalse} {.vfalse} {adv} boolInterpFalseBi = boolInterpFalse {s} , boolInterpFalse {s}
 
-  binaryImpliesUnary : {{R : Semiring}} {A : Type} {t1 t2 : Term} {adv : grade}
+  binaryImpliesUnary : {{R : Semiring}} {A : Type} {t1 t2 : Term s} {adv : grade}
                     -> ⟦ A ⟧e adv t1 t2 -> [ A ]e t1 × [ A ]e t2
-  binaryImpliesUnary {A} {t1} {t2} {adv} pre = (left , right)
+  binaryImpliesUnary {_} {A} {t1} {t2} {adv} pre = (left , right)
   -- pre takes two arguments- two values v1 and v2 that t1 and t2 reduce into
   --   given these then v1 and v2 are in the value relation
     where
@@ -167,52 +163,49 @@ mutual
       right : [ A ]e t2
       right v0 redux = proj₂ (binaryImpliesUnaryV (pre (multiRedux t1) v0 refl redux))
 
-  binaryImpliesUnaryG : {{R : Semiring}} {sz : ℕ} { Γ : Context sz } {adv : grade} {γ1 γ2 : List Term}
+  binaryImpliesUnaryG : {{R : Semiring}} {sz : ℕ} { Γ : Context sz } {adv : grade} {γ1 γ2 : Telescope sz}
                     -> ⟦ Γ ⟧Γ adv γ1 γ2 -> ([ Γ ]Γ γ1) × ([ Γ ]Γ γ2)
-  binaryImpliesUnaryG {.0} {Empty} {adv} {_} {_} pre = tt , tt
-  binaryImpliesUnaryG {suc sz} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} (arg , rest)
-    with binaryImpliesUnary {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
+  binaryImpliesUnaryG {.0} {Empty} {adv} {Empty} {Empty} pre = tt , tt
+  binaryImpliesUnaryG {suc sz} {Ext Γ (Grad A r)} {adv} {Cons v1 γ1} {Cons v2 γ2} (arg , rest)
+    with binaryImpliesUnary {_} {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
   ... | ( arg1 , arg2 ) | ( rest1 , rest2 ) = ( (arg1 , rest1) , (arg2 , rest2) )
 
 
 -------------------------------
 -- Conversion theorems for expressions and contexts
 
-unaryPlusElimLeft : {{R : Semiring}} {A : Type} {r1 r2 : grade} {x : Term} -> [ Box (r1 +R r2) A ]e (Promote x) -> [ Box r1 A ]e (Promote x)
+unaryPlusElimLeft : {{R : Semiring}} {A : Type} {r1 r2 : grade} {x : Term s} -> [ Box (r1 +R r2) A ]e (Promote x) -> [ Box r1 A ]e (Promote x)
 unaryPlusElimLeft {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
 ... | boxInterpV e inner = boxInterpV e inner
 
-unaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
-unaryPlusElimLeftΓ {.0} {γ} {Empty} {Empty} tt = tt
-unaryPlusElimLeftΓ {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail) =
-  unaryPlusElimLeft {A} {r1} {r2} {x} head , unaryPlusElimLeftΓ {s} {γ} {Γ1} {Γ2} tail
+unaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {γ : Telescope sz} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
+unaryPlusElimLeftΓ {.0} {Empty} {Empty} {Empty} tt = tt
+unaryPlusElimLeftΓ {suc s} {Cons x γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail) =
+  unaryPlusElimLeft {_} {A} {r1} {r2} {x} head , unaryPlusElimLeftΓ {s} {γ} {Γ1} {Γ2} tail
 
-unaryPlusElimRight : {{R : Semiring}}{A : Type} {r1 r2 : grade} {x : Term} -> [ Box (r1 +R r2) A ]e (Promote x) -> [ Box r2 A ]e (Promote x)
+unaryPlusElimRight : {{R : Semiring}}{A : Type} {r1 r2 : grade} {x : Term s} -> [ Box (r1 +R r2) A ]e (Promote x) -> [ Box r2 A ]e (Promote x)
 unaryPlusElimRight {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
 ... | boxInterpV e inner = boxInterpV e inner
 
-unaryPlusElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ : List Term} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ2 ]Γ γ
-unaryPlusElimRightΓ {.0} {γ} {Empty} {Empty} tt = tt
-unaryPlusElimRightΓ {suc s} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail)
+unaryPlusElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ : Telescope sz} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ2 ]Γ γ
+unaryPlusElimRightΓ {.0} {Empty} {Empty} {Empty} tt = tt
+unaryPlusElimRightΓ {suc s} {Cons x γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail)
   rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
-    unaryPlusElimRight {A} {r1} {r2} {x} head , unaryPlusElimRightΓ {s} {γ} {Γ1} {Γ2} tail
+    unaryPlusElimRight {_} {A} {r1} {r2} {x} head , unaryPlusElimRightΓ {s} {γ} {Γ1} {Γ2} tail
 
-binaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {adv : grade} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz}
-                   -> (convertVal : ({r1 r2 adv : grade} {v1 v2 : Term} {A : Type}
+binaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {adv : grade} {γ1 γ2 : Telescope sz} {Γ1 Γ2 : Context sz}
+                   -> (convertVal : ({r1 r2 adv : grade} {v1 v2 : Term sz} {A : Type}
                           -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)))
                    -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-binaryPlusElimLeftΓ {{R}} {0} {adv} {[]} {[]} {Empty} {Empty} convertVal _ = tt
+binaryPlusElimLeftΓ {{R}} {0} {adv} {Empty} {empty} {Empty} {Empty} convertVal _ = ?
 binaryPlusElimLeftΓ {{R}} {0} {adv} {γ1} {γ2} {Empty} {Empty} convertVal p = p
-binaryPlusElimLeftΓ {{R}} {.(suc _)} {adv} {[]} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
-binaryPlusElimLeftΓ {{R}} {.(suc _)} {adv} {[]} {x ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
-binaryPlusElimLeftΓ {{R}} {.(suc _)} {adv} {x ∷ γ1} {[]} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} _ ()
-binaryPlusElimLeftΓ {{R}} {(suc s)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
+binaryPlusElimLeftΓ {{R}} {(suc s)} {adv} {Cons v1 γ1} {Cons v2 γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
     convert {r1} {r2} {adv} {v1} {v2} {A} arg , binaryPlusElimLeftΓ {s} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal rest
   where
-    convert : {r1 r2 adv : grade} {v1 v2 : Term} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
-    convert {r1} {r2} {adv} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
-     rewrite trans (sym v1redux') (reduxProm {v1})
-          | trans (sym v2redux') (reduxProm {v2}) = convertVal {r1} {r2} {adv} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
+    convert : {s : ℕ} {r1 r2 adv : grade} {v1 v2 : Term s} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
+    convert {s} {r1} {r2} {adv} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
+     rewrite trans (sym v1redux') (reduxProm {_} {v1})
+          | trans (sym v2redux') (reduxProm {_} {v2}) = convertVal {r1} {r2} {adv} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
 
 binaryPlusElimRightΓ : {{R : Semiring}}
                        {sz : ℕ} {adv : grade} {γ1 γ2 : List Term} {Γ1 Γ2 : Context sz}
