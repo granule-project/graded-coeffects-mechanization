@@ -19,15 +19,26 @@ open import Data.Fin hiding (_+_; _≟_)
 
 open import Semiring
 
+{-
+ Example
+  G1 |- t1 : A1
+  G2 |- t2 : A2
+  G3 |- t3 : A3
+  Ga , x1 : A1 , Gb , x2 : A2 , Gc , x3 : A3 |- t : B
+-------------------------------------------------------
+  (Ga, Gb, Gc) + G1 + G2 + G3 |- t : B
 
-multisubst' : (xs : List (Term s)) -> Fin (suc (length xs + s)) -> Term (length xs + s) -> Term s
-multisubst' [] _ t' = t'
-multisubst' (t ∷ ts) n t' =
-  multisubst' ts {!!} (syntacticSubst (raiseTermℕ (length ts) t) {!!} t')
+i.e., |G1| = |G2| = |G3| = |Ga|+|Gb|+|Gc|
+
+-}
 
 multisubst : (xs : List (Term s)) -> Term (length xs + s) -> Term s
-multisubst ts t' = multisubst' ts zero t'
+multisubst [] t' = t'
+multisubst (t ∷ ts) t' =
+  multisubst ts (syntacticSubst (raiseTermℕ (length ts) t) zero t')
 
+-- Note that it might be easier to reason about this with closed terms
+-- i.e., is s == 0 in the above
 
 postulate
   multiReduxHere : {t : Term s} {γ : List (Term s)}
@@ -42,13 +53,14 @@ isSimultaneous' : {t t' : Term s} {γ : List (Term s)}
   -> multiRedux t ≡ t'
 isSimultaneous' {s} {t} {t'} {γ} p rewrite multiReduxHere {s} {t} {γ} = p
 
-{-
 
 -- Various preservation results about substitutions and values
 
-substPresUnit : {γ : List (Term s)} {n : ℕ} -> multisubst' n γ unit ≡ unit
-substPresUnit {γ = []}    {n} = refl
-substPresUnit {γ = x ∷ g} {n} = substPresUnit {_} {g} {n + 1}
+substPresUnit : {γ : List (Term s)} -> multisubst γ unit ≡ unit
+substPresUnit {s} {γ = []}    = refl
+substPresUnit {s} {γ = x ∷ g} = substPresUnit {s} {g}
+
+{-
 
 substPresTrue : {γ : List (Term s)} {n : ℕ} -> multisubst' n γ vtrue ≡ vtrue
 substPresTrue {γ = []}    {n} = refl

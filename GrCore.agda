@@ -394,7 +394,7 @@ data Value : {s : ℕ} -> Term s -> Set where
 
 -- Untyped reduction
 untypedRedux : {s : ℕ} -> Term s -> Maybe (Term s)
-untypedRedux (App (Abs t) t') = just (syntacticSubst t' zero t)
+untypedRedux (App (Abs t) t') = just (syntacticSubst t' Data.Fin.zero t)
 untypedRedux (App t1 t2) with untypedRedux t1
 ... | just t1' = just (App t1' t2)
 ... | nothing  = nothing
