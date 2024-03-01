@@ -47,7 +47,7 @@ utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {.τ} {.Γ} {
 utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) context v1 v1redux
   rewrite pos =
     let
-      ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst' 0 γ t1} {multisubst' 0 γ t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ} typ1)
+      ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst γ t1} {multisubst γ t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ} typ1)
       fun1 = Abs var1 bod1
 
       ih1 = utheorem {sz} {γ} {Γ1} {t1} {FunTy A r B} typ1 (unaryPlusElimLeftΓ context)

@@ -411,6 +411,12 @@ multiRedux t with untypedRedux t
 ... | just t' = multiRedux t'
 ... | nothing = t
 
+determinism : {t t1 t2 : Term s}
+             -> multiRedux t ≡ t1
+             -> multiRedux t ≡ t2
+             -> t1 ≡ t2
+determinism prf1 prf2 = trans (sym prf1) prf2             
+
 postulate
    valuesDontReduce : {s : ℕ} {t : Term s} -> Value t -> multiRedux t ≡ t
 
@@ -428,50 +434,47 @@ postulate
 -- multiReduxProducesValues {A} {vfalse} typing = falseValue
 -- multiReduxProducesValues {A} {If t t₁ t₂} typing = {!!}
 
--- postulate
---   multReduxCongruence : {t1 v : Term} {C : Term -> Term}
---                    -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
+postulate
+  multReduxCongruence : {t1 v : Term s} {C : Term s -> Term s}
+                   -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
 
---   preservation : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
---              -> Γ ⊢ t ∶ A
---              -> Γ ⊢ multiRedux t ∶ A
+  preservation : {{R : Semiring}} {Γ : Context s} {A : Type} {t : Term s}
+             -> Γ ⊢ t ∶ A
+             -> Γ ⊢ multiRedux t ∶ A
 
+-- # Equality
 
---   determinism : {t t1 t2 : Term}
---              -> multiRedux t ≡ t1
---              -> multiRedux t ≡ t2
---              -> t1 ≡ t2
+data FullBetaEq : Term s -> Term s -> Set where
+  VarEq     : {x : Fin (suc s)} -> FullBetaEq (Var x) (Var x)
+  AppEq     : {t1 t1' t2 t2' : Term s} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (App t1 t2) (App t1' t2')
+  AbsEq     : {t1 t2 : Term (suc s)} -> FullBetaEq t1 t2 -> FullBetaEq (Abs t1) (Abs t2)
+  UnitEq    : FullBetaEq (unit {s}) (unit {s})
+  PromoteEq : {t1 t2 : Term s} -> FullBetaEq t1 t2 -> FullBetaEq (Promote t1) (Promote t2)
+  VTrue     : FullBetaEq (vtrue {s}) (vtrue {s})
+  VFalse    : FullBetaEq (vfalse {s}) (vfalse {s})
+  IfEq      : {t t' t1 t1' t2 t2' : Term s} -> FullBetaEq t t' -> FullBetaEq t1 t1' -> FullBetaEq t2 t2'
+               -> FullBetaEq (If t t1 t2) (If t' t1' t2')
+  BetaEq    : {t1 : Term (suc s)} {t2 : Term s} -> FullBetaEq (App (Abs t1) t2) (syntacticSubst t2 Data.Fin.zero t1)
+  EmbedRedux : {t : Term s} -> FullBetaEq (multiRedux t) t
+  LetEq     : {t1 t1' : Term s} {t2 t2' : Term (suc s)} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (Let t1 t2) (Let t1' t2')
 
--- -- # Equality
+_==_ : Term s -> Term s -> Set
+t == t' = FullBetaEq t t'
 
--- data FullBetaEq : Term -> Term -> Set where
---   VarEq     : {x : ℕ} -> FullBetaEq (Var x) (Var x)
---   AppEq     : {t1 t1' t2 t2' : Term} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (App t1 t2) (App t1' t2')
---   AbsEq     : {x : ℕ} {t1 t2 : Term} -> FullBetaEq t1 t2 -> FullBetaEq (Abs x t1) (Abs x t2)
---   UnitEq    : FullBetaEq unit unit
---   PromoteEq : {t1 t2 : Term} -> FullBetaEq t1 t2 -> FullBetaEq (Promote t1) (Promote t2)
---   VTrue     : FullBetaEq vtrue vtrue
---   VFalse    : FullBetaEq vfalse vfalse
---   IfEq      : {t t' t1 t1' t2 t2' : Term} -> FullBetaEq t t' -> FullBetaEq t1 t1' -> FullBetaEq t2 t2'
---                -> FullBetaEq (If t t1 t2) (If t' t1' t2')
---   BetaEq    : {x : ℕ} {t1 t2 : Term} -> FullBetaEq (App (Abs x t1) t2) (syntacticSubst t1 x t2)
---   EmbedRedux : {t : Term} -> FullBetaEq (multiRedux t) t
+embedReduxCong : {t1 t2 : Term s} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
+embedReduxCong = {!!}
 
--- _==_ : Term -> Term -> Set
--- t == t' = FullBetaEq t t'
-
--- embedReduxCong : {t1 t2 : Term} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
--- embedReduxCong = {!!}
-
--- embedEq : {t1 t2 : Term} -> t1 ≡ t2 -> FullBetaEq t1 t2
--- embedEq {Var x} {Var .x} refl = VarEq
--- embedEq {App t1 t2} {App .t1 .t2} refl = AppEq (embedEq {t1} {t1} refl) (embedEq {t2} {t2} refl)
--- embedEq {Abs x t1} {Abs x₁ t2} prf = {!!}
--- embedEq {unit} {unit} refl = UnitEq
--- embedEq {Promote t1} {Promote .t1} refl = PromoteEq (embedEq {t1} {t1} refl)
--- embedEq {vtrue} {vtrue} refl = VTrue
--- embedEq {vfalse} {vfalse} refl = VFalse
--- embedEq {If t1 t2 t3} {If .t1 .t2 .t3} refl = IfEq (embedEq {t1} {t1} refl) (embedEq {t2} {t2} refl) (embedEq {t3} {t3} refl)
+embedEq : {t1 t2 : Term s} -> t1 ≡ t2 -> FullBetaEq t1 t2
+embedEq {_} {Var x} {Var .x} refl = VarEq
+embedEq {_} {App t1 t2} {App .t1 .t2} refl = AppEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl)
+embedEq {_} {Abs t1} {Abs t2} prf = {!!}
+embedEq {_} {unit} {unit} refl = UnitEq {_}
+embedEq {_} {Promote t1} {Promote .t1} refl = PromoteEq (embedEq {_} {t1} {t1} refl)
+embedEq {_} {vtrue} {vtrue} refl = VTrue {_}
+embedEq {_} {vfalse} {vfalse} refl = VFalse {_}
+embedEq {_} {If t1 t2 t3} {If .t1 .t2 .t3} refl =
+  IfEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl) (embedEq {_} {t3} {t3} refl)
+embedEq {_} {Let e1 e2} {Let e3 e4} refl = LetEq ((embedEq {_} {e1} {e3} refl)) ( (embedEq {_} {e2} {e4} refl))
 
 -- transFullBetaEq : {t1 t2 t3 : Term} -> t1 == t2 -> t2 == t3 -> t1 == t3
 -- transFullBetaEq = {!!}
