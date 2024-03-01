@@ -205,10 +205,10 @@ rel1 record { idem* = idem* ; absorb1 = absorb1 ; absorb2 = absorb2 ; plusMeet1 
     { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = antisym ; idem* = idem* }
   where
     one : {r : grade} → 1R ≤ r
-    one {r} rewrite sym (leftUnit* {r}) = multJoin1 {1R} {r}
+    one {r} rewrite sym (leftUnit* {r}) = ? -- multJoin1 {1R} {r}
 
     zero : {r : grade} -> r ≤ 0R
-    zero {r} rewrite sym (rightUnit+ {r}) = plusMeet2 {r} {0R}
+    zero {r} rewrite sym (rightUnit+ {r}) = ?  -- plusMeet2 {r} {0R}
 
     -- maybe a classical proof?
     antisym : {r s : grade} -> r ≤ s -> s ≤ r -> r ≡ s

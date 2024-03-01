@@ -148,13 +148,30 @@ raiseTerm vfalse = vfalse
 raiseTerm (If t t₁ t₂) = If (raiseTerm t) (raiseTerm t₁) (raiseTerm t₂)
 raiseTerm (Let t1 t2) = Let (raiseTerm t1) (raiseTerm t2)
 
--- matchVar redexVar targetTerm
+-- `mathcVar` is used to enact substitution into a variable term
+-- i.e., the situation is that we have a receiver:
+
+--  G, x : A, G' |- y : B
+
+-- and a substitutee
+
+--  G0 |- t : B
+
+-- where |G0| = |G| + |G'|
+
+-- The question is whether
+--   (1) y matches x and so we enact a substitution
+--   (2) y is in G so we do not substitute but instead return just y
+--   (3) y is in G' so we do not substitute but instead return pred of y
+
+-- `matchVar x y t` computes the above
+
 matchVar : {s : ℕ} -> Fin (suc s) -> Fin (suc s) -> (t : Term s) -> Term s
 matchVar {zero} Fin.zero Fin.zero t = t
-matchVar {suc s} redexVar termVar t with Data.Fin.compare redexVar termVar
-... | Data.Fin.less .termVar least = Var (inject! least)
-... | Data.Fin.equal .redexVar = t
-... | Data.Fin.greater .redexVar least = Var (inject! least)
+matchVar {suc s} varx vary t with Data.Fin.compare vary varx
+... | Data.Fin.less .varx least    = Var (inject! least)
+... | Data.Fin.equal .var       x  = t
+... | Data.Fin.greater .vary least = Var {!!}
 
 -- G1        |- t : A
 -- G2, x : A |- t' : B
@@ -162,6 +179,8 @@ matchVar {suc s} redexVar termVar t with Data.Fin.compare redexVar termVar
 syntacticSubst : {s : ℕ} -> (t : Term s) -> Fin (suc s) -> (t' : Term (suc s)) -> Term s
 syntacticSubst t x (Var y) = matchVar x y t
 syntacticSubst t x (App t1 t2) = App (syntacticSubst t x t1) (syntacticSubst t x t2)
+
+
 -- probably best if we don't allow abstraction anywhere in the term
 syntacticSubst t x (Abs y t1) with Data.Fin.compare (raise 1 x) y
 ... | p = {!p!}
