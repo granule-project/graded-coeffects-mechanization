@@ -19,27 +19,30 @@ open import Data.Fin hiding (_+_; _≟_)
 
 open import Semiring
 
-variable
-  s : ℕ
 
-multisubst' : ℕ -> List (Term s) -> Term (suc s) -> Term (suc s)
-multisubst' n [] t' = t'
-multisubst' n (t ∷ ts) t' =
-  multisubst' (n + 1) ts (syntacticSubst t ? t')
-multisubst : List (Term s) -> Term (suc s) -> Term (suc s)
-multisubst ts t' = multisubst' 0 ts t'
+multisubst' : (xs : List (Term s)) -> Fin (suc (length xs + s)) -> Term (length xs + s) -> Term s
+multisubst' [] _ t' = t'
+multisubst' (t ∷ ts) n t' =
+  multisubst' ts {!!} (syntacticSubst (raiseTermℕ (length ts) t) {!!} t')
+
+multisubst : (xs : List (Term s)) -> Term (length xs + s) -> Term s
+multisubst ts t' = multisubst' ts zero t'
+
 
 postulate
-  isSimultaneous' : {t t' : Term s} {γ : List (Term s)}
-    -> multiRedux (multisubst' 0 (t' ∷ γ) (Var zero)) ≡ raiseTerm t
-    -> multiRedux t' ≡ t
+  multiReduxHere : {t : Term s} {γ : List (Term s)}
+                  -> multisubst (t ∷ γ) (Var zero) ≡ t
 
-  isSimultaneous'' : {t : Term s} {γ : List (Term s)}
-                 -> multisubst (t ∷ γ) (Var zero) ≡ raiseTerm t
+  betaVariant1 : {bod : Term (suc s)} {t2 : Term s}
+                -> multiRedux (App (Abs bod) t2)
+                 ≡ multiRedux (syntacticSubst t2 zero bod)
 
-  betaVariant1 : {bod : Term (suc s)} {t2 : Term s} {x : Fin (suc s)}
-                -> multiRedux (raiseTerm (App (Abs x bod) t2))
-                 ≡ multiRedux (syntacticSubst t2 x bod)
+isSimultaneous' : {t t' : Term s} {γ : List (Term s)}
+  -> multiRedux (multisubst (t ∷ γ) (Var zero)) ≡ t'
+  -> multiRedux t ≡ t'
+isSimultaneous' {s} {t} {t'} {γ} p rewrite multiReduxHere {s} {t} {γ} = p
+
+{-
 
 -- Various preservation results about substitutions and values
 
@@ -129,3 +132,4 @@ reduxAndSubstCombinedProm {v} {t} {γ} redux =
        let qr = cong multiRedux (substPresProm {0} {γ} {t})
            qr' = trans qr (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
+-}

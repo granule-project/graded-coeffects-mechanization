@@ -133,7 +133,7 @@ leftUnitContext {suc s} {Γ = Ext G (Grad A r)} rewrite leftUnitContext {s} {G} 
 data Term : ℕ -> Set where
   Var     : {s : ℕ} -> Fin (suc s) -> Term (suc s)
   App     : {s : ℕ} -> Term s -> Term s -> Term s
-  Abs     : {s : ℕ} -> Fin (suc s) -> Term (suc s) -> Term s
+  Abs     : {s : ℕ} -> Term (suc s) -> Term s
   unit    : {s : ℕ} -> Term s
   Promote : {s : ℕ} -> Term s -> Term s
   Let     : {s : ℕ} -> Term s -> Term (suc s) -> Term s
@@ -145,13 +145,16 @@ data Term : ℕ -> Set where
 raiseTerm : {s : ℕ} -> Term s -> Term (suc s)
 raiseTerm (Var x) = Var (raise 1 x)
 raiseTerm (App t t₁) = App (raiseTerm t) (raiseTerm t₁)
-raiseTerm (Abs x t) = Abs (raise 1 x) (raiseTerm t)
+raiseTerm (Abs t) = Abs (raiseTerm t)
 raiseTerm unit = unit
 raiseTerm (Promote t) = Promote (raiseTerm t)
 raiseTerm vtrue = vtrue
 raiseTerm vfalse = vfalse
 raiseTerm (If t t₁ t₂) = If (raiseTerm t) (raiseTerm t₁) (raiseTerm t₂)
 raiseTerm (Let t1 t2) = Let (raiseTerm t1) (raiseTerm t2)
+
+raiseTermℕ : (n : ℕ) -> Term s -> Term (n + s)
+raiseTermℕ = {!!}
 
 -- `mathcVar` is used to enact substitution into a variable term
 -- i.e., the situation is that we have a receiver:
@@ -207,35 +210,8 @@ matchVar {suc s} t posx posy with Data.Fin.compare posy posx
 syntacticSubst : {s : ℕ} -> (t : Term s) -> Fin (suc s) -> (t' : Term (suc s)) -> Term s
 syntacticSubst t x (Var y) = matchVar t x y
 syntacticSubst t x (App t1 t2) = App (syntacticSubst t x t1) (syntacticSubst t x t2)
-
--- probably best if we don't allow abstraction anywhere in the term
-
--- Ga, y : A', Gb , x : A, Gc  |- t1 : B'
--- --------------------------------------------
--- Ga, Gb , x : A, Gc          |- \y -> t1 : A' -> B'
-
--- OR
-
--- Ga, x : A, Gb , y : A', Gc  |- t1 : B'
--- --------------------------------------------
--- Ga, x : A, Gb , Gc          |- \y -> t1 : A' -> B'
-
--- OR
-
--- Ga, x : A , Gc  |- t1 : B'
--- --------------------------------------------
--- Ga, Gc          |- \y -> t1 : A' -> B'
-
-syntacticSubst {zero} t x (Abs t1) with Data.Fin.compare {{!!}} (raise 1 x) y
-... | p = {!p!}
-
-syntacticSubst {suc s} t x (Abs y t1) with Data.Fin.compare {suc (suc (suc s))} (raise 1 x) y
-... | Data.Fin.equal posx = ?
-... | Data.Fin.greater posx least    = ?
-... | Data.Fin.less posx least    = ?
---... | yes p = Abs {!!} {!!}
---... | no p =
---      let t1' = syntacticSubst (raiseTerm t) (raise 1 x) t1 in Abs {!!} t1'
+syntacticSubst  t x (Abs t1) =
+  Abs (syntacticSubst (raiseTerm t) (raise 1 x) t1)
 syntacticSubst t x (Promote t1) = Promote (syntacticSubst t x t1)
 syntacticSubst t x unit = unit
 syntacticSubst t x vtrue = vtrue
@@ -246,11 +222,8 @@ syntacticSubst t x (Let t1 t2) = Let (syntacticSubst t x t1) (syntacticSubst (ra
 discrimBool : {s : ℕ} -> vtrue {s} ≡ vfalse {s} -> ⊥
 discrimBool ()
 
-absInj2 : {s : ℕ} {x y : Fin (suc s)} {e1 e2 : Term (suc s)} -> Abs x e1 ≡ Abs y e2 -> e1 ≡ e2
+absInj2 : {s : ℕ} {x y : Fin (suc s)} {e1 e2 : Term (suc s)} -> Abs e1 ≡ Abs e2 -> e1 ≡ e2
 absInj2 refl = refl
-
-absInj1 : {s : ℕ} {x y : Fin (suc s)} {e1 e2 : Term (suc s)} -> Abs x e1 ≡ Abs y e2 -> x ≡ y
-absInj1 refl = refl
 
 -- lookupCtx : {{R : Semiring}} -> {s : ℕ} -> (Γ : Context s) -> Fin s -> Assumption
 -- lookupCtx (Ext ctx x₁) Fin.zero = x₁
@@ -305,7 +278,7 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
       -> Γ ⊢ t ∶ B
       -> { Γ' ≡ (Γ1 ,, Γ2)}
       -> --------------------------------------
-         Γ' ⊢ Abs (raiseR s2 (fromℕ s1)) t ∶ FunTy A r B -- TODO: double-check x
+         Γ' ⊢ Abs t ∶ FunTy A r B -- TODO: double-check x
 
 
   pr : {s : ℕ}
@@ -365,7 +338,7 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
 data Value : {s : ℕ} -> Term s -> Set where
   unitValue    : Value unit
   varValue     : {s : ℕ} -> Value (Var (fromℕ s))
-  absValue     : {s : ℕ} -> (t : Term (suc s)) -> Value (Abs (fromℕ s) t)
+  absValue     : {s : ℕ} -> (t : Term (suc s)) -> Value (Abs t)
   promoteValue : {s : ℕ} -> (t : Term s) -> Value (Promote t)
   trueValue    : Value vtrue
   falseValue   : Value vfalse
@@ -421,7 +394,7 @@ data Value : {s : ℕ} -> Term s -> Set where
 
 -- Untyped reduction
 untypedRedux : {s : ℕ} -> Term s -> Maybe (Term s)
-untypedRedux (App (Abs x t) t') = just {!syntacticSubst!} -- (syntacticSubst t' x t)
+untypedRedux (App (Abs t) t') = just (syntacticSubst t' zero t)
 untypedRedux (App t1 t2) with untypedRedux t1
 ... | just t1' = just (App t1' t2)
 ... | nothing  = nothing
