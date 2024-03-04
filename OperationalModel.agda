@@ -42,6 +42,12 @@ i.e., |G1| = |G2| = |G3| = |Ga|+|Gb|+|Gc|
 `multisubst` assumes it is substituting into head variables in the context
 -}
 
+multisubst' : {s n : ℕ} -> (xs : Vec (Term (suc s)) n) -> Term (suc (n + s)) -> Term (suc s)
+multisubst' [] t' = t'
+multisubst' {s} {suc n} (t ∷ ts) t' =
+  multisubst' {s} {n} ts (syntacticSubst (raiseTermℕ n t) (suc zero) t')
+
+
 multisubst : {s n : ℕ} -> (xs : Vec (Term s) n) -> Term (n + s) -> Term s
 multisubst [] t' = t'
 multisubst {s} {suc n} (t ∷ ts) t' =
@@ -54,14 +60,33 @@ postulate
   multiReduxHere : {s n : ℕ} {t : Term s} {γ : Vec (Term s) n}
                   -> multisubst (t ∷ γ) (Var zero) ≡ t
 
+  multiSubstThere : {s n : ℕ} {t : Term s} {γ : Vec (Term s) n}
+       -> multisubst γ (matchVar (raiseTermℕ n t) zero (raiseR 0 (fromℕ (n + s))))
+         ≡ t
+
+  substCom : {s1 s2 : ℕ} {v' : Term 0} {t : Term (suc (s1 + s2))} {γ : Vec (Term 0) (s1 + s2)}
+          -> (multisubst γ (syntacticSubst (raiseTermℕ (s1 + s2) v') zero t))
+          ≡ (syntacticSubst v' zero (multisubst (Data.Vec.map raiseTerm γ) t))
+
+  substComAbs : {s1 s2 : ℕ} {v' : Term 0} {t : Term (suc (s1 + s2))} {γ : Vec (Term 0) (s1 + s2)}
+          -> (multisubst γ (syntacticSubst (raiseTermℕ (s1 + s2) v') zero t))
+          ≡ (syntacticSubst v' zero (multisubst' (Data.Vec.map (raiseTermℕ 1) γ) t))
+
+
   betaVariant1 : {bod : Term (suc s)} {t2 : Term s}
                 -> multiRedux (App (Abs bod) t2)
                  ≡ multiRedux (syntacticSubst t2 zero bod)
 
-isSimultaneous' : {s n : ℕ} {t t' : Term s} {γ : Vec (Term s) n}
+isSimultaneous' : {s n : ℕ} {t : Term s} {t' : Term s} {γ : Vec (Term s) n}
   -> multiRedux (multisubst (t ∷ γ) (Var zero)) ≡ t'
   -> multiRedux t ≡ t'
 isSimultaneous' {s} {n} {t} {t'} {γ} p rewrite multiReduxHere {s} {n} {t} {γ} = p
+
+isSimultaneousGen : {s n s1 : ℕ} {t : Term s} {t' : Term s}
+                    {γ : Vec (Term s) n} -- (fromℕ n)
+  -> multiRedux (multisubst γ (matchVar (raiseTermℕ n t) zero (raiseR 0 (fromℕ (n + s))))) ≡ t'
+  -> multiRedux t ≡ t'
+isSimultaneousGen {s} {n} {s1} {t} {t'} {γ} p rewrite (multiSubstThere {s} {n} {t} {γ}) = p
 
 
 -- Various preservation results about substitutions and values
@@ -101,7 +126,7 @@ sidPrf {s} {n} {g} (Var x) = Var (aux {s} {n} {g} x)
     aux {_} {_} {[]} (suc x) = suc x
     aux {_} {suc m} {x ∷ γ} (suc n) = let k = aux {_} {_} {γ} n in suc k
 sidPrf {s} {g} (App x x₁) = App (sidPrf {s} {g} x) (sidPrf {s} {g} x₁)
-sidPrf {s} {g} (Abs x) = let y = sidPrf {suc s} {{! !}} x in Abs y
+sidPrf {s} {g} (Abs x) = let y = sidPrf {suc s} {g} x in Abs y
 sidPrf {s} {g} unit = unit
 sidPrf {s} {g} (Promote x) = Promote (sidPrf x)
 sidPrf {s} {g} (Let x x₁) = Let (sidPrf x) (sidPrf x₁)
@@ -109,10 +134,23 @@ sidPrf {s} {g} vtrue = vtrue
 sidPrf {s} {g} vfalse = vfalse
 sidPrf {s} {g} (If x x₁ x₂) = If (sidPrf x) (sidPrf x₁) (sidPrf x₂)
 
-substPresAbs : {n : ℕ} {γ : Vec (Term s) n} {t : Term (suc (n + s))} -> multisubst γ (Abs t) ≡ Abs (multisubst (Data.Vec.map raiseTerm γ) (sidPrf t))
+import Relation.Binary.PropositionalEquality as Eq
+open Eq.≡-Reasoning
+
+substPresAbs : {n : ℕ} {γ : Vec (Term s) n} {t : Term (suc (n + s))} -> multisubst γ (Abs t) ≡ Abs (multisubst' (Data.Vec.map raiseTerm γ) t)
 substPresAbs {_} {_} {[]} {t} = refl
-substPresAbs {_} {suc n} {v ∷ γ} {t} =
-  substPresAbs {_} {n} {γ} {syntacticSubst (raiseTermℕ n {!!}) zero (sidPrf t)}
+substPresAbs {s} {suc n} {v ∷ γ} {t} =
+
+ let subst = syntacticSubst (raiseTermℕ (1 + n) v) (suc zero) t
+     ih = substPresAbs {s} {n} {γ} {subst}
+     ihpre = cong (\h ->  multisubst γ
+        (Abs (syntacticSubst h (suc zero) t))) (raiseProp {s} {n} {v})
+
+     ihpost = cong (\h ->  Abs
+      (multisubst' (Data.Vec.map raiseTerm γ)
+       (syntacticSubst h (suc zero) t))) (raisePropCom {s} {n} {v})
+
+ in trans (trans ihpre ih) ihpost
 
 substPresIf : {s n : ℕ} {γ : Vec (Term s) n} {tg t1 t2 : Term (n + s)} -> multisubst γ (If tg t1 t2) ≡ If (multisubst γ tg) (multisubst γ t1) (multisubst γ t2)
 substPresIf {_} {_} {[]} {tg} {t1} {t2} = refl
@@ -173,7 +211,7 @@ postulate -- postulate now for development speed
  -- there is some simplification here because of the definition of ,, being
  -- incorrect
   substitutionResult : {{R : Semiring}} {n s : ℕ} {v1 : Term s} {γ1 : Vec (Term s) n} {t : Term (suc (n + s))}
-   -> syntacticSubst v1 (fromℕ s) (multisubst {!γ1!} t)
+   -> syntacticSubst v1 (fromℕ s) (multisubst {!!} t)
     ≡ multisubst (v1 ∷ γ1) t
 
 

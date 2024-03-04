@@ -145,19 +145,38 @@ data Term : ℕ -> Set where
   vfalse  : {s : ℕ} -> Term s
   If      : {s : ℕ} -> Term s -> Term s -> Term s -> Term s
 
-raiseTerm : {s : ℕ} -> Term s -> Term (suc s)
-raiseTerm (Var x) = Var (raise 1 x)
-raiseTerm (App t t₁) = App (raiseTerm t) (raiseTerm t₁)
-raiseTerm (Abs t) = Abs (raiseTerm t)
-raiseTerm unit = unit
-raiseTerm (Promote t) = Promote (raiseTerm t)
-raiseTerm vtrue = vtrue
-raiseTerm vfalse = vfalse
-raiseTerm (If t t₁ t₂) = If (raiseTerm t) (raiseTerm t₁) (raiseTerm t₂)
-raiseTerm (Let t1 t2) = Let (raiseTerm t1) (raiseTerm t2)
-
 raiseTermℕ : (n : ℕ) -> Term s -> Term (n + s)
-raiseTermℕ = {!!}
+raiseTermℕ n (Var x) = Var (raise n x)
+raiseTermℕ n (App t1 t2) = App (raiseTermℕ n t1) (raiseTermℕ n t2)
+raiseTermℕ n (Abs t) = Abs (raiseTermℕ n t)
+raiseTermℕ n unit = unit
+raiseTermℕ n (Promote t) = Promote (raiseTermℕ n t)
+raiseTermℕ n (Let t1 t2) = Let (raiseTermℕ n t1) (raiseTermℕ n t2)
+raiseTermℕ n vtrue = vtrue
+raiseTermℕ n vfalse = vfalse
+raiseTermℕ n (If t t1 t2) = If (raiseTermℕ n t) (raiseTermℕ n t1) (raiseTermℕ n t2)
+
+raiseTerm : {s : ℕ} -> Term s -> Term (suc s)
+raiseTerm {s} t = raiseTermℕ {s} 1 t
+
+raiseProp : {n : ℕ} {t : Term s} -> raiseTerm (raiseTermℕ n t) ≡ raiseTermℕ (suc n) t
+raiseProp {.(suc _)} {n} {Var x} = refl
+raiseProp {s} {n} {App t t₁}
+  rewrite raiseProp {s} {n} {t} | raiseProp {s} {n} {t₁} = refl
+raiseProp {s} {n} {Abs t}
+  rewrite raiseProp {suc s} {n} {t} = refl
+raiseProp {s} {n} {unit} = refl
+raiseProp {s} {n} {Promote t}
+  rewrite raiseProp {s} {n} {t} = refl
+raiseProp {s} {n} {Let t t₁}
+  rewrite raiseProp {s} {n} {t} | raiseProp {suc s} {n} {t₁} = refl
+raiseProp {s} {n} {vtrue} = refl
+raiseProp {s} {n} {vfalse} = refl
+raiseProp {s} {n} {If t t₁ t₂}
+  rewrite raiseProp {s} {n} {t} | raiseProp {s} {n} {t₁} | raiseProp {s} {n} {t₂} = refl
+
+raisePropCom : {n : ℕ} {t : Term s} -> raiseTermℕ (suc n) t ≡ raiseTermℕ n (raiseTerm t)
+raisePropCom = {!!}
 
 -- `mathcVar` is used to enact substitution into a variable term
 -- i.e., the situation is that we have a receiver:
@@ -213,8 +232,8 @@ matchVar {suc s} t posx posy with Data.Fin.compare posy posx
 syntacticSubst : {s : ℕ} -> (t : Term s) -> Fin (suc s) -> (t' : Term (suc s)) -> Term s
 syntacticSubst t x (Var y) = matchVar t x y
 syntacticSubst t x (App t1 t2) = App (syntacticSubst t x t1) (syntacticSubst t x t2)
-syntacticSubst  t x (Abs t1) =
-  Abs (syntacticSubst (raiseTerm t) (raise 1 x) t1)
+syntacticSubst t x (Abs t1) =
+  Abs (syntacticSubst (raiseTerm t) (Data.Fin.suc x) t1)
 syntacticSubst t x (Promote t1) = Promote (syntacticSubst t x t1)
 syntacticSubst t x unit = unit
 syntacticSubst t x vtrue = vtrue
@@ -346,6 +365,14 @@ data Value : {s : ℕ} -> Term s -> Set where
   trueValue    : Value vtrue
   falseValue   : Value vfalse
 
+postulate
+  exchange : {{R : Semiring}}
+             {s1 s2 : ℕ}
+             {Γ1 : Context s1} {Γ2 : Context s2} {A B : Type} {r : grade}
+             {t : Term (suc (s1 + s2))}
+           -> (Ext Γ1 (Grad A r) ,, Γ2) ⊢ t ∶ B
+           -> Ext (Γ1 ,, Γ2) (Grad A r) ⊢ t ∶ B
+
 -- -- Substitution lemma
 -- -- TODO: Vilem
 -- substitution : {{R : Semiring}} {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : grade} {A B : Type} {t1 t2 : Term}
@@ -418,7 +445,7 @@ determinism : {t t1 t2 : Term s}
              -> multiRedux t ≡ t1
              -> multiRedux t ≡ t2
              -> t1 ≡ t2
-determinism prf1 prf2 = trans (sym prf1) prf2             
+determinism prf1 prf2 = trans (sym prf1) prf2
 
 postulate
    valuesDontReduce : {s : ℕ} {t : Term s} -> Value t -> multiRedux t ≡ t

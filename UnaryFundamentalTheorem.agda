@@ -33,11 +33,14 @@ utheorem : {{R : Semiring}} {s : ℕ} {γ : Vec (Term 0) s}
         -> [ Γ ]Γ γ
         -> [ τ ]e (multisubst γ e)
 utheorem {s} {γ} {Γ} {(Var x)} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos) context v substi
- rewrite pos with Γ1 | γ | context
-... | Empty | x ∷ q1 | r1 = {!!}
-... | Ext p1 x₁ | x ∷ q1 | r1 = {!r1!}
-
--- TODO: need to faff here with context representation
+-- substi : multiredux (multisubst γ e) = v
+  rewrite pos with Γ2 | γ | context
+... | Empty | x ∷ gee | argInterp , restInterp = conc
+  where
+    conc : [ τ ]v v
+    conc with argInterp (Promote x) refl
+    ... | boxInterpV t inner = inner v (isSimultaneousGen {zero} {s1} {zero} {t} {v} {gee} substi )
+... | Ext g x | x₁ ∷ gee | Gee = {!!}
 
 {-
 ... | Empty | x ∷ g | argInterp , restInterp = conc
@@ -86,33 +89,25 @@ utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} t
 
 -- # ABS
 utheorem {s} {γ} {Γ'} {Abs t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {Γ'} pos typing {rel}) context v substi rewrite pos | rel =
-    subst (\h -> [ FunTy A r B ]v h) {!!} (funInterpV (multisubst (Data.Vec.map raiseTerm γ) t) body)
+    subst (\h -> [ FunTy A r B ]v h) thm
+      (funInterpV (multisubst' (Data.Vec.map raiseTerm γ) t) body )
 
   where
+    thm : Abs (multisubst' (Data.Vec.map raiseTerm γ) t) ≡ v
+    thm =
+      let
+        qr = cong multiRedux (substPresAbs {_} {_} {γ} {t})
+        qr' = trans qr (valuesDontReduce {zero} (absValue (multisubst' (Data.Vec.map raiseTerm γ) t)))
+      in trans (sym qr') substi
+
     body : (v' : Term 0) →
-        [ Box r A ]e (Promote v') → [ B ]e (syntacticSubst v' zero (multisubst {!Data.Vec.map raiseTerm γ!} t))
-    body v' arg v1 v1redux =
-     let
-      ih = utheorem {{!!}} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} {!!} ( arg  , context)
+        [ Box r A ]e (Promote v') → [ B ]e
+        (syntacticSubst v' zero (multisubst' (Data.Vec.map raiseTerm γ) t))
+    body v' arg v1 v1redux rewrite sym (substComAbs {s1} {s2} {v'} {t} {γ}) =
+     let --
+      ih = utheorem {suc (s1 + s2)} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typing) ( arg  , context)
      in ih v1 v1redux
 
-{-
-  subst (\h -> [ FunTy A r B ]v h) thm (funInterpV (multisubst γ t) body)
- where
-
-   thm : Abs (multisubst ? t) ≡ v
-   thm =
-     let
-       qr = cong multiRedux (substPresAbs {_} {_} {γ} {t})
-       qr' = trans qr (valuesDontReduce {_} {Abs (multisubst ? t)} (absValue (multisubst ? t)))
-     in sym (trans (sym substi) qr')
-
-   body : (v' : Term (suc s)) → [ Box r A ]e (Promote v') → [ B ]e (syntacticSubst v' zero (multisubst ? ?))
-   body v' arg v1 v1redux rewrite substitutionResult {s1} {v'} {γ} {t} {Γ1} =
-     let
-      ih = utheorem {suc (s1 + s2)} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} typing ( arg  , context)
-     in ih v1 v1redux
--}
 
 -- # PROMOTION
 utheorem {s} {γ} {Γ'} {Promote t} {Box r A} (pr {_} {Γ} {Γ'} typing {prf}) context v substi rewrite prf =
