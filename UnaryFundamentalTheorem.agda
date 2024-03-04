@@ -54,19 +54,19 @@ utheorem {s} {γ} {Γ} {(Var x)} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos
 utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) context v1 v1redux
   rewrite pos =
     let
-      ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {_} {multisubst γ t1} {multisubst γ t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ} typ1)
-      fun1 = Abs var1 bod1
+      (bod1 , (fun1redux , bodTy1)) = reduxTheoremAppTy {_} {multisubst γ t1} {multisubst γ t2} {v1} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {_} {_} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {γ} {Γ1} {FunTy A r B} {t1} typ1)
+      fun1 = Abs bod1
 
       ih1 = utheorem {sz} {γ} {Γ1} {t1} {FunTy A r B} typ1 (unaryPlusElimLeftΓ context)
       ih1applied = ih1 fun1 fun1redux
 
       -- Join up the reductions
       -- multiRedux (App (multisubst' 0 γ t1) (multisubst' 0 γ t2)) ≡ v1
-      aeq1 = trans (cong multiRedux (sym (substPresApp {0} {γ} {t1} {t2}))) v1redux
+      aeq1 = trans (cong multiRedux (sym (substPresApp {_} {_} {γ} {t1} {t2}))) v1redux
       -- multiRedux (App (Abs var1 bod1) (multisubst' 0 γ t2)) ≡ v1
-      aeq2 = trans (sym (multReduxCongruence {multisubst γ t1} {Abs var1 bod1} {\t1' -> App t1' (multisubst γ t2)} fun1redux)) aeq1
+      aeq2 = trans (sym (multReduxCongruence {_} {multisubst γ t1} {Abs  bod1} {\t1' -> App t1' (multisubst γ t2)} fun1redux)) aeq1
       --
-      v1reduxerFull = trans (sym (betaVariant1 {bod1} {multisubst γ t2} {var1})) aeq2
+      v1reduxerFull = trans (sym (betaVariant1 {_} {bod1} {multisubst γ t2})) aeq2
 
     in extract ih1applied (multisubst γ t2) argument v1 v1reduxerFull
   where
