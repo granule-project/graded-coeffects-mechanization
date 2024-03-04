@@ -8,8 +8,9 @@ open import Data.Empty
 open import Relation.Binary.PropositionalEquality
 open import Data.Product
 open import Data.Bool hiding (_≤_; _≟_)
-open import Data.List hiding (_++_)
+open import Data.Vec hiding (_++_)
 open import Data.Nat hiding (_≤_)
+open import Data.Fin hiding (_≤_;_+_)
 open import Function
 open import Data.Maybe
 open import Relation.Nullary
@@ -26,14 +27,19 @@ open import RelationalModel
 -- Terminating pragma needed because in the (App t1 t2) case we need to recursve with (Promote t2) which doesn't look
 -- smaller to Agda
 {-# TERMINATING #-}
-utheorem : {{R : Semiring}} {s : ℕ} {γ : List Term}
-        -> {Γ : Context s} {e : Term} {τ : Type}
+utheorem : {{R : Semiring}} {s : ℕ} {γ : Vec (Term 0) s}
+        -> {Γ : Context s} {e : Term s} {τ : Type}
         -> Γ ⊢ e ∶ τ
         -> [ Γ ]Γ γ
         -> [ τ ]e (multisubst γ e)
-utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos) context v substi
+utheorem {s} {γ} {Γ} {(Var x)} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos) context v substi
  rewrite pos with Γ1 | γ | context
-... | Empty | [] | ()
+... | Empty | x ∷ q1 | r1 = {!!}
+... | Ext p1 x₁ | x ∷ q1 | r1 = {!r1!}
+
+-- TODO: need to faff here with context representation
+
+{-
 ... | Empty | x ∷ g | argInterp , restInterp = conc
   where
     conc : [ τ ]v v
@@ -43,11 +49,12 @@ utheorem {s} {γ} {Γ} {.(Var (Γlength Γ1))} {τ} (var {s1} {s2} {.τ} {.Γ} {
 ... | Ext k x | [] | ()
 -- same as above just moves down the context (bit of fiddly non key stuff)
 ... | Ext k x | x₁ ∷ g | argInterp , sndrestInterp = {!!}
+-}
 
 utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) context v1 v1redux
   rewrite pos =
     let
-      ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {multisubst γ t1} {multisubst γ t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ} typ1)
+      ((var1 , bod1) , (fun1redux , bodTy1)) = reduxTheoremAppTy {_} {multisubst γ t1} {multisubst γ t2} {v1} {0} {Empty} {A} {B} (subst (\r -> multiRedux r ≡ v1) (substPresApp {0} {γ} {t1} {t2}) v1redux) (multiSubstTy {sz} {Γ1} {t1} {FunTy A r B} {γ} typ1)
       fun1 = Abs var1 bod1
 
       ih1 = utheorem {sz} {γ} {Γ1} {t1} {FunTy A r B} typ1 (unaryPlusElimLeftΓ context)
@@ -57,17 +64,17 @@ utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} t
       -- multiRedux (App (multisubst' 0 γ t1) (multisubst' 0 γ t2)) ≡ v1
       aeq1 = trans (cong multiRedux (sym (substPresApp {0} {γ} {t1} {t2}))) v1redux
       -- multiRedux (App (Abs var1 bod1) (multisubst' 0 γ t2)) ≡ v1
-      aeq2 = trans (sym (multReduxCongruence {multisubst' zero γ t1} {Abs var1 bod1} {\t1' -> App t1' (multisubst' 0 γ t2)} fun1redux)) aeq1
+      aeq2 = trans (sym (multReduxCongruence {multisubst γ t1} {Abs var1 bod1} {\t1' -> App t1' (multisubst γ t2)} fun1redux)) aeq1
       --
-      v1reduxerFull = trans (sym (betaVariant1 {bod1} {multisubst' 0 γ t2} {var1})) aeq2
+      v1reduxerFull = trans (sym (betaVariant1 {bod1} {multisubst γ t2} {var1})) aeq2
 
-    in extract ih1applied (multisubst' zero γ t2) argument v1 v1reduxerFull
+    in extract ih1applied (multisubst γ t2) argument v1 v1reduxerFull
   where
-    extract : {x : ℕ} {e : Term} -> [ FunTy A r B ]v (Abs x e)
-           -> (forall (v : Term)
+    extract : {e : Term (suc s)} -> [ FunTy A r B ]v (Abs e)
+           -> (forall (v : Term s)
                  -> [ Box r A ]e (Promote v)
-                 -> [ B ]e (syntacticSubst v x e))
-    extract {x} {e} pre with pre
+                 -> [ B ]e (syntacticSubst v Data.Fin.zero e))
+    extract {e} pre with pre
     ... | funInterpV .e  inner = inner
 
     argument : [ Box r A ]e (Promote (multisubst γ t2))
@@ -75,10 +82,10 @@ utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} t
       let
         ih2 = utheorem {sz} {γ} {r · Γ2} {Promote t2} {Box r A} (pr {Γ' = r · Γ2} {r} typ2 {refl}) (unaryPlusElimRightΓ context)
       in
-        subst (\h -> [ Box r A ]e h) (substPresProm {0} {γ} {t2}) ih2
+        subst (\h -> [ Box r A ]e h) (substPresProm {_} {_} {γ} {t2}) ih2
 
 -- # ABS
-utheorem {s} {γ} {Γ'} {Abs .(Γlength Γ1 + 1) t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {Γ'} pos typing {rel}) context v substi rewrite pos | rel =
+utheorem {s} {γ} {Γ'} {Abs t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {Γ'} pos typing {rel}) context v substi rewrite pos | rel =
   subst (\h -> [ FunTy A r B ]v h) thm (funInterpV (multisubst γ t) body)
  where
    x = (Γlength Γ1 + 1)
@@ -140,7 +147,7 @@ utheorem {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} {
     v1redux' : multiRedux (If (multisubst γ tg) (multisubst γ t1) (multisubst γ t2))  ≡ v1
     v1redux' = trans (cong multiRedux (sym (substPresIf {0} {γ} {tg} {t1} {t2}))) v1redux
 
-    convert : {sz : ℕ} {Γ1 Γ2 : Context sz} {γ : List Term} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
+    convert : {sz t : ℕ} {Γ1 Γ2 : Context sz} {γ : Vec (Term t) sz} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
     convert {.0} {Empty} {Empty} {γ} g = tt
     convert {.(suc _)} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} ()
     convert {suc sz} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x ∷ γ} (hd , tl) =

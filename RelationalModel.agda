@@ -9,6 +9,7 @@ open import Relation.Binary.PropositionalEquality
 open import Data.Product
 open import Data.Bool hiding (_≤_; _≟_)
 open import Data.List hiding (_++_)
+open import Data.Vec hiding (_++_)
 open import Data.Nat hiding (_≤_)
 open import Function
 open import Data.Maybe
@@ -120,14 +121,15 @@ mutual
 -- Contexts
 
 -- unary
-[_]Γ : {{R : Semiring}} -> {s : ℕ} -> Context s -> Telescope s -> Set
-[ Empty            ]Γ Empty = ⊤
-[ Ext g (Grad A r) ]Γ (Cons v vs) = ([ Box r A ]e (Promote v)) × ([ g ]Γ vs)
+[_]Γ : {{R : Semiring}} -> {s t : ℕ} -> Context t -> Vec (Term s) t -> Set
+[ Empty            ]Γ [] = ⊤
+[ Ext g (Grad A r) ]Γ (v ∷ vs) = ([ Box r A ]e (Promote v)) × ([ g ]Γ vs)
+
 
 -- binary
-⟦_⟧Γ : {{R : Semiring}} -> {s : ℕ} -> Context s -> (adv : grade) -> Telescope s -> Telescope s -> Set
-⟦ Empty   ⟧Γ adv Empty Empty  = ⊤
-⟦ Ext g (Grad A r) ⟧Γ adv (Cons t1 ts1) (Cons t2 ts2) =
+⟦_⟧Γ : {{R : Semiring}} -> {s t : ℕ} -> Context t -> (adv : grade) -> Vec (Term s) t -> Vec (Term s) t -> Set
+⟦ Empty   ⟧Γ adv [] []  = ⊤
+⟦ Ext g (Grad A r) ⟧Γ adv (t1 ∷ ts1) (t2 ∷ ts2) =
 
    ⟦ Box r A ⟧e adv (Promote t1) (Promote t2)
    ×
@@ -163,11 +165,11 @@ mutual
       right : [ A ]e t2
       right v0 redux = proj₂ (binaryImpliesUnaryV (pre (multiRedux t1) v0 refl redux))
 
-  binaryImpliesUnaryG : {{R : Semiring}} {sz : ℕ} { Γ : Context sz } {adv : grade} {γ1 γ2 : Telescope sz}
+  binaryImpliesUnaryG : {{R : Semiring}} {sz : ℕ} {t : ℕ} { Γ : Context sz } {adv : grade} {γ1 γ2 : Vec (Term t) sz}
                     -> ⟦ Γ ⟧Γ adv γ1 γ2 -> ([ Γ ]Γ γ1) × ([ Γ ]Γ γ2)
-  binaryImpliesUnaryG {.0} {Empty} {adv} {Empty} {Empty} pre = tt , tt
-  binaryImpliesUnaryG {suc sz} {Ext Γ (Grad A r)} {adv} {Cons v1 γ1} {Cons v2 γ2} (arg , rest)
-    with binaryImpliesUnary {_} {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {Γ} {adv} {γ1} {γ2} rest
+  binaryImpliesUnaryG {.0} {_} {Empty} {adv} {[]} {[]} pre = tt , tt
+  binaryImpliesUnaryG {suc sz} {_} {Ext Γ (Grad A r)} {adv} {v1 ∷ γ1} {v2 ∷ γ2} (arg , rest)
+    with binaryImpliesUnary {_} {Box r A} {Promote v1} {Promote v2} {adv} arg | binaryImpliesUnaryG {sz} {_} {Γ} {adv} {γ1} {γ2} rest
   ... | ( arg1 , arg2 ) | ( rest1 , rest2 ) = ( (arg1 , rest1) , (arg2 , rest2) )
 
 
@@ -178,28 +180,28 @@ unaryPlusElimLeft : {{R : Semiring}} {A : Type} {r1 r2 : grade} {x : Term s} -> 
 unaryPlusElimLeft {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
 ... | boxInterpV e inner = boxInterpV e inner
 
-unaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {γ : Telescope sz} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
-unaryPlusElimLeftΓ {.0} {Empty} {Empty} {Empty} tt = tt
-unaryPlusElimLeftΓ {suc s} {Cons x γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail) =
-  unaryPlusElimLeft {_} {A} {r1} {r2} {x} head , unaryPlusElimLeftΓ {s} {γ} {Γ1} {Γ2} tail
+unaryPlusElimLeftΓ : {{R : Semiring}} {sz t : ℕ} {γ : Vec (Term t) sz} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
+unaryPlusElimLeftΓ {.0} {_} {[]} {Empty} {Empty} tt = tt
+unaryPlusElimLeftΓ {suc s} {_} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail) =
+  unaryPlusElimLeft {_} {A} {r1} {r2} {x} head , unaryPlusElimLeftΓ {s} {_} {γ} {Γ1} {Γ2} tail
 
 unaryPlusElimRight : {{R : Semiring}}{A : Type} {r1 r2 : grade} {x : Term s} -> [ Box (r1 +R r2) A ]e (Promote x) -> [ Box r2 A ]e (Promote x)
 unaryPlusElimRight {A} {r1} {r2} {x} arg v0 v0redux with arg v0 v0redux
 ... | boxInterpV e inner = boxInterpV e inner
 
-unaryPlusElimRightΓ : {{R : Semiring}} {sz : ℕ} {γ : Telescope sz} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ2 ]Γ γ
-unaryPlusElimRightΓ {.0} {Empty} {Empty} {Empty} tt = tt
-unaryPlusElimRightΓ {suc s} {Cons x γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail)
+unaryPlusElimRightΓ : {{R : Semiring}} {sz t : ℕ} {γ : Vec (Term t) sz} {Γ1 Γ2 : Context sz} -> [ Γ1 ++ Γ2 ]Γ γ -> [ Γ2 ]Γ γ
+unaryPlusElimRightΓ {.0} {_} {[]} {Empty} {Empty} tt = tt
+unaryPlusElimRightΓ {suc s} {_} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} (head , tail)
   rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
-    unaryPlusElimRight {_} {A} {r1} {r2} {x} head , unaryPlusElimRightΓ {s} {γ} {Γ1} {Γ2} tail
+    unaryPlusElimRight {_} {A} {r1} {r2} {x} head , unaryPlusElimRightΓ {s} {_} {γ} {Γ1} {Γ2} tail
 
-binaryPlusElimLeftΓ : {{R : Semiring}} {sz : ℕ} {adv : grade} {γ1 γ2 : Telescope sz} {Γ1 Γ2 : Context sz}
+binaryPlusElimLeftΓ : {{R : Semiring}} {sz t : ℕ} {adv : grade} {γ1 γ2 : Vec (Term t) sz} {Γ1 Γ2 : Context sz}
                    -> (convertVal : ({sz : ℕ} {r1 r2 adv : grade} {v1 v2 : Term sz} {A : Type}
                           -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)))
                    -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-binaryPlusElimLeftΓ {{R}} {0} {adv} {Empty} {empty} {Empty} {Empty} convertVal x = x
-binaryPlusElimLeftΓ {{R}} {(suc s)} {adv} {Cons v1 γ1} {Cons v2 γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
-    convert {s} {r1} {r2} {adv} {v1} {v2} {A} arg , binaryPlusElimLeftΓ {s} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal rest
+binaryPlusElimLeftΓ {{R}} {0} {_} {adv} {[]} {empty} {Empty} {Empty} convertVal x = x
+binaryPlusElimLeftΓ {{R}} {(suc s)} {t} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
+    convert {t} {r1} {r2} {adv} {v1} {v2} {A} arg , binaryPlusElimLeftΓ {s} {_} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal rest
   where
     convert : {s : ℕ} {r1 r2 adv : grade} {v1 v2 : Term s} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧e adv (Promote v1) (Promote v2)
     convert {s} {r1} {r2} {adv} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
@@ -208,13 +210,13 @@ binaryPlusElimLeftΓ {{R}} {(suc s)} {adv} {Cons v1 γ1} {Cons v2 γ2} {Ext Γ1 
           convertVal {_} {r1} {r2} {adv} {v1} {v2} {A} (arg (Promote v1) ((Promote v2)) refl refl)
 
 binaryPlusElimRightΓ : {{R : Semiring}}
-                       {sz : ℕ} {adv : grade} {γ1 γ2 : Telescope sz} {Γ1 Γ2 : Context sz}
+                       {sz t : ℕ} {adv : grade} {γ1 γ2 : Vec (Term t) sz} {Γ1 Γ2 : Context sz}
                     -> (convertVal : {sz : ℕ} {r1 r2 adv : grade} {v1 v2 : Term sz} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧v adv (Promote v1) (Promote v2))
                     -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ2 ⟧Γ adv γ1 γ2
-binaryPlusElimRightΓ {{R}} {0} {adv} {Empty} {Empty} {Empty} {Empty} _ _ = tt
-binaryPlusElimRightΓ {{R}} {(suc s)} {adv} {Cons v1 γ1} {Cons v2 γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal2 (arg , rest)
+binaryPlusElimRightΓ {{R}} {0} {_} {adv} {[]} {[]} {Empty} {Empty} _ _ = tt
+binaryPlusElimRightΓ {{R}} {(suc s)} {t} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal2 (arg , rest)
       rewrite sym (sameTypes {s} {Γ1} {Γ2} {Ext (Γ1 ++ Γ2) (Grad A (r1 +R r2))} {A} {A'} {r1} {r2} refl) =
-        convert2 {s} {r1} {r2} {v1} {v2} {A} arg , binaryPlusElimRightΓ {s} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal2 rest
+        convert2 {t} {r1} {r2} {v1} {v2} {A} arg , binaryPlusElimRightΓ {s} {t} {adv} {γ1} {γ2} {Γ1} {Γ2} convertVal2 rest
   where
     convert2 : {s : ℕ} {r1 r2 : grade} {v1 v2 : Term s} {A : Type} -> ⟦ Box (r1 +R r2) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box r2 A ⟧e adv (Promote v1) (Promote v2)
     convert2 {s} {r1} {r2} {v1} {v2} {A} arg v1' v2' v1redux' v2redux'
@@ -267,14 +269,14 @@ convertValNISemiring {_} {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 
 
 binaryTimesElimRightΓ :
     {{R : Semiring}}
-    {sz : ℕ}
-    {γ1 γ2 : Telescope sz}
+    {sz t : ℕ}
+    {γ1 γ2 : Vec (Term t) sz}
     {Γ : Context sz} {r adv : grade} ->
      (convertVal : {sz : ℕ} {s : grade} {v1 v2 : Term sz} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2))
    -> ⟦ r · Γ ⟧Γ adv γ1 γ2 -> ⟦ Γ ⟧Γ adv γ1 γ2
-binaryTimesElimRightΓ {_} {Empty} {Empty} {Empty} {r} {adv} _ g = tt
-binaryTimesElimRightΓ {suc n} {Cons v1 γ1} {Cons v2 γ2} {Ext Γ (Grad A s)} {r} {adv} convertVal (ass , g) =
-    convertExp {s} {v1} {v2} {A} ass , binaryTimesElimRightΓ {n} {γ1} {γ2} {Γ} {r} {adv} convertVal g
+binaryTimesElimRightΓ {_} {_} {[]} {[]} {Empty} {r} {adv} _ g = tt
+binaryTimesElimRightΓ {suc n} {_} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ (Grad A s)} {r} {adv} convertVal (ass , g) =
+    convertExp {s} {v1} {v2} {A} ass , binaryTimesElimRightΓ {n} {_} {γ1} {γ2} {Γ} {r} {adv} convertVal g
   where
         convertExp : {s : grade} {v1 v2 : Term _} {A : Type} -> ⟦ Box (r *R s) A ⟧e adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧e adv (Promote v1) (Promote v2)
         convertExp {s} {v1} {v2} {A} arg1 v1' v2' v1redux' v2redux' rewrite trans (sym v1redux') (reduxProm {_} {v1}) | trans (sym v2redux') (reduxProm {_} {v2}) =
@@ -292,8 +294,8 @@ convertUnaryBox pre v0 v0redux with pre v0 v0redux
 
 unaryTimesElimRightΓ :
     {{R : Semiring}}
-    {sz : ℕ} {γ1 : Telescope sz} {Γ : Context sz} {r : grade}
+    {sz t : ℕ} {γ1 : Vec (Term t) sz} {Γ : Context sz} {r : grade}
    -> [ r · Γ ]Γ γ1 -> [ Γ ]Γ γ1
-unaryTimesElimRightΓ ⦃ R ⦄ {.0} {Empty} {Empty} {r} inp = tt
-unaryTimesElimRightΓ ⦃ R ⦄ {suc n} {Cons x γ1} {Ext Γ (Grad A s)} {r} (ass , g) =
-  convertUnaryBox ass , unaryTimesElimRightΓ {{R}} {n} {γ1} {Γ} {r} g
+unaryTimesElimRightΓ ⦃ R ⦄ {.0} {_} {[]} {Empty} {r} inp = tt
+unaryTimesElimRightΓ ⦃ R ⦄ {suc n} {_} {x ∷ γ1} {Ext Γ (Grad A s)} {r} (ass , g) =
+  convertUnaryBox ass , unaryTimesElimRightΓ {{R}} {n} {_} {γ1} {Γ} {r} g
