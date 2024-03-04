@@ -32,7 +32,7 @@ utheorem : {{R : Semiring}} {s : ℕ} {γ : Vec (Term 0) s}
         -> Γ ⊢ e ∶ τ
         -> [ Γ ]Γ γ
         -> [ τ ]e (multisubst γ e)
-utheorem {s} {γ} {Γ} {(Var x)} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos) context v substi
+utheorem {s} {γ} {Γ} {Var x} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos) context v substi
 -- substi : multiredux (multisubst γ e) = v
   rewrite pos with Γ2 | γ | context
 ... | Empty | x ∷ gee | argInterp , restInterp = conc

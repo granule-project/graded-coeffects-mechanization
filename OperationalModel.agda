@@ -64,10 +64,6 @@ postulate
        -> multisubst γ (matchVar (raiseTermℕ n t) zero (raiseR 0 (fromℕ (n + s))))
          ≡ t
 
-  substCom : {s1 s2 : ℕ} {v' : Term 0} {t : Term (suc (s1 + s2))} {γ : Vec (Term 0) (s1 + s2)}
-          -> (multisubst γ (syntacticSubst (raiseTermℕ (s1 + s2) v') zero t))
-          ≡ (syntacticSubst v' zero (multisubst (Data.Vec.map raiseTerm γ) t))
-
   substComAbs : {s1 s2 : ℕ} {v' : Term 0} {t : Term (suc (s1 + s2))} {γ : Vec (Term 0) (s1 + s2)}
           -> (multisubst γ (syntacticSubst (raiseTermℕ (s1 + s2) v') zero t))
           ≡ (syntacticSubst v' zero (multisubst' (Data.Vec.map (raiseTermℕ 1) γ) t))
@@ -210,8 +206,10 @@ postulate -- postulate now for development speed
 -- This is about the structure of substitutions and relates to abs
  -- there is some simplification here because of the definition of ,, being
  -- incorrect
-  substitutionResult : {{R : Semiring}} {n s : ℕ} {v1 : Term s} {γ1 : Vec (Term s) n} {t : Term (suc (n + s))}
-   -> syntacticSubst v1 (fromℕ s) (multisubst {!!} t)
+  substitutionResult : {{R : Semiring}}
+      {n s : ℕ} {v1 : Term s} {γ1 : Vec (Term s) n} {t : Term (suc (n + s))}
+
+   -> syntacticSubst v1 zero (multisubst {!γ1!} t)
     ≡ multisubst (v1 ∷ γ1) t
 
 
