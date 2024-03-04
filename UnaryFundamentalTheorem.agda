@@ -93,7 +93,7 @@ utheorem {s} {γ} {Γ'} {Abs t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {�
         [ Box r A ]e (Promote v') → [ B ]e (syntacticSubst v' zero (multisubst {!Data.Vec.map raiseTerm γ!} t))
     body v' arg v1 v1redux =
      let
-      ih = utheorem {?} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} {!!} ( arg  , context)
+      ih = utheorem {{!!}} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} {!!} ( arg  , context)
      in ih v1 v1redux
 
 {-
@@ -125,7 +125,7 @@ utheorem {s} {γ} {Γ'} {Promote t} {Box r A} (pr {_} {Γ} {Γ'} typing {prf}) c
     thm : Promote (multisubst γ t) ≡ v
     thm =
        let qr = cong multiRedux (substPresProm {0} {s} {γ} {t})
-           qr' = trans qr (valuesDontReduce {{!!}} {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
+           qr' = trans qr (valuesDontReduce {zero} {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym substi) qr')
 
 -- # Unit
@@ -159,8 +159,7 @@ utheorem {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} {
     v1redux' = trans (cong multiRedux (sym (substPresIf {0} {sz} {γ} {tg} {t1} {t2}))) v1redux
 
     convert : {sz t : ℕ} {Γ1 Γ2 : Context sz} {γ : Vec (Term t) sz} -> [ (r · Γ1) ++ Γ2 ]Γ γ -> [ Γ1 ]Γ γ
-    convert {.0} {_} {Empty} {Empty} {γ} g = {!!} -- -tt
---    convert {.(suc _)} {_} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {[]} ()
+    convert {.0} {_} {Empty} {Empty} {[]} g = tt
     convert {suc sz} {_} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} {x ∷ γ} (hd , tl) =
       convertUnaryBox hd , convert {sz} {_} {Γ1} {Γ2} {γ} tl
 
