@@ -73,6 +73,9 @@ open import Agda.Builtin.Equality.Rewrite
 _,,_ : {{R : Semiring}} {s t : ℕ} -> Context s -> Context t -> Context (s + t)
 G1 ,, Empty = G1
 G1 ,, (Ext G2 a) = Ext (G1 ,, G2) a
+-- OLD
+--Empty ,, G2 = G2
+--(Ext G1 a) ,, G2 = Ext (G1 ,, G2) a
 
 -- Context scalar multiplication
 _·_ : {{R : Semiring}} {s : ℕ} -> grade -> Context s -> Context s
