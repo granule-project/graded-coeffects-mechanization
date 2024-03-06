@@ -385,12 +385,3 @@ lem {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
   mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
 -}
 
-boolBinaryValueInterpEquality : {{R : Semiring}} {r : grade} (v1 v2 : Term s) -> ⟦ BoolTy ⟧v r v1 v2 -> v1 ≡ v2
-boolBinaryValueInterpEquality .vtrue .vtrue boolInterpTrueBi = refl
-boolBinaryValueInterpEquality .vfalse .vfalse boolInterpFalseBi = refl
-
-boolBinaryExprInterpEquality : {{R : Semiring}} {r : grade} (v1 v2 : Term s)
-                              -> ⟦ BoolTy ⟧e r v1 v2
-                              -> multiRedux v1 ≡ multiRedux v2
-boolBinaryExprInterpEquality t1 t2 prf =
-  boolBinaryValueInterpEquality (multiRedux t1) (multiRedux t2) ((prf (multiRedux t1) (multiRedux t2) refl refl))

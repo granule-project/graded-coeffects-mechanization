@@ -69,7 +69,7 @@ utheorem {sz} {γ} {Γ} {App t1 t2} {τ} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} t
       -- multiRedux (App (Abs var1 bod1) (multisubst' 0 γ t2)) ≡ v1
       aeq2 = trans (sym (multReduxCongruence {_} {multisubst γ t1} {Abs  bod1} {\t1' -> App t1' (multisubst γ t2)} fun1redux)) aeq1
       --
-      v1reduxerFull = trans (sym (betaVariant1 {_} {bod1} {multisubst γ t2})) aeq2
+      v1reduxerFull = trans (sym (betaUnderMultiRedux {_} {bod1} {multisubst γ t2})) aeq2
 
     in extract ih1applied (multisubst γ t2) argument v1 v1reduxerFull
   where

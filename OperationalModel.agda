@@ -84,113 +84,7 @@ multisubst {s} {suc n} (t ∷ ts) t' =
 -- Note that it might be easier to reason about this with closed terms
 -- i.e., is s == 0 in the above
 
-
--- Untyped reduction
-untypedRedux : {s : ℕ} -> Term s -> Maybe (Term s)
-untypedRedux (App (Abs t) t') = just (syntacticSubst t' Data.Fin.zero t)
-untypedRedux (App t1 t2) with untypedRedux t1
-... | just t1' = just (App t1' t2)
-... | nothing  = nothing
-untypedRedux (If vtrue t1 _) = just t1
-untypedRedux (If vfalse _ t2) = just t2
-untypedRedux (If t t1 t2) with untypedRedux t
-... | just t' = just (If t' t1 t2)
-... | nothing = nothing
-untypedRedux _ = nothing
-
-{-# TERMINATING #-}
-multiRedux : {s : ℕ} -> Term s -> Term s
-multiRedux t with untypedRedux t
-... | just t' = multiRedux t'
-... | nothing = t
-
-determinism : {t t1 t2 : Term s}
-             -> multiRedux t ≡ t1
-             -> multiRedux t ≡ t2
-             -> t1 ≡ t2
-determinism prf1 prf2 = trans (sym prf1) prf2
-
-postulate
-   valuesDontReduce : {s : ℕ} {t : Term s} -> Value t -> multiRedux t ≡ t
-
-
-postulate
-  multReduxCongruence : {t1 v : Term s} {C : Term s -> Term s}
-                   -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
-
-  preservation : {{R : Semiring}} {Γ : Context s} {A : Type} {t : Term s}
-             -> Γ ⊢ t ∶ A
-             -> Γ ⊢ multiRedux t ∶ A
-
--- # Equality
-
-data FullBetaEq : Term s -> Term s -> Set where
-  VarEq     : {x : Fin (suc s)} -> FullBetaEq (Var x) (Var x)
-  AppEq     : {t1 t1' t2 t2' : Term s} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (App t1 t2) (App t1' t2')
-  AbsEq     : {t1 t2 : Term (suc s)} -> FullBetaEq t1 t2 -> FullBetaEq (Abs t1) (Abs t2)
-  UnitEq    : FullBetaEq (unit {s}) (unit {s})
-  PromoteEq : {t1 t2 : Term s} -> FullBetaEq t1 t2 -> FullBetaEq (Promote t1) (Promote t2)
-  VTrue     : FullBetaEq (vtrue {s}) (vtrue {s})
-  VFalse    : FullBetaEq (vfalse {s}) (vfalse {s})
-  IfEq      : {t t' t1 t1' t2 t2' : Term s} -> FullBetaEq t t' -> FullBetaEq t1 t1' -> FullBetaEq t2 t2'
-               -> FullBetaEq (If t t1 t2) (If t' t1' t2')
-  BetaEq    : {t1 : Term (suc s)} {t2 : Term s} -> FullBetaEq (App (Abs t1) t2) (syntacticSubst t2 Data.Fin.zero t1)
-  EmbedRedux : {t : Term s} -> FullBetaEq (multiRedux t) t
-  LetEq     : {t1 t1' : Term s} {t2 t2' : Term (suc s)} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (Let t1 t2) (Let t1' t2')
-
-_==_ : Term s -> Term s -> Set
-t == t' = FullBetaEq t t'
-
-embedReduxCong : {t1 t2 : Term s} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
-embedReduxCong = {!!}
-
-embedEq : {t1 t2 : Term s} -> t1 ≡ t2 -> FullBetaEq t1 t2
-embedEq {_} {Var x} {Var .x} refl = VarEq
-embedEq {_} {App t1 t2} {App .t1 .t2} refl = AppEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl)
-embedEq {_} {Abs t1} {Abs t2} prf = {!!}
-embedEq {_} {unit} {unit} refl = UnitEq {_}
-embedEq {_} {Promote t1} {Promote .t1} refl = PromoteEq (embedEq {_} {t1} {t1} refl)
-embedEq {_} {vtrue} {vtrue} refl = VTrue {_}
-embedEq {_} {vfalse} {vfalse} refl = VFalse {_}
-embedEq {_} {If t1 t2 t3} {If .t1 .t2 .t3} refl =
-  IfEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl) (embedEq {_} {t3} {t3} refl)
-embedEq {_} {Let e1 e2} {Let e3 e4} refl = LetEq ((embedEq {_} {e1} {e3} refl)) ( (embedEq {_} {e2} {e4} refl))
-
--- transFullBetaEq : {t1 t2 t3 : Term} -> t1 == t2 -> t2 == t3 -> t1 == t3
--- transFullBetaEq = {!!}
-
-
-
-
-postulate
-  multiReduxHere : {s n : ℕ} {t : Term s} {γ : Vec (Term s) n}
-                  -> multisubst (t ∷ γ) (Var zero) ≡ t
-
-  multiSubstThere : {s n : ℕ} {t : Term s} {γ : Vec (Term s) n}
-       -> multisubst γ (matchVar (raiseTermℕ n t) zero (raiseR 0 (fromℕ (n + s))))
-         ≡ t
-
-  substComAbs : {s1 s2 : ℕ} {v' : Term 0} {t : Term (suc (s1 + s2))} {γ : Vec (Term 0) (s1 + s2)}
-          -> (multisubst γ (syntacticSubst (raiseTermℕ (s1 + s2) v') zero t))
-          ≡ (syntacticSubst v' zero (multisubst' (Data.Vec.map (raiseTermℕ 1) γ) t))
-
-
-  betaVariant1 : {bod : Term (suc s)} {t2 : Term s}
-                -> multiRedux (App (Abs bod) t2)
-                 ≡ multiRedux (syntacticSubst t2 zero bod)
-
-isSimultaneous' : {s n : ℕ} {t : Term s} {t' : Term s} {γ : Vec (Term s) n}
-  -> multiRedux (multisubst (t ∷ γ) (Var zero)) ≡ t'
-  -> multiRedux t ≡ t'
-isSimultaneous' {s} {n} {t} {t'} {γ} p rewrite multiReduxHere {s} {n} {t} {γ} = p
-
-isSimultaneousGen : {s n s1 : ℕ} {t : Term s} {t' : Term s}
-                    {γ : Vec (Term s) n} -- (fromℕ n)
-  -> multiRedux (multisubst γ (matchVar (raiseTermℕ n t) zero (raiseR 0 (fromℕ (n + s))))) ≡ t'
-  -> multiRedux t ≡ t'
-isSimultaneousGen {s} {n} {s1} {t} {t'} {γ} p rewrite (multiSubstThere {s} {n} {t} {γ}) = p
-
-
+-- ## (Simultaneous) substitution commutates with terms
 -- Various preservation results about substitutions and values
 
 substPresUnit : {s n : ℕ} {γ : Vec (Term s) n} -> multisubst γ unit ≡ unit
@@ -255,6 +149,149 @@ substPresIf {_} {suc n} {x ∷ γ} {tg} {t1} {t2} =
                       {syntacticSubst (raiseTermℕ n x) zero t1}
                       {syntacticSubst (raiseTermℕ n x) zero t2}
 
+-- ## Other properties of substitution
+
+-- Substitutions to different head variables commutes
+substComm : {s n : ℕ} {v : Term n} {t : Term (suc (suc (s + n)))} {x : Term n}
+         -> (syntacticSubst (raiseTermℕ s v) zero
+               (syntacticSubst (raiseTermℕ s (raiseTerm x)) (suc zero) t))
+
+          ≡ (syntacticSubst (raiseTermℕ s x) zero
+               (syntacticSubst (raiseTermℕ (suc s) v) zero t))
+substComm {s} {n} {v} {Var y} {x} with Data.Fin.compare y zero
+... | k = {!!}
+substComm {s} {n} {v} {App t1 t2} {x} = {!!}
+substComm {s} {n} {v} {Abs t} {x} = {!!}
+substComm {s} {n} {v} {unit} {x} = {!!}
+substComm {s} {n} {v} {Promote t} {x} = {!!}
+substComm {s} {n} {v} {Let t1 t2} {x} = {!!}
+substComm {s} {n} {v} {vtrue} {x} = {!!}
+substComm {s} {n} {v} {vfalse} {x} = {!!}
+substComm {s} {n} {v} {If t0 t1 t2} {x} = {!!}
+
+-- A simultaneous substitution can be re-organised, moving the head substitution
+-- to happen after the tail substitutions
+multiSubstComm :
+     {s n : ℕ} {γ : Vec (Term n) s} {v : Term n} {t : Term (suc (s + n))}
+    ->    syntacticSubst v zero (multisubst' (map raiseTerm γ) t)
+        ≡ multisubst γ (syntacticSubst (raiseTermℕ s v) zero t)
+multiSubstComm {.zero} {n} {[]} {v} {t} rewrite raiseTermℕzero {n} {v} = refl
+multiSubstComm {suc s} {n} {x ∷ γ} {v} {t} rewrite sym (substComm {s} {n} {v} {t} {x}) =
+  multiSubstComm {s} {n} {γ} {v} {syntacticSubst (raiseTermℕ s (raiseTerm x)) (suc zero) t}
+
+-- # Reduction
+
+-- Untyped reduction
+untypedRedux : {s : ℕ} -> Term s -> Maybe (Term s)
+untypedRedux (App (Abs t) t') = just (syntacticSubst t' Data.Fin.zero t)
+untypedRedux (App t1 t2) with untypedRedux t1
+... | just t1' = just (App t1' t2)
+... | nothing  = nothing
+untypedRedux (If vtrue t1 _) = just t1
+untypedRedux (If vfalse _ t2) = just t2
+untypedRedux (If t t1 t2) with untypedRedux t
+... | just t' = just (If t' t1 t2)
+... | nothing = nothing
+untypedRedux (Let (Promote t1) t2) = just (syntacticSubst t1 zero t2)
+untypedRedux _ = nothing
+
+{-# TERMINATING #-}
+multiRedux : {s : ℕ} -> Term s -> Term s
+multiRedux t with untypedRedux t
+... | just t' = multiRedux t'
+... | nothing = t
+
+determinism : {t t1 t2 : Term s}
+             -> multiRedux t ≡ t1
+             -> multiRedux t ≡ t2
+             -> t1 ≡ t2
+determinism prf1 prf2 = trans (sym prf1) prf2
+
+postulate
+   valuesDontReduce : {s : ℕ} {t : Term s} -> Value t -> multiRedux t ≡ t
+
+
+postulate
+  multReduxCongruence : {t1 v : Term s} {C : Term s -> Term s}
+                   -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
+
+  preservation : {{R : Semiring}} {Γ : Context s} {A : Type} {t : Term s}
+             -> Γ ⊢ t ∶ A
+             -> Γ ⊢ multiRedux t ∶ A
+
+-- # Full-beta equality (which includes equality inside of abs)
+
+data FullBetaEq : {s : ℕ} -> Term s -> Term s -> Set where
+  VarEq     : {x : Fin (suc s)} -> FullBetaEq (Var x) (Var x)
+  AppEq     : {t1 t1' t2 t2' : Term s} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (App t1 t2) (App t1' t2')
+  AbsEq     : {t1 t2 : Term (suc s)} -> FullBetaEq t1 t2 -> FullBetaEq (Abs t1) (Abs t2)
+  UnitEq    : FullBetaEq (unit {s}) (unit {s})
+  PromoteEq : {t1 t2 : Term s} -> FullBetaEq t1 t2 -> FullBetaEq (Promote t1) (Promote t2)
+  VTrue     : FullBetaEq (vtrue {s}) (vtrue {s})
+  VFalse    : FullBetaEq (vfalse {s}) (vfalse {s})
+  IfEq      : {t t' t1 t1' t2 t2' : Term s} -> FullBetaEq t t' -> FullBetaEq t1 t1' -> FullBetaEq t2 t2'
+               -> FullBetaEq (If t t1 t2) (If t' t1' t2')
+  BetaEq    : {t1 : Term (suc s)} {t2 : Term s} -> FullBetaEq (App (Abs t1) t2) (syntacticSubst t2 Data.Fin.zero t1)
+  EmbedRedux : {t : Term s} -> FullBetaEq (multiRedux t) t
+  LetEq     : {t1 t1' : Term s} {t2 t2' : Term (suc s)} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (Let t1 t2) (Let t1' t2')
+  Redux     : {s : ℕ} {t1 t2 : Term s} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
+
+open FullBetaEq
+
+_==_ : Term s -> Term s -> Set
+t == t' = FullBetaEq t t'
+
+-- Equality embeds into full beta eq
+
+embedEq : {t1 t2 : Term s} -> t1 ≡ t2 -> FullBetaEq t1 t2
+embedEq {_} {Var x} {Var .x} refl = VarEq
+embedEq {_} {App t1 t2} {App .t1 .t2} refl = AppEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl)
+embedEq {_} {Abs t1} {Abs t2} prf = AbsEq (embedEq (aux prf))
+  where
+    aux : Abs t1 ≡ Abs t2 -> t1 ≡ t2
+    aux prf with prf
+    ... | refl = refl
+embedEq {_} {unit} {unit} refl = UnitEq {_}
+embedEq {_} {Promote t1} {Promote .t1} refl = PromoteEq (embedEq {_} {t1} {t1} refl)
+embedEq {_} {vtrue} {vtrue} refl = VTrue {_}
+embedEq {_} {vfalse} {vfalse} refl = VFalse {_}
+embedEq {_} {If t1 t2 t3} {If .t1 .t2 .t3} refl =
+  IfEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl) (embedEq {_} {t3} {t3} refl)
+embedEq {_} {Let e1 e2} {Let e3 e4} refl = LetEq ((embedEq {_} {e1} {e3} refl)) ( (embedEq {_} {e2} {e4} refl))
+
+postulate
+  transFullBetaEq : {t1 t2 t3 : Term s} -> t1 == t2 -> t2 == t3 -> t1 == t3
+
+postulate
+  multiReduxHere : {s n : ℕ} {t : Term s} {γ : Vec (Term s) n}
+                  -> multisubst (t ∷ γ) (Var zero) ≡ t
+
+  multiSubstThere : {s n : ℕ} {t : Term s} {γ : Vec (Term s) n}
+       -> multisubst γ (matchVar (raiseTermℕ n t) zero (raiseR 0 (fromℕ (n + s))))
+         ≡ t
+
+  substComAbs : {s1 s2 : ℕ} {v' : Term 0} {t : Term (suc (s1 + s2))} {γ : Vec (Term 0) (s1 + s2)}
+          -> (multisubst γ (syntacticSubst (raiseTermℕ (s1 + s2) v') zero t))
+          ≡ (syntacticSubst v' zero (multisubst' (Data.Vec.map (raiseTermℕ 1) γ) t))
+
+-- # Properties of reduction
+
+betaUnderMultiRedux : {bod : Term (suc s)} {t2 : Term s}
+             -> multiRedux (App (Abs bod) t2)
+              ≡ multiRedux (syntacticSubst t2 zero bod)
+betaUnderMultiRedux {s} {bod} {t2} = refl
+
+isSimultaneous' : {s n : ℕ} {t : Term s} {t' : Term s} {γ : Vec (Term s) n}
+  -> multiRedux (multisubst (t ∷ γ) (Var zero)) ≡ t'
+  -> multiRedux t ≡ t'
+isSimultaneous' {s} {n} {t} {t'} {γ} p rewrite multiReduxHere {s} {n} {t} {γ} = p
+
+isSimultaneousGen : {s n s1 : ℕ} {t : Term s} {t' : Term s}
+                    {γ : Vec (Term s) n} -- (fromℕ n)
+  -> multiRedux (multisubst γ (matchVar (raiseTermℕ n t) zero (raiseR 0 (fromℕ (n + s))))) ≡ t'
+  -> multiRedux t ≡ t'
+isSimultaneousGen {s} {n} {s1} {t} {t'} {γ} p rewrite (multiSubstThere {s} {n} {t} {γ}) = p
+
 
 reduxProm : {v : Term s} -> multiRedux (Promote v) ≡ Promote v
 reduxProm {v} = refl
@@ -272,7 +309,7 @@ reduxUnit : multiRedux unit ≡ unit
 reduxUnit = refl
 
 substMultiRedux : {t t' v : Term s} -> t ≡ t' -> multiRedux t ≡ v -> multiRedux t' ≡ v
-substMultiRedux {_} {t} {t'} {v} prf prf' = subst (\h -> multiRedux h ≡ v) prf prf' 
+substMultiRedux {_} {t} {t'} {v} prf prf' = subst (\h -> multiRedux h ≡ v) prf prf'
 
 postulate -- postulate now for development speed
   reduxTheoremApp : {sz : ℕ} {t1 t2 t v : Term sz}
@@ -304,44 +341,6 @@ postulate -- postulate now for development speed
                     -> Σ (Term s) (\v' -> multiRedux t1 ≡ Promote v' × multiRedux (syntacticSubst v' zero t2) ≡ v)
 
 
--- This is about the structure of substitutions and relates to abs
- -- there is some simplification here because of the definition of ,, being
- -- incorrect
-  substitutionResult : {{R : Semiring}}
-      {n s : ℕ} {v1 : Term s} {γ1 : Vec (Term s) n} {t : Term (suc (n + s))}
-
-   -> syntacticSubst v1 zero (multisubst {!γ1!} t)
-    ≡ multisubst (v1 ∷ γ1) t
-
--- Substitutions to different head variables commutes
-substComm : {s : ℕ} {v : Term 1} {t : Term (suc (suc (suc s)))} {x : Term 1}
-         -> (syntacticSubst (raiseTermℕ s v) zero
-               (syntacticSubst (raiseTermℕ s (raiseTerm x)) (suc zero) t))
-               
-          ≡ (syntacticSubst (raiseTermℕ s x) zero
-               (syntacticSubst (raiseTermℕ (suc s) v) zero t))
-substComm {s} {v} {Var y} {x} with Data.Fin.compare y zero
-... | k = {!k!}
-substComm {s} {v} {App t1 t2} {x} = {!!}
-substComm {s} {v} {Abs t} {x} = {!!}
-substComm {s} {v} {unit} {x} = {!!}
-substComm {s} {v} {Promote t} {x} = {!!}
-substComm {s} {v} {Let t1 t2} {x} = {!!}
-substComm {s} {v} {vtrue} {x} = {!!}
-substComm {s} {v} {vfalse} {x} = {!!}
-substComm {s} {v} {If t0 t1 t2} {x} = {!!}
-
--- A simultaneous substitution can be re-organised, moving the head substitution
--- to happen after the tail substitutions
-multiSubstComm :
-     {s : ℕ} {γ : Vec (Term (suc 0)) s} {v : Term 1} {t : Term (suc (suc s))}
-    ->    syntacticSubst v zero (multisubst' (map raiseTerm γ) t)
-        ≡ multisubst γ (syntacticSubst (raiseTermℕ s v) zero t)
-multiSubstComm {.zero} {[]} {v} {t} rewrite raiseTermℕzero {1} {v} = refl
-multiSubstComm {suc s} {x ∷ γ} {v} {t} rewrite sym (substComm {s} {v} {t} {x}) =
-  multiSubstComm {s} {γ} {v} {syntacticSubst (raiseTermℕ s (raiseTerm x)) (suc zero) t}
-
-
 reduxAndSubstCombinedProm : {s n : ℕ} {γ : Vec (Term s) n} {v : Term s} {t : Term (n + s)} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
 reduxAndSubstCombinedProm {_} {_} {γ} {v} {t}  redux =
        let qr = cong multiRedux (substPresProm {_} {_} {γ} {t})
@@ -351,18 +350,35 @@ reduxAndSubstCombinedProm {_} {_} {γ} {v} {t}  redux =
 
 -- -- Substitution lemma
 -- -- TODO: Vilem
--- substitution : {{R : Semiring}} {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : grade} {A B : Type} {t1 t2 : Term}
---       -> Γ ⊢ t1 ∶ B
---       -> (pos : Γ ≡ ((Ext Γ1 (Grad A r)) ,, Γ3))
---       -> Γ2 ⊢ t2 ∶ A
---       -> ((Γ1 ,, Γ3) ++ (r · Γ2)) ⊢ syntacticSubst t2 (Γlength Γ1) t1 ∶ B
+substitution : {{R : Semiring}} {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : grade} {A B : Type} {t1 : Term ((1 + s1) + s2)} {t2 : Term (s1 + s2)}
+       -> Γ ⊢ t1 ∶ B
+       -> (pos : Γ ≡ ((Ext Γ1 (Grad A r)) ,, Γ3))
+       -> Γ2 ⊢ t2 ∶ A
+       -> ((Γ1 ,, Γ3) ++ (r · Γ2)) ⊢ syntacticSubst t2 (raiseR s2 (fromℕ s1)) t1 ∶ B
 
--- --substitution {Γ1} {Γ2} {.1r} {A} {.A} {Var .0} {t2} (var (Here .Γ1 .A (Γ1' , allZeroesPrf))) substitee
--- --  rewrite allZeroesPrf | absorptionContext {Γ1'} {1r · Γ2} | leftUnitContext {Γ2} =
--- --    t2 , substitee
+{-
+substitution {s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {.1r} {A} {.A} {Var x} {t2} (var (Here .Γ1 .A (Γ1' , allZeroesPrf))) prf substitee
+  rewrite allZeroesPrf | absorptionContext {Γ1'} {1r · Γ2} | leftUnitContext {Γ2} =
+     t2 , substitee
+-}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {Var x} {t2} substitutee pos e = {!substitutee!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {App t1 t3} {t2} substitutee pos e = {!!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {Abs t1} {t2} substitutee pos e = {!!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {unit} {t2} substitutee pos e = {!!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {Promote t1} {t2} substitutee pos e = {!!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {Let t1 t3} {t2} substitutee pos e = {!!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {vtrue} {t2} substitutee pos e = {!!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {vfalse} {t2} substitutee pos e = {!!}
+substitution {s1 = s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {If t1 t3 t4} {t2} substitutee pos e = {!!}
 
--- substitution {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {t1} {t2} substitutee pos e = {!subs!}
+substitution {s1} {s2} = {!!}
+{-
+substitution {s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {.1r} {A} {.A} {Var .0} {t2} (var (Here .Γ1 .A (Γ1' , allZeroesPrf))) prf substitee
+  rewrite allZeroesPrf | absorptionContext {Γ1'} {1r · Γ2} | leftUnitContext {Γ2} =
+     t2 , substitee
 
+substitution {s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {t1} {t2} substitutee pos e = {!subs!}
+-}
 
 -- -- Progress lemma
 -- redux : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
@@ -398,17 +414,6 @@ reduxAndSubstCombinedProm {_} {_} {γ} {v} {t}  redux =
 -- redux {{_}} {s} {Γ} {A} {t} t1 = {!!}
 
 
-
--- multiReduxProducesValues : {{R : Semiring}} {A : Type} {t : Term} -> Empty ⊢ t ∶ A -> Value (multiRedux t)
--- multiReduxProducesValues {A} {Var _} ()
--- multiReduxProducesValues {A} {App t1 t2} (app typing1 typing2) = {!!}
--- multiReduxProducesValues {FunTy _ _ _} {Abs x t} _
---   with untypedRedux (Abs x t) | inspect untypedRedux (Abs x t)
--- ... | just t' | [ () ]
--- ... | nothing | [ prf ] = absValue {x} t
--- multiReduxProducesValues {A} {unit} typing = unitValue
--- multiReduxProducesValues {A} {Promote t} typing = promoteValue t
--- multiReduxProducesValues {A} {vtrue} typing = trueValue
--- multiReduxProducesValues {A} {vfalse} typing = falseValue
--- multiReduxProducesValues {A} {If t t₁ t₂} typing = {!!}
-
+postulate
+  strongNormalisation : {{R : Semiring}} {A : Type} {t : Term 0}
+                           -> Empty ⊢ t ∶ A -> Value (multiRedux t)
