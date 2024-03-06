@@ -6,14 +6,14 @@ open import GrCore
 open import Data.Unit hiding (_≤_; _≟_)
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
-open import Data.Product
+open import Data.Product hiding (map)
 open import Data.Bool hiding (_≤_; _≟_)
 open import Data.Vec hiding (_++_)
 open import Data.Nat hiding (_≤_)
 open import Function
-open import Data.Maybe
+open import Data.Maybe hiding (map)
 open import Relation.Nullary
-open import Data.Sum
+open import Data.Sum hiding (map)
 open import Data.Fin hiding (_≤_; _+_)
 
 open import Semiring
@@ -130,18 +130,18 @@ biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1}
 
 -- # ABS
 biFundamentalTheorem {sz} {Γ'} {Abs t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {Γ'} pos typ {rel}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
-  subst₂ (\h1 h2 -> ⟦ FunTy A r B ⟧v adv h1 h2) (thm γ1 v1 v1redux) (thm γ2 v2 v2redux) (funInterpBi {_} {adv} {A} {B} {r} {Γlength Γ1 + 1} {Γlength Γ1 + 1} (multisubst (Data.Vec.map raiseTerm γ1) t) ((multisubst (Data.Vec.map raiseTerm γ2) t)) body ubody1 ubody2)
+  subst₂ (\h1 h2 -> ⟦ FunTy A r B ⟧v adv h1 h2) (thm γ1 v1 v1redux) (thm γ2 v2 v2redux) (funInterpBi {_} {adv} {A} {B} {r} {Γlength Γ1 + 1} {Γlength Γ1 + 1} (multisubst' (map raiseTerm γ1) t) ((multisubst' (map raiseTerm γ2) t)) body ubody1 ubody2)
   where
     body : (forall (v1' : Term 0) (v2' : Term 0)
          -> ⟦ Box r A ⟧e adv (Promote v1') (Promote v2')
-         -> ⟦ B ⟧e adv (syntacticSubst v1' zero (multisubst (Data.Vec.map raiseTerm γ1) t)) (syntacticSubst v2' zero (multisubst (Data.Vec.map raiseTerm γ2) t)))
+         -> ⟦ B ⟧e adv (syntacticSubst v1' zero (multisubst' (map raiseTerm γ1) t)) (syntacticSubst v2' zero (multisubst' (map raiseTerm γ2) t)))
     body  v1' v2' arg rewrite pos | rel =
       -- | (substitutionResult {?} {_} {v1'} {γ1} {t} {Γ1}) | (substitutionResult {s1} {v2'} {γ2} {t} {Γ1}) =
       {!!} -- biFundamentalTheorem {suc (s1 + s2)} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typ) {v1' ∷ γ1} {v2' ∷ γ2} adv (arg , contextInterp)
 
     ubody1 : (v : Term 0) →
       [ Box r A ]e (Promote v) →
-      [ B ]e (syntacticSubst v zero (multisubst (Data.Vec.map raiseTerm γ1) t))
+      [ B ]e (syntacticSubst v zero (multisubst' (map raiseTerm γ1) t))
     ubody1 v arg rewrite pos | rel =
        -- | substitutionResult {s1} {v} {γ1} {t} {Γ1}
        {!!}
@@ -150,17 +150,17 @@ biFundamentalTheorem {sz} {Γ'} {Abs t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} 
 
     ubody2 : (v : Term 0) →
       [ Box r A ]e (Promote v) →
-      [ B ]e (syntacticSubst v zero (multisubst (Data.Vec.map raiseTerm γ2) t))
+      [ B ]e (syntacticSubst v zero (multisubst' (map raiseTerm γ2) t))
     ubody2 v arg rewrite pos | rel = {!!}
     -- below needs reintegrating
     -- | substitutionResult {s1} {v} {γ2} {t} {Γ1} = utheorem {suc (s1 + s2)} {v ∷ γ2} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} typ (arg , proj₂ (binaryImpliesUnaryG contextInterp))
 
     thm : (γ : Vec (Term 0) sz) -> (v : Term 0)
-        -> multiRedux (multisubst γ (Abs t)) ≡ v -> Abs (multisubst (Data.Vec.map raiseTerm γ) t) ≡ v
+        -> multiRedux (multisubst γ (Abs t)) ≡ v -> Abs (multisubst' (map raiseTerm γ) t) ≡ v
     thm γ v redux =
      let
        qr = cong multiRedux (substPresAbs {_} {_} {γ} {t})
-       qr' = trans qr {!!} -- REINTEGRATE (valuesDontReduce {_} {Abs (multisubst (Data.Vec.map raiseTerm γ) t)} (absValue {Γlength Γ1 + 1} (multisubst γ t)))
+       qr' = trans qr ((valuesDontReduce {_} {Abs (multisubst' (map raiseTerm γ) t)} (absValue {0} (multisubst' (map raiseTerm γ) t))))
      in sym (trans (sym redux) qr')
 
 -- # PROMOTION
