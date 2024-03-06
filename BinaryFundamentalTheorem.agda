@@ -331,11 +331,34 @@ biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {
 
        -- reduxTheoremLet _ : Σ v1' (multiRedux (Let (multisubst γ1 t1) ≡ Promote v1')
 
-       (v1ai , v1airedux) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ1} {t1} {t2}))) v1redux)
-       (v2ai , v2airedux) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ2} {t1} {t2}))) v2redux)
+       (v1ai , v1airedux , bodyRedux1) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ1} {t1} {t2}))) v1redux)
+       (v2ai , v2airedux , bodyRedux2) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ2} {t1} {t2}))) v2redux)
        
        arg = biFundamentalTheorem {sz} {Γ1} {t1} {Box r A} typing1 {γ1} {γ2} adv leftContext (Promote v1ai) (Promote v2ai) v1airedux v2airedux
-      in letBody v1ai v2ai arg
+       bodyRedux1' = subst (\h -> multiRedux h ≡ v1) multiSubstComm {sz} {?} {?} {?}  bodyRedux1
+       ih = biFundamentalTheorem {suc sz} {Ext Γ2 (Grad A r)} {t2} {B} typing2 {v1ai ∷ γ1} {v2ai ∷ γ2} adv ({!arg!} , rightContext) v1 v2 {!bodyRedux1!} {!!}
+
+{-
+-- rt = (proj₁
+              (reduxTheoremLet
+               (trans (sym (cong multiRedux substPresLet)) v2redux)))
+{-bodyRedux2
+          : multiRedux
+            (syntacticSubst
+             rt
+             zero (multisubst' (map raiseTerm γ2) t2))
+            ≡ v2
+            -}
+{- goal
+ multiRedux
+      (multisubst γ2
+       (syntacticSubst
+        (raiseTermℕ sz rt)
+        zero t2))
+      ≡ v2
+-}
+-}
+   in letBody v1ai v2ai {!!}
 
   where
     leftContext : ⟦ Γ1 ⟧Γ adv γ1 γ2
@@ -351,7 +374,7 @@ biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {
       let
          t2redux1 = {!!}
          t2redux2 = {!!}
-         ih = biFundamentalTheorem {suc sz} {Ext Γ2 (Grad A r)} {t2} {B} typing2 {v1a ∷ γ1} {v2a ∷ γ2} adv ({!arg!} , rightContext) v1 v2 {!!} {!!}
+         ih = biFundamentalTheorem {suc sz} {Ext Γ2 (Grad A r)} {t2} {B} typing2 {v1a ∷ γ1} {v2a ∷ γ2} adv ({!arg!} , rightContext) v1 v2 {!bodyRedux1!} {!!}
       in ih
 {-
 Not needed any more but possible useful elseshere

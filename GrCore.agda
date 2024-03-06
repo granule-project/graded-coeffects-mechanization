@@ -156,6 +156,17 @@ raiseTermℕ n vtrue = vtrue
 raiseTermℕ n vfalse = vfalse
 raiseTermℕ n (If t t1 t2) = If (raiseTermℕ n t) (raiseTermℕ n t1) (raiseTermℕ n t2)
 
+raiseTermℕzero : {s : ℕ} {t : Term s} -> raiseTermℕ zero t ≡ t
+raiseTermℕzero {.(suc _)} {Var x} = refl
+raiseTermℕzero {s} {App t1 t2} rewrite raiseTermℕzero {s} {t1} | raiseTermℕzero {s} {t2} = refl
+raiseTermℕzero {s} {Abs t} rewrite raiseTermℕzero {suc s} {t} = refl
+raiseTermℕzero {s} {unit} = refl
+raiseTermℕzero {s} {Promote t} rewrite raiseTermℕzero {s} {t} = refl
+raiseTermℕzero {s} {Let t1 t2} rewrite raiseTermℕzero {s} {t1} | raiseTermℕzero {suc s} {t2} = refl
+raiseTermℕzero {s} {vtrue} = refl
+raiseTermℕzero {s} {vfalse} = refl
+raiseTermℕzero {s} {If t0 t1 t2} rewrite raiseTermℕzero {s} {t0} | raiseTermℕzero {s} {t1} | raiseTermℕzero {s} {t2} = refl
+
 raiseTerm : {s : ℕ} -> Term s -> Term (suc s)
 raiseTerm {s} t = raiseTermℕ {s} 1 t
 
@@ -175,8 +186,35 @@ raiseProp {s} {n} {vfalse} = refl
 raiseProp {s} {n} {If t t₁ t₂}
   rewrite raiseProp {s} {n} {t} | raiseProp {s} {n} {t₁} | raiseProp {s} {n} {t₂} = refl
 
+-- Helper
+finRaiseComm : {s n : ℕ} {x : Fin (suc s)} -> Fin.suc (raise n x) ≡ raise n (Fin.suc x)
+finRaiseComm {zero} {zero} {Fin.zero} = refl
+finRaiseComm {zero} {suc n} {Fin.zero} rewrite finRaiseComm {zero} {n} {Fin.zero} = refl
+finRaiseComm {suc s} {zero} {Fin.zero} = refl
+finRaiseComm {suc s} {zero} {Fin.suc x} = refl
+finRaiseComm {suc s} {suc n} {Fin.zero} rewrite finRaiseComm {suc s} {n} {Fin.zero} = refl
+finRaiseComm {suc s} {suc n} {Fin.suc x} rewrite finRaiseComm {suc s} {n} {Fin.suc x} = refl
+
 raisePropCom : {n : ℕ} {t : Term s} -> raiseTermℕ (suc n) t ≡ raiseTermℕ n (raiseTerm t)
-raisePropCom = {!!}
+raisePropCom {.(suc _)} {zero} {Var x} = refl
+raisePropCom {suc s} {suc n} {Var x} rewrite finRaiseComm {s} {n} {x} = refl
+    
+raisePropCom {s} {n} {App t1 t2}
+  rewrite raisePropCom {s} {n} {t1} | raisePropCom {s} {n} {t2} = refl
+raisePropCom {s} {n} {Abs t}
+  rewrite raisePropCom {suc s} {n} {t} = refl
+raisePropCom {s} {n} {unit} = refl
+raisePropCom {s} {n} {Promote t}
+  rewrite raisePropCom {s} {n} {t} = refl
+raisePropCom {s} {n} {Let t1 t2}
+  rewrite raisePropCom {s} {n} {t1}
+        | raisePropCom {suc s} {n} {t2} = refl
+raisePropCom {s} {n} {vtrue} = refl
+raisePropCom {s} {n} {vfalse} = refl
+raisePropCom {s} {n} {If t1 t2 t3}
+  rewrite raisePropCom {s} {n} {t1}
+        | raisePropCom {s} {n} {t2}
+        | raisePropCom {s} {n} {t3} = refl
 
 -- `mathcVar` is used to enact substitution into a variable term
 -- i.e., the situation is that we have a receiver:
@@ -219,27 +257,6 @@ matchVar {suc s} t posx posy with Data.Fin.compare posy posx
 -- least : Fin' posx = Fin (toN posx)  | [[least]] = jy s.t., 0 <= jy < ix
 ... | Data.Fin.less .posx least    = Var (inject! least)
 
--- # Substitution
-
--- `syntacticSubst {s} t x_pos t'` represents the situation:
-
--- G1             |- t       : A  -- substitutee
--- G2, x : A, G3  |- t'      : B  -- receiver
--- G1 + (G2,G3)   |- [t/x]t' : B
-
--- where |G1| = |G2|+|G3| = s
-
-syntacticSubst : {s : ℕ} -> (t : Term s) -> Fin (suc s) -> (t' : Term (suc s)) -> Term s
-syntacticSubst t x (Var y) = matchVar t x y
-syntacticSubst t x (App t1 t2) = App (syntacticSubst t x t1) (syntacticSubst t x t2)
-syntacticSubst t x (Abs t1) =
-  Abs (syntacticSubst (raiseTerm t) (Data.Fin.suc x) t1)
-syntacticSubst t x (Promote t1) = Promote (syntacticSubst t x t1)
-syntacticSubst t x unit = unit
-syntacticSubst t x vtrue = vtrue
-syntacticSubst t x vfalse = vfalse
-syntacticSubst t x (If t1 t2 t3) = If (syntacticSubst t x t1) (syntacticSubst t x t2) (syntacticSubst t x t3)
-syntacticSubst t x (Let t1 t2) = Let (syntacticSubst t x t1) (syntacticSubst (raiseTerm t) (raise 1 x) t2)
 
 discrimBool : {s : ℕ} -> vtrue {s} ≡ vfalse {s} -> ⊥
 discrimBool ()
@@ -353,17 +370,14 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
    ----------------------------------
     -> Γ ⊢ If t1 t2 t3 ∶ B
 
-
--- # Operational semantics
-
 -- Value predicate
 data Value : {s : ℕ} -> Term s -> Set where
-  unitValue    : Value unit
+  unitValue    : {s : ℕ} -> Value {s} unit
   varValue     : {s : ℕ} -> Value (Var (fromℕ s))
   absValue     : {s : ℕ} -> (t : Term (suc s)) -> Value (Abs t)
   promoteValue : {s : ℕ} -> (t : Term s) -> Value (Promote t)
-  trueValue    : Value vtrue
-  falseValue   : Value vfalse
+  trueValue    : {s : ℕ} -> Value {s} vtrue
+  falseValue   : {s : ℕ} -> Value {s} vfalse
 
 postulate
   exchange : {{R : Semiring}}
@@ -373,138 +387,3 @@ postulate
            -> (Ext Γ1 (Grad A r) ,, Γ2) ⊢ t ∶ B
            -> Ext (Γ1 ,, Γ2) (Grad A r) ⊢ t ∶ B
 
--- -- Substitution lemma
--- -- TODO: Vilem
--- substitution : {{R : Semiring}} {s1 s2 : ℕ} {Γ : Context ((1 + s1) + s2)} {Γ1 : Context s1} {Γ2 : Context (s1 + s2)} {Γ3 : Context s2} {r : grade} {A B : Type} {t1 t2 : Term}
---       -> Γ ⊢ t1 ∶ B
---       -> (pos : Γ ≡ ((Ext Γ1 (Grad A r)) ,, Γ3))
---       -> Γ2 ⊢ t2 ∶ A
---       -> ((Γ1 ,, Γ3) ++ (r · Γ2)) ⊢ syntacticSubst t2 (Γlength Γ1) t1 ∶ B
-
--- --substitution {Γ1} {Γ2} {.1r} {A} {.A} {Var .0} {t2} (var (Here .Γ1 .A (Γ1' , allZeroesPrf))) substitee
--- --  rewrite allZeroesPrf | absorptionContext {Γ1'} {1r · Γ2} | leftUnitContext {Γ2} =
--- --    t2 , substitee
-
--- substitution {Γ} {Γ1} {Γ2} {Γ3} {r} {A} {B} {t1} {t2} substitutee pos e = {!subs!}
-
-
--- -- Progress lemma
--- redux : {{R : Semiring}} {s : ℕ} {Γ : Context s} {A : Type} {t : Term}
---       -> Γ ⊢ t ∶ A
---       -> (Value t) ⊎ ∃ (\t' -> Γ ⊢ t' ∶ A)
-
--- redux {{_}} {s} {Γ} {A} {Var _} (var pos) = inj₁ varValue
-
--- -- Beta
--- --
--- --        deriv1 =  Γ₁ ⊢ t ∶ A
--- --        Γ₁ = Ext (Γ1 ,, Γ2) (Grad A₁ r)
--- --      --------------------------
--- --            (\× . t) t2
--- --
--- redux {{_}} {s} {Γ} {A} {.(App (Abs _ _) _)} (app {t2 = t2} (abs {t = t} pos deriv1) deriv2 {ctxtPrf}) rewrite ctxtPrf  =
---   let derive' = substitution deriv1 pos deriv2
---   in inj₂ (syntacticSubst t2 {!!} t , {!derive'!})
-
--- redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) with redux deriv1
--- redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 with redux deriv2
--- redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₁ v2 = inj₁ {!!}
-
--- redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₁ v1 | inj₂ (t2' , deriv2') = inj₂ (App t1 t2' , app deriv1 deriv2')
-
--- redux {{_}} {s} {Γ} {A} {App t1 t2} (app deriv1 deriv2) | inj₂ (t1' , deriv1') = inj₂ (App t1' t2 , app deriv1' deriv2)
-
--- redux {{_}} {s} {Γ} {.(FunTy _ _ _)} {(Abs n t)} (abs pos deriv) with redux deriv
--- ... | inj₁ v = inj₁ {!!}
--- ... | inj₂ (t' , deriv') = inj₂ (Abs n t' , abs pos deriv')
-
--- redux {{_}} {s} {Γ} {A} {unit} _ = inj₁ unitValue
--- redux {{_}} {s} {Γ} {A} {t} t1 = {!!}
-
-
--- Untyped reduction
-untypedRedux : {s : ℕ} -> Term s -> Maybe (Term s)
-untypedRedux (App (Abs t) t') = just (syntacticSubst t' Data.Fin.zero t)
-untypedRedux (App t1 t2) with untypedRedux t1
-... | just t1' = just (App t1' t2)
-... | nothing  = nothing
-untypedRedux (If vtrue t1 _) = just t1
-untypedRedux (If vfalse _ t2) = just t2
-untypedRedux (If t t1 t2) with untypedRedux t
-... | just t' = just (If t' t1 t2)
-... | nothing = nothing
-untypedRedux _ = nothing
-
-{-# TERMINATING #-}
-multiRedux : {s : ℕ} -> Term s -> Term s
-multiRedux t with untypedRedux t
-... | just t' = multiRedux t'
-... | nothing = t
-
-determinism : {t t1 t2 : Term s}
-             -> multiRedux t ≡ t1
-             -> multiRedux t ≡ t2
-             -> t1 ≡ t2
-determinism prf1 prf2 = trans (sym prf1) prf2
-
-postulate
-   valuesDontReduce : {s : ℕ} {t : Term s} -> Value t -> multiRedux t ≡ t
-
-
--- multiReduxProducesValues : {{R : Semiring}} {A : Type} {t : Term} -> Empty ⊢ t ∶ A -> Value (multiRedux t)
--- multiReduxProducesValues {A} {Var _} ()
--- multiReduxProducesValues {A} {App t1 t2} (app typing1 typing2) = {!!}
--- multiReduxProducesValues {FunTy _ _ _} {Abs x t} _
---   with untypedRedux (Abs x t) | inspect untypedRedux (Abs x t)
--- ... | just t' | [ () ]
--- ... | nothing | [ prf ] = absValue {x} t
--- multiReduxProducesValues {A} {unit} typing = unitValue
--- multiReduxProducesValues {A} {Promote t} typing = promoteValue t
--- multiReduxProducesValues {A} {vtrue} typing = trueValue
--- multiReduxProducesValues {A} {vfalse} typing = falseValue
--- multiReduxProducesValues {A} {If t t₁ t₂} typing = {!!}
-
-postulate
-  multReduxCongruence : {t1 v : Term s} {C : Term s -> Term s}
-                   -> multiRedux t1 ≡ v -> multiRedux (C t1) ≡ multiRedux (C v)
-
-  preservation : {{R : Semiring}} {Γ : Context s} {A : Type} {t : Term s}
-             -> Γ ⊢ t ∶ A
-             -> Γ ⊢ multiRedux t ∶ A
-
--- # Equality
-
-data FullBetaEq : Term s -> Term s -> Set where
-  VarEq     : {x : Fin (suc s)} -> FullBetaEq (Var x) (Var x)
-  AppEq     : {t1 t1' t2 t2' : Term s} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (App t1 t2) (App t1' t2')
-  AbsEq     : {t1 t2 : Term (suc s)} -> FullBetaEq t1 t2 -> FullBetaEq (Abs t1) (Abs t2)
-  UnitEq    : FullBetaEq (unit {s}) (unit {s})
-  PromoteEq : {t1 t2 : Term s} -> FullBetaEq t1 t2 -> FullBetaEq (Promote t1) (Promote t2)
-  VTrue     : FullBetaEq (vtrue {s}) (vtrue {s})
-  VFalse    : FullBetaEq (vfalse {s}) (vfalse {s})
-  IfEq      : {t t' t1 t1' t2 t2' : Term s} -> FullBetaEq t t' -> FullBetaEq t1 t1' -> FullBetaEq t2 t2'
-               -> FullBetaEq (If t t1 t2) (If t' t1' t2')
-  BetaEq    : {t1 : Term (suc s)} {t2 : Term s} -> FullBetaEq (App (Abs t1) t2) (syntacticSubst t2 Data.Fin.zero t1)
-  EmbedRedux : {t : Term s} -> FullBetaEq (multiRedux t) t
-  LetEq     : {t1 t1' : Term s} {t2 t2' : Term (suc s)} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (Let t1 t2) (Let t1' t2')
-
-_==_ : Term s -> Term s -> Set
-t == t' = FullBetaEq t t'
-
-embedReduxCong : {t1 t2 : Term s} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
-embedReduxCong = {!!}
-
-embedEq : {t1 t2 : Term s} -> t1 ≡ t2 -> FullBetaEq t1 t2
-embedEq {_} {Var x} {Var .x} refl = VarEq
-embedEq {_} {App t1 t2} {App .t1 .t2} refl = AppEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl)
-embedEq {_} {Abs t1} {Abs t2} prf = {!!}
-embedEq {_} {unit} {unit} refl = UnitEq {_}
-embedEq {_} {Promote t1} {Promote .t1} refl = PromoteEq (embedEq {_} {t1} {t1} refl)
-embedEq {_} {vtrue} {vtrue} refl = VTrue {_}
-embedEq {_} {vfalse} {vfalse} refl = VFalse {_}
-embedEq {_} {If t1 t2 t3} {If .t1 .t2 .t3} refl =
-  IfEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl) (embedEq {_} {t3} {t3} refl)
-embedEq {_} {Let e1 e2} {Let e3 e4} refl = LetEq ((embedEq {_} {e1} {e3} refl)) ( (embedEq {_} {e2} {e4} refl))
-
--- transFullBetaEq : {t1 t2 t3 : Term} -> t1 == t2 -> t2 == t3 -> t1 == t3
--- transFullBetaEq = {!!}
