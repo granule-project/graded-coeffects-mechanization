@@ -164,6 +164,9 @@ reduxTrue = refl
 reduxUnit : multiRedux unit ≡ unit
 reduxUnit = refl
 
+substMultiRedux : {t t' v : Term s} -> t ≡ t' -> multiRedux t ≡ v -> multiRedux t' ≡ v
+substMultiRedux {_} {t} {t'} {v} prf prf' = subst (\h -> multiRedux h ≡ v) prf prf' 
+
 postulate -- postulate now for development speed
   reduxTheoremApp : {sz : ℕ} {t1 t2 t v : Term sz}
                  -> multiRedux (App t1 t2) ≡ v
