@@ -7,16 +7,15 @@ open import GrCore
 open import Data.Unit -- hiding (_≤_; _≟_)
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
-open import Data.Product
+open import Data.Product hiding (map)
 open import Data.Bool hiding (_≤_; _≟_)
 open import Data.Vec hiding (_++_)
 open import Data.Nat hiding (_≤_)
 open import Function
-open import Data.Maybe
+open import Data.Maybe hiding (map)
 open import Relation.Nullary
-open import Data.Sum
+open import Data.Sum hiding (map)
 open import Data.Fin hiding (_+_; _≟_)
-
 open import Semiring
 
 data Telescope : ℕ -> Set where
@@ -112,28 +111,22 @@ substPresApp  {_} {suc n} {x ∷ γ} {t1} {t2} =
   substPresApp {_} {n} {γ} {syntacticSubst (raiseTermℕ n x) zero t1}
                            {syntacticSubst (raiseTermℕ n x) zero t2}
 
-sidPrf : {s n : ℕ}  {γ : Vec (Term s) n}
-       -> Term (suc (n + s))
-       -> Term (suc (n + s))
-sidPrf {s} {n} {g} (Var x) = Var (aux {s} {n} {g} x)
-  where
-    aux : {s n : ℕ} -> {γ : Vec (Term s) n} -> Fin (suc (n + s)) -> Fin (suc (n + s))
-    aux {_} {_} {γ} zero = zero
-    aux {_} {_} {[]} (suc x) = suc x
-    aux {_} {suc m} {x ∷ γ} (suc n) = let k = aux {_} {_} {γ} n in suc k
-sidPrf {s} {g} (App x x₁) = App (sidPrf {s} {g} x) (sidPrf {s} {g} x₁)
-sidPrf {s} {g} (Abs x) = let y = sidPrf {suc s} {g} x in Abs y
-sidPrf {s} {g} unit = unit
-sidPrf {s} {g} (Promote x) = Promote (sidPrf x)
-sidPrf {s} {g} (Let x x₁) = Let (sidPrf x) (sidPrf x₁)
-sidPrf {s} {g} vtrue = vtrue
-sidPrf {s} {g} vfalse = vfalse
-sidPrf {s} {g} (If x x₁ x₂) = If (sidPrf x) (sidPrf x₁) (sidPrf x₂)
+substPresLet : {n : ℕ} {γ : Vec (Term s) n} {t1 : Term (n + s)} {t2 : Term (suc (n + s))}
+            -> multisubst γ (Let t1 t2) ≡ Let (multisubst γ t1) (multisubst' (map raiseTerm γ) t2)
+substPresLet {_} {.zero} {[]} {t1} {t2} = refl
+substPresLet {s} {suc n} {v ∷ γ} {t1} {t2} =
+ let
+   subst1 = syntacticSubst (raiseTermℕ n v) zero t1
+   subst2 = syntacticSubst (raiseTermℕ (1 + n) v) (suc zero) t2
+   ih1 = substPresLet {s} {n} {γ} {subst1} {subst2}
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq.≡-Reasoning
+   ihpre = cong (\h ->  multisubst γ (Let subst1 (syntacticSubst h (suc zero) t2))) (raiseProp {s} {n} {v})
+   ihpost = cong (\h -> Let (multisubst γ subst1) (multisubst' (map raiseTerm γ) (syntacticSubst h (suc zero) t2)))
+    (raisePropCom {s} {n} {v})
+  in trans (trans ihpre ih1) ihpost
 
-substPresAbs : {n : ℕ} {γ : Vec (Term s) n} {t : Term (suc (n + s))} -> multisubst γ (Abs t) ≡ Abs (multisubst' (Data.Vec.map raiseTerm γ) t)
+substPresAbs : {n : ℕ} {γ : Vec (Term s) n} {t : Term (suc (n + s))}
+       -> multisubst γ (Abs t) ≡ Abs (multisubst' (Data.Vec.map raiseTerm γ) t)
 substPresAbs {_} {_} {[]} {t} = refl
 substPresAbs {s} {suc n} {v ∷ γ} {t} =
 
@@ -154,6 +147,7 @@ substPresIf {_} {suc n} {x ∷ γ} {tg} {t1} {t2} =
   substPresIf {_} {n} {γ} {syntacticSubst (raiseTermℕ n x) zero tg}
                       {syntacticSubst (raiseTermℕ n x) zero t1}
                       {syntacticSubst (raiseTermℕ n x) zero t2}
+
 
 reduxProm : {v : Term s} -> multiRedux (Promote v) ≡ Promote v
 reduxProm {v} = refl
@@ -201,6 +195,9 @@ postulate -- postulate now for development speed
   reduxTheoremBool1 : {tg t1 t2 v : Term s} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
   reduxTheoremBool2 : {tg t1 t2 v : Term s} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
 
+  reduxTheoremLet : {t1 v : Term s} {t2 : Term (suc s)}
+                    -> multiRedux (Let t1 t2) ≡ v
+                    -> Σ (Term s) (\v' -> multiRedux t1 ≡ Promote v')
 
 
 -- This is about the structure of substitutions and relates to abs

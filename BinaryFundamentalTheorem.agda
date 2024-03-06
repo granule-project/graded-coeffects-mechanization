@@ -314,6 +314,29 @@ biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {
            (sym (reduxTheoremBool2 {_} {multisubst γ1 tg} {multisubst γ1 t1} {multisubst γ1 t2} {v1} v1redux' falseEv1))
              (sym (reduxTheoremBool2 {_} {multisubst γ2 tg} {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux' falseEv2))
 
+biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {A} {B} t1 t2 typing1 typing2 { prf })
+  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym prf =
+     let
+       v1aireduxA = trans (sym substPresLet) v1redux
+       v2aireduxB = trans (sym substPresLet) v2redux
+       (v1ai , v1airedux) = reduxTheoremLet {!!}
+       (v2ai , v2airedux) = reduxTheoremLet {!!}
+       arg = biFundamentalTheorem {sz} {Γ1} {t1} {Box r A} typing1 {γ1} {γ2} adv leftContext (Promote {!!}) (Promote {!!}) {!!} {!!}
+      in letBody {!!} {!!} {!!}
+
+  where
+    leftContext : ⟦ Γ1 ⟧Γ adv γ1 γ2
+    leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimLeftBox
+                   (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
+
+    rightContext : ⟦ Γ2 ⟧Γ adv γ1 γ2
+    rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimRightBox
+                   (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
+
+    letBody : (v1a v2a : Term sz) -> ⟦ Box r A ⟧v adv (Promote v1a) (Promote v2a) -> ⟦ B ⟧v adv v1 v2
+    letBody v1a v2a arg =
+      let ih = biFundamentalTheorem {suc sz} {Ext Γ2 (Grad A r)} {t2} {B} typing2 {{!!}} {{!!}} adv {!!} v1 v2 {!!} {!!}
+      in ih
 {-
 Not needed any more but possible useful elseshere
 lem : {{R : Semiring}} {adv : grade}

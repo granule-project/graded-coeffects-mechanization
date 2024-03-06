@@ -196,8 +196,10 @@ unaryPlusElimRightΓ {suc s} {_} {x ∷ γ} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad
     unaryPlusElimRight {_} {A} {r1} {r2} {x} head , unaryPlusElimRightΓ {s} {_} {γ} {Γ1} {Γ2} tail
 
 binaryPlusElimLeftΓ : {{R : Semiring}} {sz t : ℕ} {adv : grade} {γ1 γ2 : Vec (Term t) sz} {Γ1 Γ2 : Context sz}
+
                    -> (convertVal : ({sz : ℕ} {r1 r2 adv : grade} {v1 v2 : Term sz} {A : Type}
                           -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)))
+                          
                    -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
 binaryPlusElimLeftΓ {{R}} {0} {_} {adv} {[]} {empty} {Empty} {Empty} convertVal x = x
 binaryPlusElimLeftΓ {{R}} {(suc s)} {t} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
