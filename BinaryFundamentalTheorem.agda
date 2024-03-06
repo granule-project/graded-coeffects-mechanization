@@ -72,7 +72,6 @@ biFundamentalTheorem {{R}} {{R'}} {_} {Γ} {Var x} {τ} (var {_} {_} {.τ} {.Γ}
 
 -- generalises the above for any variable
 ... | Ext G1' a | a1 ∷ γ1' | a2 ∷ γ2' | contextInterp = {!!}
-   {!!}
 
 
 biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos =
@@ -97,14 +96,14 @@ biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1}
     -- multiRedux (App (Abs var1 bod1) (multisubst' 0 γ1 t2)) ≡ v1
     aeq2 = trans (sym (multReduxCongruence {_} {multisubst γ1 t1} {Abs bod1} {\t1' -> App t1' (multisubst γ1 t2)} fun1redux)) aeq1
     --
-    v1reduxerFull = trans (sym (betaVariant1 {_} {bod1} {multisubst γ1 t2})) aeq2
+    v1reduxerFull = trans (sym (betaUnderMultiRedux {_} {bod1} {multisubst γ1 t2})) aeq2
 
     -- multiRedux (App (multisubst' 0 γ2 t1) (multisubst' 0 γ2 t2)) ≡ v2
     beq1 = trans (cong multiRedux (sym (substPresApp {_} {_} {γ2} {t1} {t2}))) v2redux
     -- multiRedux (App (Abs var1 bod2) (multisubst' 0 γ2 t2)) ≡ v2
     beq2 = trans (sym (multReduxCongruence {_} {multisubst γ2 t1} {Abs bod2} {\t1' -> App t1' (multisubst γ2 t2)} fun2redux)) beq1
     --
-    v2reduxerFull = trans {!!} beq2 -- (sym (betaVariant1 {_} {multisubst γ2 t2})) beq2
+    v2reduxerFull = trans (betaUnderMultiRedux {zero} {bod2} {multisubst γ2 t2}) beq2
 
    in
      extract ih1applied (multisubst γ1 t2) (multisubst γ2 t2) argument v1 v2 v1reduxerFull v2reduxerFull
@@ -132,28 +131,25 @@ biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1}
 biFundamentalTheorem {sz} {Γ'} {Abs t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {Γ'} pos typ {rel}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
   subst₂ (\h1 h2 -> ⟦ FunTy A r B ⟧v adv h1 h2) (thm γ1 v1 v1redux) (thm γ2 v2 v2redux) (funInterpBi {_} {adv} {A} {B} {r} {Γlength Γ1 + 1} {Γlength Γ1 + 1} (multisubst' (map raiseTerm γ1) t) ((multisubst' (map raiseTerm γ2) t)) body ubody1 ubody2)
   where
-    body : (forall (v1' : Term 0) (v2' : Term 0)
+    body : forall (v1' : Term 0) (v2' : Term 0)
          -> ⟦ Box r A ⟧e adv (Promote v1') (Promote v2')
-         -> ⟦ B ⟧e adv (syntacticSubst v1' zero (multisubst' (map raiseTerm γ1) t)) (syntacticSubst v2' zero (multisubst' (map raiseTerm γ2) t)))
-    body  v1' v2' arg rewrite pos | rel =
-      -- | (substitutionResult {?} {_} {v1'} {γ1} {t} {Γ1}) | (substitutionResult {s1} {v2'} {γ2} {t} {Γ1}) =
-      {!!} -- biFundamentalTheorem {suc (s1 + s2)} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typ) {v1' ∷ γ1} {v2' ∷ γ2} adv (arg , contextInterp)
+         -> ⟦ B ⟧e adv (syntacticSubst v1' zero (multisubst' (map raiseTerm γ1) t)) (syntacticSubst v2' zero (multisubst' (map raiseTerm γ2) t))
+    body  v1' v2' arg rewrite pos | rel
+           | multiSubstComm {s1 + s2} {zero} {γ1} {v1'} {t}
+           | multiSubstComm {s1 + s2} {zero} {γ2} {v2'} {t} =
+      biFundamentalTheorem {suc (s1 + s2)} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typ) {v1' ∷ γ1} {v2' ∷ γ2} adv ((arg , contextInterp))
 
     ubody1 : (v : Term 0) →
       [ Box r A ]e (Promote v) →
       [ B ]e (syntacticSubst v zero (multisubst' (map raiseTerm γ1) t))
-    ubody1 v arg rewrite pos | rel =
-       -- | substitutionResult {s1} {v} {γ1} {t} {Γ1}
-       {!!}
-       -- below needs reintegrating
-       -- utheorem {suc (s1 + s2)} {v ∷ γ1} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typ) (arg , proj₁ (binaryImpliesUnaryG contextInterp))
+    ubody1 v arg rewrite pos | rel | multiSubstComm {s1 + s2} {zero} {γ1} {v} {t} =
+       utheorem {suc (s1 + s2)} {v ∷ γ1} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typ) (arg , proj₁ (binaryImpliesUnaryG contextInterp))
 
     ubody2 : (v : Term 0) →
       [ Box r A ]e (Promote v) →
       [ B ]e (syntacticSubst v zero (multisubst' (map raiseTerm γ2) t))
-    ubody2 v arg rewrite pos | rel = {!!}
-    -- below needs reintegrating
-    -- | substitutionResult {s1} {v} {γ2} {t} {Γ1} = utheorem {suc (s1 + s2)} {v ∷ γ2} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} typ (arg , proj₂ (binaryImpliesUnaryG contextInterp))
+    ubody2 v arg rewrite pos | rel | multiSubstComm {s1 + s2} {zero} {γ2} {v} {t} =
+       utheorem {suc (s1 + s2)} {v ∷ γ2} {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typ) (arg , proj₂ (binaryImpliesUnaryG contextInterp))
 
     thm : (γ : Vec (Term 0) sz) -> (v : Term 0)
         -> multiRedux (multisubst γ (Abs t)) ≡ v -> Abs (multisubst' (map raiseTerm γ) t) ≡ v
@@ -225,7 +221,7 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
     thm : {v : Term 0} {γ : Vec (Term 0) sz} -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
     thm {v} {γ} redux =
        let qr = cong multiRedux (substPresProm {_} {_} {γ} {t})
-           qr' = trans qr {!!} -- (valuesDontReduce {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
+           qr' = trans qr (valuesDontReduce {zero} {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
 
 biFundamentalTheorem {_} {_} {.unit} {.Unit} unitConstr {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
@@ -323,19 +319,19 @@ biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {
       -- (v2ai , v2airedux) = reduxTheoremLet {!!}
        -- want  multiRedux (multisubst γ1 t1) ≡ Promote ?15
        -- have  v1redux : (multiRedux (multisubst γ1 (Let t1 t2)) ≡ v1
-       
+
        -- cong multiRedux substPresLet : multiRedux (multisubst γ1 (Let t1 t2))
        --                              = multiRedux (Let (multisubst γ1 t1) (multisubst γ1 t2))
-                                       
+
        -- trans (sym (cong multiRedux substPresLet)) v1redux : multiRedux (Let (multisubst γ1 t1) (multisubst γ1 t2)) ≡ v1
 
        -- reduxTheoremLet _ : Σ v1' (multiRedux (Let (multisubst γ1 t1) ≡ Promote v1')
 
        (v1ai , v1airedux , bodyRedux1) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ1} {t1} {t2}))) v1redux)
        (v2ai , v2airedux , bodyRedux2) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ2} {t1} {t2}))) v2redux)
-       
+
        arg = biFundamentalTheorem {sz} {Γ1} {t1} {Box r A} typing1 {γ1} {γ2} adv leftContext (Promote v1ai) (Promote v2ai) v1airedux v2airedux
-       bodyRedux1' = subst (\h -> multiRedux h ≡ v1) multiSubstComm {sz} {?} {?} {?}  bodyRedux1
+       -- bodyRedux1' = subst (\h -> multiRedux h ≡ v1) multiSubstComm {sz} {?} {?} {?}  bodyRedux1
        ih = biFundamentalTheorem {suc sz} {Ext Γ2 (Grad A r)} {t2} {B} typing2 {v1ai ∷ γ1} {v2ai ∷ γ2} adv ({!arg!} , rightContext) v1 v2 {!bodyRedux1!} {!!}
 
 {-
