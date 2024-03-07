@@ -118,7 +118,7 @@ increasing* {{R}} {{R'}} {r1} {r2} {s} pre =
 
 
 -- TODO: is zeroIsTop deriveable from decreaseing +?
--- Vilem?
+-- TODOABLE Vilem?
 zeroIsTopFromDecreasing : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
   -> ({r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s))
   -> ({r : grade} -> r ≤ 0R)
@@ -168,6 +168,9 @@ decreasing+Inv' {{R}} {{R'}} {r1} {r2} {s} pre =
 antisymmetryAlt : {{R : Semiring}} {{R' : NonInterferingSemiring}} {r s : grade} -> r ≤ s -> r ≢ s -> ¬ (s ≤ r)
 antisymmetryAlt {{R}} {{R'}} {r} {s} pre1 pre2 pre3 = ⊥-elim (pre2 (antisymmetry R' {r} {s} pre1 pre3))
 
+-------------------------------------------------------
+-- NOTES BELOW HERE
+
 -- From Abel&Bernardy (2021) §4.3
 -- The paper has a strong implication of lattice nature around here
 -- which would imply having a partial order => having an antisymmetric relation
@@ -205,10 +208,10 @@ rel1 record { idem* = idem* ; absorb1 = absorb1 ; absorb2 = absorb2 ; plusMeet1 
     { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = antisym ; idem* = idem* }
   where
     one : {r : grade} → 1R ≤ r
-    one {r} rewrite sym (leftUnit* {r}) = ? -- multJoin1 {1R} {r}
+    one {r} rewrite sym (leftUnit* {r}) = {!!} -- multJoin1 {1R} {r}
 
     zero : {r : grade} -> r ≤ 0R
-    zero {r} rewrite sym (rightUnit+ {r}) = ?  -- plusMeet2 {r} {0R}
+    zero {r} rewrite sym (rightUnit+ {r}) = {!!}  -- plusMeet2 {r} {0R}
 
     -- maybe a classical proof?
     antisym : {r s : grade} -> r ≤ s -> s ≤ r -> r ≡ s
