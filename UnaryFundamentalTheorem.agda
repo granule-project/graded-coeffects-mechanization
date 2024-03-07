@@ -40,6 +40,7 @@ utheorem {s} {γ} {Γ} {Var x} {τ} (var {s1} {s2} {.τ} {.Γ} {Γ1} {Γ2} pos) 
     conc : [ τ ]v v
     conc with argInterp (Promote x) refl
     ... | boxInterpV t inner = inner v (isSimultaneousGen {zero} {s1} {zero} {t} {v} {gee} substi )
+-- TOODOMABLE - above does the main thing
 ... | Ext g x | x₁ ∷ gee | Gee = {!!}
 
 {-
@@ -103,7 +104,7 @@ utheorem {s} {γ} {Γ'} {Abs t} {FunTy A r B} (abs {s1} {s2} {Γ} {Γ1} {Γ2} {�
     body : (v' : Term 0) →
         [ Box r A ]e (Promote v') → [ B ]e
         (syntacticSubst v' zero (multisubst' (Data.Vec.map raiseTerm γ) t))
-    body v' arg v1 v1redux rewrite sym (substComAbs {s1} {s2} {v'} {t} {γ}) =
+    body v' arg v1 v1redux rewrite multiSubstComm {s1 + s2} {0} {γ} {v'} {t} =
      let --
       ih = utheorem {suc (s1 + s2)} {v' ∷ γ}  {Ext (Γ1 ,, Γ2) (Grad A r)} {t} {B} (exchange typing) ( arg  , context)
      in ih v1 v1redux
@@ -167,4 +168,5 @@ utheorem {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} {
       utheorem {sz} {γ} {Γ2} {t2} {B} typ2 (unaryPlusElimRightΓ context) v1
          (sym (reduxTheoremBool2 {_} {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux' falseEv))
 
+-- TOODOMABLE
 utheorem {sz} {γ} {Γ} {Let t1 t2} {B} deriv context v1 v1redux = {!!}
