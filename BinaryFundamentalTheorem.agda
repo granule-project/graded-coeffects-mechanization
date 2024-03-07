@@ -330,9 +330,9 @@ biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {
        (v1ai , v1airedux , bodyRedux1) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ1} {t1} {t2}))) v1redux)
        (v2ai , v2airedux , bodyRedux2) = reduxTheoremLet (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ2} {t1} {t2}))) v2redux)
 
-       arg = biFundamentalTheorem {sz} {Γ1} {t1} {Box r A} typing1 {γ1} {γ2} adv leftContext (Promote v1ai) (Promote v2ai) v1airedux v2airedux
+       arg = (\v1ai v2ai v1airedux v2airedux -> biFundamentalTheorem {sz} {Γ1} {t1} {Box r A} typing1 {γ1} {γ2} adv leftContext (Promote v1ai) (Promote v2ai) v1airedux v2airedux)
        -- bodyRedux1' = subst (\h -> multiRedux h ≡ v1) multiSubstComm {sz} {?} {?} {?}  bodyRedux1
-       ih = biFundamentalTheorem {suc sz} {Ext Γ2 (Grad A r)} {t2} {B} typing2 {v1ai ∷ γ1} {v2ai ∷ γ2} adv ({!arg!} , rightContext) v1 v2 {!bodyRedux1!} {!!}
+       ih = biFundamentalTheorem {suc sz} {Ext Γ2 (Grad A r)} {t2} {B} typing2 {v1ai ∷ γ1} {v2ai ∷ γ2} adv ({!arg!} , rightContext) v1 v2 bodyRedux1 bodyRedux2
 
 {-
 -- rt = (proj₁
