@@ -384,4 +384,3 @@ lem : {{R : Semiring}} {adv : grade}
 lem {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
   mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
 -}
-
