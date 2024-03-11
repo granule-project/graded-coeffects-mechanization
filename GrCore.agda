@@ -29,7 +29,7 @@ data Type {{R : Semiring}} : Set where
   Unit  : Type
   Box   : (r : grade) -> Type -> Type
   --------------------------------------------------
-  -- Prod  : Type -> Type -> Type
+  Prod  : Type -> Type -> Type
   -- Sum   : Type -> Type -> Type
   BoolTy : Type
 
@@ -144,6 +144,9 @@ data Term : ℕ -> Set where
   vtrue   : {s : ℕ} -> Term s
   vfalse  : {s : ℕ} -> Term s
   If      : {s : ℕ} -> Term s -> Term s -> Term s -> Term s
+  -- handling products
+  tuple   : {s : ℕ} -> Term s -> Term s -> Term s
+  LetProd : {s : ℕ} -> Term s -> Term (suc (suc s)) -> Term s
 
 raiseTermℕ : (n : ℕ) -> Term s -> Term (n + s)
 raiseTermℕ n (Var x) = Var (raise n x)
@@ -155,6 +158,8 @@ raiseTermℕ n (Let t1 t2) = Let (raiseTermℕ n t1) (raiseTermℕ n t2)
 raiseTermℕ n vtrue = vtrue
 raiseTermℕ n vfalse = vfalse
 raiseTermℕ n (If t t1 t2) = If (raiseTermℕ n t) (raiseTermℕ n t1) (raiseTermℕ n t2)
+raiseTermℕ n (tuple t1 t2) = tuple (raiseTermℕ n t1) (raiseTermℕ n t2)
+raiseTermℕ n (LetProd t1 t2) = LetProd (raiseTermℕ n t1) (raiseTermℕ n t2)
 
 raiseTermℕzero : {s : ℕ} {t : Term s} -> raiseTermℕ zero t ≡ t
 raiseTermℕzero {.(suc _)} {Var x} = refl
@@ -166,6 +171,8 @@ raiseTermℕzero {s} {Let t1 t2} rewrite raiseTermℕzero {s} {t1} | raiseTerm�
 raiseTermℕzero {s} {vtrue} = refl
 raiseTermℕzero {s} {vfalse} = refl
 raiseTermℕzero {s} {If t0 t1 t2} rewrite raiseTermℕzero {s} {t0} | raiseTermℕzero {s} {t1} | raiseTermℕzero {s} {t2} = refl
+raiseTermℕzero {s} {tuple e1 e2} rewrite raiseTermℕzero {s} {e1} | raiseTermℕzero {s} {e2} = refl
+raiseTermℕzero {s} {LetProd e1 e2} rewrite raiseTermℕzero {s} {e1} | raiseTermℕzero {suc (suc s)} {e2} = refl
 
 raiseTerm : {s : ℕ} -> Term s -> Term (suc s)
 raiseTerm {s} t = raiseTermℕ {s} 1 t
@@ -185,6 +192,10 @@ raiseProp {s} {n} {vtrue} = refl
 raiseProp {s} {n} {vfalse} = refl
 raiseProp {s} {n} {If t t₁ t₂}
   rewrite raiseProp {s} {n} {t} | raiseProp {s} {n} {t₁} | raiseProp {s} {n} {t₂} = refl
+raiseProp {s} {n} {tuple e1 e2}
+  rewrite raiseProp {s} {n} {e1} | raiseProp {s} {n} {e2} = refl
+raiseProp {s} {n} {LetProd e1 e2}
+  rewrite raiseProp {s} {n} {e1} | raiseProp {suc (suc s)} {n} {e2} = refl
 
 -- Helper
 finRaiseComm : {s n : ℕ} {x : Fin (suc s)} -> Fin.suc (raise n x) ≡ raise n (Fin.suc x)
@@ -198,7 +209,7 @@ finRaiseComm {suc s} {suc n} {Fin.suc x} rewrite finRaiseComm {suc s} {n} {Fin.s
 raisePropCom : {n : ℕ} {t : Term s} -> raiseTermℕ (suc n) t ≡ raiseTermℕ n (raiseTerm t)
 raisePropCom {.(suc _)} {zero} {Var x} = refl
 raisePropCom {suc s} {suc n} {Var x} rewrite finRaiseComm {s} {n} {x} = refl
-    
+
 raisePropCom {s} {n} {App t1 t2}
   rewrite raisePropCom {s} {n} {t1} | raisePropCom {s} {n} {t2} = refl
 raisePropCom {s} {n} {Abs t}
@@ -215,6 +226,14 @@ raisePropCom {s} {n} {If t1 t2 t3}
   rewrite raisePropCom {s} {n} {t1}
         | raisePropCom {s} {n} {t2}
         | raisePropCom {s} {n} {t3} = refl
+raisePropCom {s} {n} {tuple e1 e2}
+    rewrite raisePropCom {s} {n} {e1}
+          | raisePropCom {s} {n} {e2}
+  = refl
+raisePropCom {s} {n} {LetProd t1 t2}
+    rewrite raisePropCom {s} {n} {t1}
+          | raisePropCom {suc (suc s)} {n} {t2}
+        = refl
 
 -- `mathcVar` is used to enact substitution into a variable term
 -- i.e., the situation is that we have a receiver:
@@ -370,6 +389,28 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
    ----------------------------------
     -> Γ ⊢ If t1 t2 t3 ∶ B
 
+  prodIntro : {s : ℕ}
+              { Γ Γ1 Γ2 : Context s }
+              { A B : Type }
+              { t1 t2 : Term s }
+           -> Γ1 ⊢ t1 ∶ A
+           -> Γ2 ⊢ t2 ∶ B
+           -> { res : Γ1 ++ Γ2 ≡ Γ }
+           ------------------------------------
+           -> Γ ⊢ tuple t1 t2 ∶ Prod A B
+
+  prodElim : {s : ℕ}
+             { Γ Γ1 Γ2 : Context s }
+             { t1 : Term s }
+             { t2 : Term (suc (suc s)) }
+             { A B C : Type }
+             { r : grade }
+           -> Γ1 ⊢ t1 ∶ Prod A B
+           -> Ext (Ext Γ2 (Grad A r)) (Grad B r) ⊢ t2 ∶ C
+           ---------------------------------------------
+           -> { res : ((r · Γ1) ++ Γ2) ≡ Γ }
+           -> Γ ⊢ LetProd t1 t2 ∶ C
+
 -- Value predicate
 data Value : {s : ℕ} -> Term s -> Set where
   unitValue    : {s : ℕ} -> Value {s} unit
@@ -378,6 +419,7 @@ data Value : {s : ℕ} -> Term s -> Set where
   promoteValue : {s : ℕ} -> (t : Term s) -> Value (Promote t)
   trueValue    : {s : ℕ} -> Value {s} vtrue
   falseValue   : {s : ℕ} -> Value {s} vfalse
+  prodValue    : {s : ℕ} -> (t1 t2 : Term s) -> Value {s} t1 -> Value {s} t2 -> Value (tuple t1 t2)
 
 postulate
   exchange : {{R : Semiring}}
@@ -386,4 +428,3 @@ postulate
              {t : Term (suc (s1 + s2))}
            -> (Ext Γ1 (Grad A r) ,, Γ2) ⊢ t ∶ B
            -> Ext (Γ1 ,, Γ2) (Grad A r) ⊢ t ∶ B
-

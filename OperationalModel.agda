@@ -41,7 +41,12 @@ syntacticSubst t x vfalse = vfalse
 syntacticSubst t x (If t1 t2 t3) =
   If (syntacticSubst t x t1) (syntacticSubst t x t2) (syntacticSubst t x t3)
 syntacticSubst t x (Let t1 t2) =
-  Let (syntacticSubst t x t1) (syntacticSubst (raiseTerm t) (raise 1 x) t2)
+  Let (syntacticSubst t x t1) (syntacticSubst (raiseTerm t) (Data.Fin.suc x) t2)
+syntacticSubst t x (tuple t1 t2) =
+  tuple (syntacticSubst t x t1) (syntacticSubst t x t2)
+syntacticSubst t x (LetProd t1 t2) =
+  LetProd (syntacticSubst t x t1)
+          (syntacticSubst (raiseTermℕ 2 t) (Data.Fin.suc (Data.Fin.suc x)) t2)
 
 -- # Simultaneous substitution
 
@@ -172,6 +177,8 @@ substComm {s} {n} {v} {Let t1 t2} {x} = {!!}
 substComm {s} {n} {v} {vtrue} {x} = {!!}
 substComm {s} {n} {v} {vfalse} {x} = {!!}
 substComm {s} {n} {v} {If t0 t1 t2} {x} = {!!}
+substComm {s} {n} {v} {tuple t1 t2} {x} = {!!}
+substComm {s} {n} {v} {LetProd t1 t2} {x} = {!!}
 
 -- A simultaneous substitution can be re-organised, moving the head substitution
 -- to happen after the tail substitutions
@@ -197,6 +204,7 @@ untypedRedux (If t t1 t2) with untypedRedux t
 ... | just t' = just (If t' t1 t2)
 ... | nothing = nothing
 untypedRedux (Let (Promote t1) t2) = just (syntacticSubst t1 zero t2)
+untypedRedux (LetProd (tuple t1 t2) t) = just (syntacticSubst t2 zero (syntacticSubst (raiseTerm t1) zero t))
 untypedRedux _ = nothing
 
 {-# TERMINATING #-}
@@ -241,6 +249,7 @@ data FullBetaEq : {s : ℕ} -> Term s -> Term s -> Set where
   BetaEq    : {t1 : Term (suc s)} {t2 : Term s} -> FullBetaEq (App (Abs t1) t2) (syntacticSubst t2 Data.Fin.zero t1)
   EmbedRedux : {t : Term s} -> FullBetaEq (multiRedux t) t
   LetEq     : {t1 t1' : Term s} {t2 t2' : Term (suc s)} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (Let t1 t2) (Let t1' t2')
+  -- TODO: add tuples
   Redux     : {s : ℕ} {t1 t2 : Term s} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
 
 open FullBetaEq
@@ -344,9 +353,9 @@ postulate -- postulate now for development speed
   reduxTheoremBool1 : {tg t1 t2 v : Term s} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vtrue -> v ≡ multiRedux t1
   reduxTheoremBool2 : {tg t1 t2 v : Term s} -> multiRedux (If tg t1 t2) ≡ v -> multiRedux tg ≡ vfalse -> v ≡ multiRedux t2
 
-  reduxTheoremLet : {t1 v : Term s} {t2 : Term (suc s)}
+  reduxTheoremLet : {t1 : Term s} {t2 : Term (suc s)} {v : Term s}
                     -> multiRedux (Let t1 t2) ≡ v
-                    -> Σ (Term s) (\v' -> multiRedux t1 ≡ Promote v' × multiRedux (syntacticSubst v' zero t2) ≡ v)
+                    -> Σ (Term s) (\e -> multiRedux t1 ≡ Promote e × multiRedux (syntacticSubst e zero t2) ≡ v)
 
 
 reduxAndSubstCombinedProm : {s n : ℕ} {γ : Vec (Term s) n} {v : Term s} {t : Term (n + s)}
