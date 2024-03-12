@@ -203,5 +203,5 @@ utheorem {s = sz} {γ1} {Γ} {Let t1 t2} {B} (unbox {_} {Γ1} {Γ2} {_} {r} {A} 
 
 -- TOODOMABLE
 
-utheorem {s = sz} {γ} {Γ} {tuple t1 t2} {.(Prod _ _)} (prodIntro deriv1 deriv2) context v1 v1redux = {!!}
+utheorem {s = sz} {γ} {Γ} {tuple t1 t2} {.(ProdTy _ _)} (prodIntro deriv1 deriv2) context v1 v1redux = {!!}
 utheorem {s = sz} {γ} {Γ} {LetProd t1 t2} {B} (prodElim deriv1 deriv2) context v1 v1redux = {!!}

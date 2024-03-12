@@ -157,6 +157,12 @@ substPresIf {_} {suc n} {x ∷ γ} {tg} {t1} {t2} =
                       {syntacticSubst (raiseTermℕ n x) zero t1}
                       {syntacticSubst (raiseTermℕ n x) zero t2}
 
+substPresTuple : {s n : ℕ} {γ : Vec (Term s) n} {t1 t2 : Term (n + s)}
+    -> multisubst γ (tuple t1 t2) ≡ tuple (multisubst γ t1) (multisubst γ t2)
+substPresTuple {s} {.zero} {[]} {t1} {t2} = refl
+substPresTuple {s} {suc n} {x ∷ γ} {t1} {t2} =
+  substPresTuple {_} {n} {γ} {syntacticSubst (raiseTermℕ n x) zero t1} {syntacticSubst (raiseTermℕ n x) zero t2}
+
 -- ## Other properties of substitution
 
 -- Substitutions to different head variables commutes

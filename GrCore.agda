@@ -29,7 +29,7 @@ data Type {{R : Semiring}} : Set where
   Unit  : Type
   Box   : (r : grade) -> Type -> Type
   --------------------------------------------------
-  Prod  : Type -> Type -> Type
+  ProdTy  : Type -> Type -> Type
   -- Sum   : Type -> Type -> Type
   BoolTy : Type
 
@@ -397,7 +397,7 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
            -> Γ2 ⊢ t2 ∶ B
            -> { res : Γ1 ++ Γ2 ≡ Γ }
            ------------------------------------
-           -> Γ ⊢ tuple t1 t2 ∶ Prod A B
+           -> Γ ⊢ tuple t1 t2 ∶ ProdTy A B
 
   prodElim : {s : ℕ}
              { Γ Γ1 Γ2 : Context s }
@@ -405,7 +405,7 @@ data _⊢_∶_ {{R : Semiring}} : {s : ℕ} -> Context s -> Term s -> Type -> Se
              { t2 : Term (suc (suc s)) }
              { A B C : Type }
              { r : grade }
-           -> Γ1 ⊢ t1 ∶ Prod A B
+           -> Γ1 ⊢ t1 ∶ ProdTy A B
            -> Ext (Ext Γ2 (Grad A r)) (Grad B r) ⊢ t2 ∶ C
            ---------------------------------------------
            -> { res : ((r · Γ1) ++ Γ2) ≡ Γ }

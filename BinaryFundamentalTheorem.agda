@@ -351,8 +351,24 @@ biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {
     rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimRightBox
                    (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
 
-biFundamentalTheorem {s = sz} {Γ} {tuple t t₁} {.(Prod _ _)} (prodIntro deriv1 deriv2) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
-biFundamentalTheorem {s = sz} {Γ} {LetProd t t₁} {A} (prodElim deriv1 deriv2) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {s = sz} {Γ} {.(tuple t1 t2)} {.(ProdTy _ _)}
+   (prodIntro {_} {.Γ} {Γ1} {Γ2} {A} {B} {t1} {t2} deriv1 deriv2 {prf}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym prf | sym v1redux | sym v2redux =
+      {- | substPresTuple {_} {_} {γ1} {t1} {t2}
+      | substPresTuple {_} {_} {γ2} {t1} {t2} = -}
+      let
+        ih1 = biFundamentalTheorem {sz} {Γ1} {t1} {A} deriv1 {γ1} {γ2} adv leftContext
+        ih2 = biFundamentalTheorem {sz} {Γ2} {t2} {B} deriv2 {γ1} {γ2} adv rightContext
+      in ? -- prodInterpBi {zero} {adv} {A} {B} {!!} {!!} {!!} {!!} (ih1 {!!} {!!} {!!} {!!}) (ih2 {!!} {!!} {!!} {!!})
+    where
+      -- Split context interpretations
+      leftContext : ⟦ Γ1 ⟧Γ adv γ1 γ2
+      leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimLeftBox contextInterp
+--                     (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
+
+      rightContext : ⟦ Γ2 ⟧Γ adv γ1 γ2
+      rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimRightBox contextInterp
+--                     (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
+biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {A} (prodElim deriv1 deriv2) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
 
 {-
 Not needed any more but possible useful elseshere

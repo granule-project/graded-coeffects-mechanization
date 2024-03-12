@@ -48,6 +48,13 @@ mutual
     boolInterpTrue  : {s : ℕ} -> [ BoolTy ]v {s} vtrue
     boolInterpFalse : {s : ℕ} -> [ BoolTy ]v {s} vfalse
 
+    prodInterpV : {A B : Type}
+                -> (e1 : Term s)
+                -> (e2 : Term s)
+                -> [ A ]v e1
+                -> [ B ]v e2
+                -> [ ProdTy A B ]v (tuple e1 e2)
+
   -- # Unary interpretation of expressions in types
 
   [_]e : {{R : Semiring}} -> Type -> {s : ℕ} -> Term s -> Set
@@ -108,6 +115,13 @@ mutual
     boolInterpTrueBi  : {s : ℕ} {adv : grade} -> ⟦ BoolTy ⟧v {s} adv vtrue vtrue
     boolInterpFalseBi : {s : ℕ} {adv : grade} -> ⟦ BoolTy ⟧v {s} adv vfalse vfalse
 
+    prodInterpBi : {adv : grade} {A B : Type}
+                -> (t1 t1' : Term s)
+                -> (t2 t2' : Term s)
+                -> ⟦ A ⟧v adv t1 t1'
+                -> ⟦ B ⟧v adv t2 t2'
+                -> ⟦ ProdTy A B ⟧v adv (tuple t1 t2) (tuple t1' t2')
+
   {-# TERMINATING #-}
   -- # Binary interpretation of expressions in types
   ⟦_⟧e : {{R : Semiring}} -> Type -> (adv : grade) -> {s : ℕ} -> Rel (Term s) (Term s)
@@ -152,6 +166,11 @@ mutual
     (boxInterpV t1 fst) , (boxInterpV t2 snd)
   binaryImpliesUnaryV {s} {BoolTy} {.vtrue} {.vtrue} {adv} boolInterpTrueBi = boolInterpTrue {s} , boolInterpTrue {s}
   binaryImpliesUnaryV {s} {BoolTy} {.vfalse} {.vfalse} {adv} boolInterpFalseBi = boolInterpFalse {s} , boolInterpFalse {s}
+  binaryImpliesUnaryV {s} {ProdTy A B} {.(tuple t1 t2)} {.(tuple t1' t2')} {adv}  (prodInterpBi t1 t1' t2 t2' fst snd)
+    with binaryImpliesUnaryV {_} {A} {t1} {t1'} {adv} fst
+       | binaryImpliesUnaryV {_} {B} {t2} {t2'} {adv} snd
+  ... | (fstU1 , fstU2) | (sndU1 , sndU2)
+    = (prodInterpV t1 t2 fstU1 sndU1) , prodInterpV t1' t2' fstU2 sndU2
 
   binaryImpliesUnary : {{R : Semiring}} {A : Type} {t1 t2 : Term s} {adv : grade}
                     -> ⟦ A ⟧e adv t1 t2 -> [ A ]e t1 × [ A ]e t2
