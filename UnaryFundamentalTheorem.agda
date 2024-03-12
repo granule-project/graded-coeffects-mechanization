@@ -6,15 +6,15 @@ open import GrCore
 open import Data.Unit hiding (_≤_; _≟_)
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
-open import Data.Product
+open import Data.Product hiding (map)
 open import Data.Bool hiding (_≤_; _≟_)
 open import Data.Vec hiding (_++_)
 open import Data.Nat hiding (_≤_)
 open import Data.Fin hiding (_≤_;_+_)
 open import Function
-open import Data.Maybe
+open import Data.Maybe hiding (map)
 open import Relation.Nullary
-open import Data.Sum
+open import Data.Sum hiding (map)
 
 open import Semiring
 
@@ -168,5 +168,40 @@ utheorem {sz} {γ} {Γ} {If tg t1 t2} {B} (if {.sz} {Γ} {Γ1} {Γ2} {.B} {tg} {
       utheorem {sz} {γ} {Γ2} {t2} {B} typ2 (unaryPlusElimRightΓ context) v1
          (sym (reduxTheoremBool2 {_} {multisubst γ tg} {multisubst γ t1} {multisubst γ t2} {v1} v1redux' falseEv))
 
+-- # Unbox
+utheorem {s = sz} {γ1} {Γ} {Let t1 t2} {B} (unbox {_} {Γ1} {Γ2} {_} {r} {A} {_} .t1 .t2 typing1 typing2 {prf}) contextInterp v1 v1redux =
+  let
+       -- Reason about the decomposition of a multireduction on a let
+       (e0 , e0redux , bodyRedux1) =
+         reduxTheoremLet {0} {multisubst γ1 t1} {multisubst' (map raiseTerm γ1) t2} {v1} (trans (sym (cong multiRedux (substPresLet {zero} {sz} {γ1} {t1}))) v1redux)
+
+       -- Induct on the argument
+       ihArg = utheorem {sz} {γ1} {Γ1} {t1} {Box r A} typing1 leftContext (Promote e0) e0redux
+
+       -- Reason about shape of reductions on the body term
+       bodyRedux1' = subst (\h -> multiRedux h ≡ v1)
+                        (multiSubstComm {sz} {zero} {γ1} {e0}) bodyRedux1
+
+       -- Glue argument induction onto body induction
+       ihBody = utheorem {suc sz} {e0 ∷ γ1} {Ext Γ2 (Grad A r)} {t2} {B} typing2  (lifter ihArg , rightContext) v1 bodyRedux1'
+
+   in ihBody
+
+  where
+    -- lift a value interpretation to an expression interpretation on a value term
+    lifter : {e1 : Term 0} -> [ Box r A ]v (Promote e1) -> [ Box r A ]e (Promote e1)
+    lifter {e1} vmeaning v3 v3redux
+      rewrite trans (sym (valuesDontReduce {zero} {Promote e1} (promoteValue e1))) v3redux
+        = vmeaning
+
+    -- Split context interpretations
+    leftContext : [ Γ1 ]Γ γ1
+    leftContext = unaryPlusElimLeftΓ {sz} {zero} {γ1} {Γ1} {Γ2} (subst (\h -> [ h ]Γ γ1) prf contextInterp)
+
+    rightContext : [ Γ2 ]Γ γ1
+    rightContext = unaryPlusElimRightΓ {sz} {zero} {γ1} {Γ1} {Γ2} (subst (\h -> [ h ]Γ γ1) prf contextInterp)
+
 -- TOODOMABLE
-utheorem {sz} {γ} {Γ} {Let t1 t2} {B} deriv context v1 v1redux = {!!}
+
+utheorem {s = sz} {γ} {Γ} {tuple t1 t2} {.(Prod _ _)} (prodIntro deriv1 deriv2) context v1 v1redux = {!!}
+utheorem {s = sz} {γ} {Γ} {LetProd t1 t2} {B} (prodElim deriv1 deriv2) context v1 v1redux = {!!}
