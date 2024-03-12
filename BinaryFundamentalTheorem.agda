@@ -351,6 +351,9 @@ biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {
     rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimRightBox
                    (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
 
+biFundamentalTheorem {s = sz} {Γ} {tuple t t₁} {.(Prod _ _)} (prodIntro deriv1 deriv2) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+biFundamentalTheorem {s = sz} {Γ} {LetProd t t₁} {A} (prodElim deriv1 deriv2) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+
 {-
 Not needed any more but possible useful elseshere
 lem : {{R : Semiring}} {adv : grade}
