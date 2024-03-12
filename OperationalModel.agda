@@ -249,6 +249,11 @@ data FullBetaEq : {s : ℕ} -> Term s -> Term s -> Set where
   BetaEq    : {t1 : Term (suc s)} {t2 : Term s} -> FullBetaEq (App (Abs t1) t2) (syntacticSubst t2 Data.Fin.zero t1)
   EmbedRedux : {t : Term s} -> FullBetaEq (multiRedux t) t
   LetEq     : {t1 t1' : Term s} {t2 t2' : Term (suc s)} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (Let t1 t2) (Let t1' t2')
+  TupleEq   : {t1 t2 t1' t2' : Term s} -> FullBetaEq t1 t1' -> FullBetaEq t2 t2' -> FullBetaEq (tuple t1 t2) (tuple t1' t2')
+  ProdLetEq : {t1 t1' : Term s} {t2 t2' : Term (suc (suc s))}
+             -> FullBetaEq t1 t1'
+             -> FullBetaEq t2 t2'
+             -> FullBetaEq (LetProd t1 t2) (LetProd t1' t2')
   -- TODO: add tuples
   Redux     : {s : ℕ} {t1 t2 : Term s} -> multiRedux t1 ≡ multiRedux t2 -> FullBetaEq t1 t2
 
@@ -275,6 +280,10 @@ embedEq {_} {vfalse} {vfalse} refl = VFalse {_}
 embedEq {_} {If t1 t2 t3} {If .t1 .t2 .t3} refl =
   IfEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl) (embedEq {_} {t3} {t3} refl)
 embedEq {_} {Let e1 e2} {Let e3 e4} refl = LetEq ((embedEq {_} {e1} {e3} refl)) ( (embedEq {_} {e2} {e4} refl))
+embedEq {_} {tuple t1 t2} {tuple .t1 .t2} refl =
+  TupleEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl)
+embedEq {_} {LetProd t1 t2} {LetProd .t1 .t2} refl =
+  ProdLetEq (embedEq {_} {t1} {t1} refl) (embedEq {_} {t2} {t2} refl)
 
 postulate
   transFullBetaEq : {t1 t2 t3 : Term s} -> t1 == t2 -> t2 == t3 -> t1 == t3
