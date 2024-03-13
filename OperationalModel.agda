@@ -192,25 +192,41 @@ substPresTuple {s} {suc n} {x ∷ γ} {t1} {t2} =
 -- ## Other properties of substitution
 
 -- Substitutions to different head variables commutes
--- TODOABLE
-substComm : {s n : ℕ} {v : Term n} {t : Term (suc (suc (s + n)))} {x : Term n}
-         -> (syntacticSubst (raiseTermℕ s v) zero
-               (syntacticSubst (raiseTermℕ s (raiseTerm x)) (suc zero) t))
+postulate
+  substComm : {s n : ℕ} {t0 : Term n} {t : Term (suc (suc (s + n)))} {t1 : Term n}
+         -> (syntacticSubst (raiseTermℕ s t0) zero
+               (syntacticSubst (raiseTermℕ s (raiseTerm t1)) (suc zero) t))
 
-          ≡ (syntacticSubst (raiseTermℕ s x) zero
-               (syntacticSubst (raiseTermℕ (suc s) v) zero t))
-substComm {s} {n} {v} {Var y} {x} with Data.Fin.compare y zero
-... | k = {!!}
-substComm {s} {n} {v} {App t1 t2} {x} = {!!}
-substComm {s} {n} {v} {Abs t} {x} = {!!}
-substComm {s} {n} {v} {unit} {x} = {!!}
-substComm {s} {n} {v} {Promote t} {x} = {!!}
-substComm {s} {n} {v} {Let t1 t2} {x} = {!!}
-substComm {s} {n} {v} {vtrue} {x} = {!!}
-substComm {s} {n} {v} {vfalse} {x} = {!!}
-substComm {s} {n} {v} {If t0 t1 t2} {x} = {!!}
-substComm {s} {n} {v} {tuple t1 t2} {x} = {!!}
-substComm {s} {n} {v} {LetProd t1 t2} {x} = {!!}
+          ≡ (syntacticSubst (raiseTermℕ s t1) zero
+               (syntacticSubst (raiseTermℕ (suc s) t0) zero t))
+{-
+
+
+|G0a|=|G0b|=|G1|=n
+|D|=s
+
+G0a |- t0 : A
+G0b |- t1 : B
+D, G1, x : B, y : A |- y : A
+
+   G0a         |- t0 : A
+-- -------------------------- weak
+-- G0a , x : B |- <t0 : A
+-- -------- ------------------- raise
+-- (D, G0a , x : B) |- ↑<t0 : A  
+
+
+(lhs) D, (G1) ++ G0b), y : A |- [↑<t1/x]y : A
+   ;  D, (G1 ++ G0b ++ G0a)  |- [↑<t0/y][↑<t1/x]y : A
+   =  D, (G1 ++ G0b ++ G0a)  |- ↑<t0 : A 
+
+(rhs) (D, G1 ++ G0a, x : B)  |- [↑<t0/y]y : A
+    = (D, G1 ++ G0a, x : B)  |- ↑<t0 : A
+    ; D, (G1 ++ G0a ++ G0b)  |- [↑<t1/x]↑<t0 : A
+    = D, (G1 ++ G0a ++ G0b)  |- [↑<t1/x]↑<t0 : A
+    = D, (G1 ++ G0a ++ G0b)  |- ↑<t0 : A
+-}
+-- substComm {s} {n} {t0} {Var y} {t1} = {!!}
 
 -- A simultaneous substitution can be re-organised, moving the head substitution
 -- to happen after the tail substitutions
