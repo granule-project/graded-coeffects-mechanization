@@ -21,6 +21,32 @@ open import Semiring
 
 -- # Substitution
 
+matchVar : {s : ℕ} -> (t : Term s) ->  Fin (suc s) -> Fin (suc s) -> Term s
+-- case (1) because we have singleton contexts
+matchVar {zero} t Fin.zero Fin.zero = t
+
+matchVar {suc s} t posx posy with Data.Fin.compare posy posx
+-- case (1)
+
+-- D ,       , D'  |- t : A
+-- G , y : A , G'  |- y : A
+
+-- |D| = |G| & |D'| = |G'|
+-- result
+-- (G,G') + (D,D') |- t : A
+
+... | Data.Fin.equal .posx         = t
+
+-- case (2)
+... | Data.Fin.greater .posy least = Var (pred! posy)
+
+-- case (3)
+-- posx : Fin (suc (suc s))            | [[posx]]  = ix s.t., 0 <= ix < 2+s
+-- posy : Fin (suc (suc s))            | [[posy]]  = iy s.t., 0 <= iy < 2+s
+-- least : Fin' posx = Fin (toN posx)  | [[least]] = jy s.t., 0 <= jy < ix
+... | Data.Fin.less .posx least    = Var (inject! least)
+
+
 -- `syntacticSubst {s} t x_pos t'` represents the situation:
 
 -- G1             |- t       : A  -- substitutee

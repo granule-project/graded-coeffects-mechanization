@@ -259,24 +259,6 @@ pred! : Fin (suc (suc s)) -> Fin (suc s)
 pred! Fin.zero = Fin.zero
 pred! (Fin.suc x) = x
 
-matchVar : {s : ℕ} -> (t : Term s) ->  Fin (suc s) -> Fin (suc s) -> Term s
--- case (1) because we have singleton contexts
-matchVar {zero} t Fin.zero Fin.zero = t
-
-matchVar {suc s} t posx posy with Data.Fin.compare posy posx
--- case (1)
-... | Data.Fin.equal .posx         = t
-
--- case (2)
-... | Data.Fin.greater .posy least = Var (pred! posy)
-
--- case (3)
--- posx : Fin (suc (suc s))            | [[posx]]  = ix s.t., 0 <= ix < 2+s
--- posy : Fin (suc (suc s))            | [[posy]]  = iy s.t., 0 <= iy < 2+s
--- least : Fin' posx = Fin (toN posx)  | [[least]] = jy s.t., 0 <= jy < ix
-... | Data.Fin.less .posx least    = Var (inject! least)
-
-
 discrimBool : {s : ℕ} -> vtrue {s} ≡ vfalse {s} -> ⊥
 discrimBool ()
 
