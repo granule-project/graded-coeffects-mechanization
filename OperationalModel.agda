@@ -118,6 +118,21 @@ multisubst' [] t' = t'
 multisubst' {s} {suc n} (t ∷ ts) t' =
   multisubst' {s} {n} ts (syntacticSubst (raiseTermℕ n t) (suc zero) t')
 
+-- Simultaneous substitution under two binders at position 0 and 1
+multisubst'' : {s n : ℕ} -> (xs : Vec (Term s) n) -> Term (suc (suc (n + s))) -> Term (suc (suc s))
+multisubst'' [] t' = t'
+multisubst'' {s} {suc n} (t ∷ ts) t' =
+  multisubst'' {s} {n} ts (syntacticSubst (raiseTermℕ (suc (suc n)) t) (suc (suc zero)) t')
+
+{-
+There is a generalisation of all the above like this:
+multisubstGen : {s n m : ℕ} -> (xs : Vec (Term s) n) -> Term ((m + n) + s) -> Term (m + s)
+multisubstGen [] t' = t'
+multisubstGen {s} {suc n} {m} (t ∷ ts) t' =
+  multisubstGen {s} {n} {m} ts (syntacticSubst (raiseTermℕ (m + n) t) (raiseR (n + s) (fromℕ m))  t')
+-- with a little rewriting
+-}
+
 -- ## (Simultaneous) substitution commutates with terms
 -- Various preservation results about substitutions and values
 
@@ -161,7 +176,7 @@ substPresLet {s} {suc n} {v ∷ γ} {t1} {t2} =
   in trans (trans ihpre ih1) ihpost
 
 substPresAbs : {n : ℕ} {γ : Vec (Term s) n} {t : Term (suc (n + s))}
-       -> multisubst γ (Abs t) ≡ Abs (multisubst' (Data.Vec.map raiseTerm γ) t)
+       -> multisubst γ (Abs t) ≡ Abs (multisubst' (map raiseTerm γ) t)
 substPresAbs {_} {_} {[]} {t} = refl
 substPresAbs {s} {suc n} {v ∷ γ} {t} =
 
@@ -171,7 +186,7 @@ substPresAbs {s} {suc n} {v ∷ γ} {t} =
         (Abs (syntacticSubst h (suc zero) t))) (raiseProp {s} {n} {v})
 
      ihpost = cong (\h ->  Abs
-      (multisubst' (Data.Vec.map raiseTerm γ)
+      (multisubst' (map raiseTerm γ)
        (syntacticSubst h (suc zero) t))) (raisePropCom {s} {n} {v})
 
  in trans (trans ihpre ih) ihpost
@@ -189,6 +204,39 @@ substPresTuple {s} {.zero} {[]} {t1} {t2} = refl
 substPresTuple {s} {suc n} {x ∷ γ} {t1} {t2} =
   substPresTuple {_} {n} {γ} {syntacticSubst (raiseTermℕ n x) zero t1} {syntacticSubst (raiseTermℕ n x) zero t2}
 
+substPresLetProd : {s n : ℕ} {γ : Vec (Term s) n} {t1 : Term (n + s)} {t2 : Term (suc (suc (n + s)))}
+                 -> multisubst γ (LetProd t1 t2) ≡ LetProd (multisubst γ t1) (multisubst'' γ t2)
+substPresLetProd {s} {zero} {[]} {t1} {t2} = refl
+substPresLetProd {s} {suc n} {x ∷ γ} {t1} {t2} =
+    let
+       subst1 = syntacticSubst (raiseTermℕ n x) zero t1
+       subst2 = syntacticSubst (raiseTermℕ (2 + n) x) (suc (suc zero)) t2
+       ih = substPresLetProd {s} {n} {γ} {subst1} {subst2}
+
+       ihp2 = cong (\h -> multisubst γ (LetProd subst1 (syntacticSubst h (suc (suc zero)) t2))) (raiseProp' {s} {n} {x})
+    in trans ihp2 ih
+
+  where
+    raiseProp' : {s n : ℕ} {t : Term s} -> raiseTermℕ 2 (raiseTermℕ n t) ≡ raiseTermℕ (2 + n) t
+    raiseProp' {.(suc _)} {n} {Var x} = refl
+    raiseProp' {s} {n} {App t t₁}
+      rewrite raiseProp' {s} {n} {t} | raiseProp' {s} {n} {t₁} = refl
+    raiseProp' {s} {n} {Abs t}
+      rewrite raiseProp' {suc s} {n} {t} = refl
+    raiseProp' {s} {n} {unit} = refl
+    raiseProp' {s} {n} {Promote t}
+      rewrite raiseProp' {s} {n} {t} = refl
+    raiseProp' {s} {n} {Let t t₁}
+      rewrite raiseProp' {s} {n} {t} | raiseProp' {suc s} {n} {t₁} = refl
+    raiseProp' {s} {n} {vtrue} = refl
+    raiseProp' {s} {n} {vfalse} = refl
+    raiseProp' {s} {n} {If t t₁ t₂}
+      rewrite raiseProp' {s} {n} {t} | raiseProp' {s} {n} {t₁} | raiseProp' {s} {n} {t₂} = refl
+    raiseProp' {s} {n} {tuple e1 e2}
+      rewrite raiseProp' {s} {n} {e1} | raiseProp' {s} {n} {e2} = refl
+    raiseProp' {s} {n} {LetProd e1 e2}
+      rewrite raiseProp' {s} {n} {e1} | raiseProp' {suc (suc s)} {n} {e2} = refl
+  
 -- ## Other properties of substitution
 
 -- Substitutions to different head variables commutes
@@ -238,6 +286,20 @@ multiSubstComm {.zero} {n} {[]} {v} {t} rewrite raiseTermℕzero {n} {v} = refl
 multiSubstComm {suc s} {n} {x ∷ γ} {v} {t} rewrite sym (substComm {s} {n} {v} {t} {x}) =
   multiSubstComm {s} {n} {γ} {v} {syntacticSubst (raiseTermℕ s (raiseTerm x)) (suc zero) t}
 
+-- version of the above with two substitutions (for jumpin two vars)
+multiSubstComm2 :
+     {s n : ℕ} {γ : Vec (Term n) s} {va vb : Term n} {t : Term (suc (suc (s + n)))}
+    -> syntacticSubst va zero
+             (syntacticSubst (raiseTerm vb) zero (multisubst'' γ t))
+    ≡ multisubst γ
+       (syntacticSubst (raiseTermℕ s va) zero
+        (syntacticSubst (raiseTermℕ (suc s) vb) zero t))
+ 
+multiSubstComm2 {.zero} {n} {[]} {va} {vb} {t} rewrite raiseTermℕzero {n} {va} = refl
+multiSubstComm2 {suc s} {n} {x ∷ γ} {va} {vb} {t} rewrite sym (substComm {suc s} {n} {vb} {t} {x}) | sym (substComm {suc s} {n} {va} {t} {x}) =
+  {!!} -- multiSubstComm2 {s} {n} {γ} {va} {vb} {syntacticSubst (raiseTermℕ (suc s) (raiseTerm x)) (suc zero) t}
+
+
 -- # Reduction
 
 -- Untyped reduction
@@ -253,6 +315,11 @@ untypedRedux (If t t1 t2) with untypedRedux t
 ... | nothing = nothing
 untypedRedux (Let (Promote t1) t2) = just (syntacticSubst t1 zero t2)
 untypedRedux (LetProd (tuple t1 t2) t) = just (syntacticSubst t2 zero (syntacticSubst (raiseTerm t1) zero t))
+untypedRedux (tuple t1 t2) with untypedRedux t1
+... | just t1' = just (tuple t1' t2)
+... | nothing with untypedRedux t2
+untypedRedux (tuple t1 t2) | nothing | just t2' = just (tuple t1 t2')
+untypedRedux (tuple t1 t2) | nothing | nothing  = nothing
 untypedRedux _ = nothing
 
 {-# TERMINATING #-}
@@ -270,6 +337,7 @@ determinism prf1 prf2 = trans (sym prf1) prf2
 postulate
    -- TODOABLE
    valuesDontReduce : {s : ℕ} {t : Term s} -> Value t -> multiRedux t ≡ t
+
 
 
 postulate
@@ -382,6 +450,9 @@ reduxTrue = refl
 reduxUnit : multiRedux {_} unit ≡ unit
 reduxUnit = refl
 
+postulate
+  reduxTuple : {t1 t2 : Term s} -> multiRedux (tuple t1 t2) ≡ tuple (multiRedux t1) (multiRedux t2)
+
 substMultiRedux : {t t' v : Term s} -> t ≡ t' -> multiRedux t ≡ v -> multiRedux t' ≡ v
 substMultiRedux {_} {t} {t'} {v} prf prf' = subst (\h -> multiRedux h ≡ v) prf prf'
 
@@ -414,6 +485,14 @@ postulate -- postulate now for development speed
                     -> multiRedux (Let t1 t2) ≡ v
                     -> Σ (Term s) (\e -> multiRedux t1 ≡ Promote e × multiRedux (syntacticSubst e zero t2) ≡ v)
 
+  reduxTheoremLetProd : {v t1 : Term s} {t2 : Term (suc (suc s))}
+                   -> multiRedux (LetProd t1 t2) ≡ v
+                   -> Σ (Term s)
+                       (\ta -> Σ (Term s)
+                         (\tb -> multiRedux t1 ≡ tuple ta tb
+                               × ((Value ta × Value tb)
+                               × multiRedux (syntacticSubst ta zero (syntacticSubst (raiseTerm tb) zero t2)) ≡ v)))
+
 
 reduxAndSubstCombinedProm : {s n : ℕ} {γ : Vec (Term s) n} {v : Term s} {t : Term (n + s)}
   -> multiRedux (multisubst γ (Promote t)) ≡ v -> Promote (multisubst γ t) ≡ v
@@ -440,6 +519,7 @@ substitution {s1} {s2} {Γ} {Γ1} {Γ2} {Γ3} {.1r} {A} {.A} {Var x} {t2} (var (
 -}
 
 postulate
+
   strongNormalisation : {{R : Semiring}} {A : Type} {t : Term 0}
                            -> Empty ⊢ t ∶ A
                            -> Value (multiRedux t)

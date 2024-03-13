@@ -201,7 +201,24 @@ utheorem {s = sz} {γ1} {Γ} {Let t1 t2} {B} (unbox {_} {Γ1} {Γ2} {_} {r} {A} 
     rightContext : [ Γ2 ]Γ γ1
     rightContext = unaryPlusElimRightΓ {sz} {zero} {γ1} {Γ1} {Γ2} (subst (\h -> [ h ]Γ γ1) prf contextInterp)
 
+utheorem {s = sz} {γ} {Γ} {.(tuple t1 t2)} {.(ProdTy _ _)}
+   (prodIntro {_} {.Γ} {Γ1} {Γ2} {A} {B} {t1} {t2} deriv1 deriv2 {prf}) contextInterp v1 v1redux rewrite sym prf | sym v1redux
+      | substPresTuple {_} {_} {γ} {t1} {t2}
+      | reduxTuple {_} {multisubst γ t1} {multisubst γ t2} =
+      let
+        ih1 = utheorem {sz} {γ} {Γ1} {t1} {A} deriv1 leftContext
+        ih2 = utheorem {sz} {γ} {Γ2} {t2} {B} deriv2 rightContext
+      in prodInterpV {_} {A} {B} (multiRedux (multisubst γ t1)) (multiRedux (multisubst γ t2))
+           (ih1 (multiRedux (multisubst γ t1)) refl)
+           (ih2 (multiRedux (multisubst γ t2)) refl)
+    where
+   -- Split context interpretations
+    leftContext : [ Γ1 ]Γ γ
+    leftContext = unaryPlusElimLeftΓ {sz} {zero} {γ} {Γ1} {Γ2} contextInterp
+
+    rightContext : [ Γ2 ]Γ γ
+    rightContext = unaryPlusElimRightΓ {sz} {zero} {γ} {Γ1} {Γ2} contextInterp
+
 -- TOODOMABLE
 
-utheorem {s = sz} {γ} {Γ} {tuple t1 t2} {.(ProdTy _ _)} (prodIntro deriv1 deriv2) context v1 v1redux = {!!}
 utheorem {s = sz} {γ} {Γ} {LetProd t1 t2} {B} (prodElim deriv1 deriv2) context v1 v1redux = {!!}

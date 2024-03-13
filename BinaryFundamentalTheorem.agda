@@ -73,6 +73,7 @@ biFundamentalTheorem {{R}} {{R'}} {_} {Γ} {Var x} {τ} (var {_} {_} {.τ} {.Γ}
 -- generalises the above for any variable
 ... | Ext G1' a | a1 ∷ γ1' | a2 ∷ γ2' | contextInterp = {!!}
 
+-- # APP
 
 biFundamentalTheorem {{R}} {{R'}} {sz} {Γ} {App t1 t2} {.B} (app {s} {Γ} {Γ1} {Γ2} {r} {A} {B} typ1 typ2 {pos}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite pos =
    let
@@ -224,6 +225,7 @@ biFundamentalTheorem {sz} {Γ'} {Promote t} {Box r A} (pr {s} {Γ} {Γ'} typ {pr
            qr' = trans qr (valuesDontReduce {zero} {Promote (multisubst γ t)} (promoteValue (multisubst γ t)))
        in sym (trans (sym redux) qr')
 
+-- # Units
 biFundamentalTheorem {_} {_} {.unit} {.Unit} unitConstr {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
   subst₂ (\h1 h2 -> ⟦ Unit ⟧v adv h1 h2) thm1 thm2 (unitInterpBi {_} {adv})
     where
@@ -233,7 +235,7 @@ biFundamentalTheorem {_} {_} {.unit} {.Unit} unitConstr {γ1} {γ2} adv contextI
       thm2 : unit ≡ v2
       thm2 = trans (sym (cong multiRedux (substPresUnit {_} {_} {γ2}))) v2redux
 
-
+-- # Bools
 biFundamentalTheorem {_} {_} {.vtrue} {.BoolTy} trueConstr {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux =
   subst₂ (\h1 h2 -> ⟦ BoolTy ⟧v adv h1 h2) thm1 thm2 boolInterpTrueBi
    where
@@ -310,6 +312,8 @@ biFundamentalTheorem {sz} {Γ} {If tg t1 t2} {B} (if {s} {Γ} {Γ1} {Γ2} {.B} {
            (sym (reduxTheoremBool2 {_} {multisubst γ1 tg} {multisubst γ1 t1} {multisubst γ1 t2} {v1} v1redux' falseEv1))
              (sym (reduxTheoremBool2 {_} {multisubst γ2 tg} {multisubst γ2 t1} {multisubst γ2 t2} {v2} v2redux' falseEv2))
 
+-- # UNBOX
+
 biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {A} {B} t1 t2 typing1 typing2 { prf })
   {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym prf =
      let
@@ -352,23 +356,78 @@ biFundamentalTheorem {sz} {Γ} {Let t1 t2} {B} (unbox {s} {Γ1} {Γ2} {Γ} {r} {
                    (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
 
 biFundamentalTheorem {s = sz} {Γ} {.(tuple t1 t2)} {.(ProdTy _ _)}
-   (prodIntro {_} {.Γ} {Γ1} {Γ2} {A} {B} {t1} {t2} deriv1 deriv2 {prf}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym prf | sym v1redux | sym v2redux =
-      {- | substPresTuple {_} {_} {γ1} {t1} {t2}
-      | substPresTuple {_} {_} {γ2} {t1} {t2} = -}
+   (prodIntro {_} {.Γ} {Γ1} {Γ2} {A} {B} {t1} {t2} deriv1 deriv2 {prf}) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym prf  | sym v1redux | sym v2redux
+      | substPresTuple {_} {_} {γ1} {t1} {t2}
+      | substPresTuple {_} {_} {γ2} {t1} {t2}
+      | reduxTuple {_} {multisubst γ1 t1} {multisubst γ1 t2}
+      | reduxTuple {_} {multisubst γ2 t1} {multisubst γ2 t2} =      
       let
         ih1 = biFundamentalTheorem {sz} {Γ1} {t1} {A} deriv1 {γ1} {γ2} adv leftContext
         ih2 = biFundamentalTheorem {sz} {Γ2} {t2} {B} deriv2 {γ1} {γ2} adv rightContext
-      in ? -- prodInterpBi {zero} {adv} {A} {B} {!!} {!!} {!!} {!!} (ih1 {!!} {!!} {!!} {!!}) (ih2 {!!} {!!} {!!} {!!})
+      in prodInterpBi {zero} {adv} {A} {B} (multiRedux (multisubst γ1 t1)) (multiRedux (multisubst γ2 t1)) (multiRedux (multisubst γ1 t2)) (multiRedux (multisubst γ2 t2))
+           (ih1 (multiRedux (multisubst γ1 t1)) (multiRedux (multisubst γ2 t1)) refl refl)
+           (ih2 (multiRedux (multisubst γ1 t2)) (multiRedux (multisubst γ2 t2)) refl refl)
     where
       -- Split context interpretations
       leftContext : ⟦ Γ1 ⟧Γ adv γ1 γ2
       leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimLeftBox contextInterp
---                     (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
 
       rightContext : ⟦ Γ2 ⟧Γ adv γ1 γ2
       rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimRightBox contextInterp
---                     (subst (\h -> ⟦ h ⟧Γ adv γ1 γ2) prf contextInterp)
-biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {A} (prodElim deriv1 deriv2) {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux = {!!}
+
+biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1} {Γ2} {t1} {t2} {A} {B} {C} {r} deriv1 deriv2 {prf})
+  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym prf
+   | substPresLetProd {zero} {sz} {γ1} {t1} {t2}
+   | substPresLetProd {zero} {sz} {γ2} {t1} {t2} =
+    let
+      (va , vb , tupleRedux , (vaIsVal , vbIsVal) , restSubst) = reduxTheoremLetProd {zero} {v1} {multisubst γ1 t1} {multisubst'' γ1 t2} v1redux
+      (va' , vb' , tupleRedux' , (va'IsVal , vb'IsVal) , restSubst') = reduxTheoremLetProd {zero} {v2} {multisubst γ2 t1} {multisubst'' γ2 t2} v2redux
+      ih = biFundamentalTheorem deriv1 adv leftContext' (tuple va vb) (tuple va' vb') tupleRedux tupleRedux'
+
+      -- Reason about shape of reductions on the body term
+      bodyRedux1' = subst (\h -> multiRedux h ≡ v1)
+                        (multiSubstComm2{sz} {zero} {γ1} {va} {vb}) restSubst
+      bodyRedux2' = subst (\h -> multiRedux h ≡ v2)
+                        (multiSubstComm2 {sz} {zero} {γ2} {va'} {vb'}) restSubst'
+
+      body = biFundamentalTheorem deriv2 adv (rightContext' va va' vb vb' ih) v1 v2 bodyRedux1' bodyRedux2'
+     in body 
+   where
+      -- Split context interpretations
+      leftContext : ⟦ r · Γ1 ⟧Γ adv γ1 γ2
+      leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp
+
+
+      convertVal :  {sz : ℕ} {s : grade} {v1 : Term sz} {v2 : Term sz} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
+      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
+      ... | yes eq = boxInterpBiobs eq v1 v2 interp
+      ... | no eq  = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {_} {A} {v1} {v2} interp)
+
+      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) = boxInterpBiunobs (propInvTimesMonoAsymN x {!!}) v1 v2 interp
+
+      leftContext' : ⟦ Γ1 ⟧Γ adv γ1 γ2
+      leftContext' = binaryTimesElimRightΓ convertVal (binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp)
+
+      rightContext : ⟦ Γ2 ⟧Γ adv γ1 γ2
+      rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimRightBox contextInterp
+
+      rightContext' : (va va' vb vb' : Term zero)
+                   -> ⟦ ProdTy A B ⟧v adv (tuple va vb) (tuple va' vb')
+                   -> ⟦ Ext (Ext Γ2 (Grad A r)) (Grad B r) ⟧Γ adv (vb ∷ va ∷ γ1) (vb' ∷ va' ∷ γ2)
+      rightContext' va va' vb vb' (prodInterpBi .va .va' .vb .vb' part1 part2) with r ≤d adv
+      ... | yes prf = arg2 , arg1 , rightContext
+        where
+          part1e : ⟦ A ⟧e adv va va'
+          part1e va0 va0' va0redux va0'redux rewrite sym va0redux | sym va0'redux = {!!}
+
+          arg1 : ⟦ Box r A ⟧e adv (Promote va) (Promote va')
+          arg1 va0 va0' va0redux va0'redux rewrite sym va0redux | sym va0'redux = boxInterpBiobs prf va va' part1e
+
+          arg2 : ⟦ Box r B ⟧e adv (Promote vb) (Promote vb')
+          arg2 = {!!}
+      ... | no prf  = {!!} , ({!!} , rightContext)
+
+      --argument : ⟦ Box r A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
 
 {-
 Not needed any more but possible useful elseshere

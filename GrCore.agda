@@ -5,7 +5,7 @@ module GrCore where
 
 open import Data.Product
 open import Data.Sum
-open import Data.Nat.Properties using (+-identityʳ; +-suc; +-comm)
+open import Data.Nat.Properties using (+-identityʳ; +-suc; +-comm; +-assoc)
 open import Data.Nat hiding (_≟_; _≤_)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
