@@ -360,7 +360,7 @@ biFundamentalTheorem {s = sz} {Γ} {.(tuple t1 t2)} {.(ProdTy _ _)}
       | substPresTuple {_} {_} {γ1} {t1} {t2}
       | substPresTuple {_} {_} {γ2} {t1} {t2}
       | reduxTuple {_} {multisubst γ1 t1} {multisubst γ1 t2}
-      | reduxTuple {_} {multisubst γ2 t1} {multisubst γ2 t2} =      
+      | reduxTuple {_} {multisubst γ2 t1} {multisubst γ2 t2} =
       let
         ih1 = biFundamentalTheorem {sz} {Γ1} {t1} {A} deriv1 {γ1} {γ2} adv leftContext
         ih2 = biFundamentalTheorem {sz} {Γ2} {t2} {B} deriv2 {γ1} {γ2} adv rightContext
@@ -376,7 +376,8 @@ biFundamentalTheorem {s = sz} {Γ} {.(tuple t1 t2)} {.(ProdTy _ _)}
       rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimRightBox contextInterp
 
 biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1} {Γ2} {t1} {t2} {A} {B} {C} {r} deriv1 deriv2 {prf})
-  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite sym prf
+  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux with r ≤d adv
+... | yes r-less-adv rewrite sym prf
    | substPresLetProd {zero} {sz} {γ1} {t1} {t2}
    | substPresLetProd {zero} {sz} {γ2} {t1} {t2} =
     let
@@ -390,8 +391,8 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
       bodyRedux2' = subst (\h -> multiRedux h ≡ v2)
                         (multiSubstComm2 {sz} {zero} {γ2} {va'} {vb'}) restSubst'
 
-      body = biFundamentalTheorem deriv2 adv (rightContext' va va' vb vb' ih) v1 v2 bodyRedux1' bodyRedux2'
-     in body 
+      body = biFundamentalTheorem deriv2 adv (rightContext' va va' vb vb' vaIsVal va'IsVal vbIsVal vb'IsVal ih) v1 v2 bodyRedux1' bodyRedux2'
+     in body
    where
       -- Split context interpretations
       leftContext : ⟦ r · Γ1 ⟧Γ adv γ1 γ2
@@ -403,7 +404,11 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
       ... | yes eq = boxInterpBiobs eq v1 v2 interp
       ... | no eq  = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {_} {A} {v1} {v2} interp)
 
-      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) = boxInterpBiunobs (propInvTimesMonoAsymN x {!!}) v1 v2 interp
+      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) with r ≤d adv | s ≤d adv
+      ... | yes eq1 | yes eq2 = ⊥-elim (x (subst (\h -> ((r *R s) ≤ h)) (idem* {adv}) (monotone* eq1 eq2)))
+      ... | yes eq1 | no eq2 = boxInterpBiunobs eq2 v1 v2 interp
+      ... | no eq1  | yes eq2 = ⊥-elim (eq1 r-less-adv)
+      ... | no eq1  | no eq2 = boxInterpBiunobs eq2 v1 v2 interp
 
       leftContext' : ⟦ Γ1 ⟧Γ adv γ1 γ2
       leftContext' = binaryTimesElimRightΓ convertVal (binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp)
@@ -412,32 +417,57 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
       rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimRightBox contextInterp
 
       rightContext' : (va va' vb vb' : Term zero)
+                   -> Value va
+                   -> Value va'
+                   -> Value vb
+                   -> Value vb'
                    -> ⟦ ProdTy A B ⟧v adv (tuple va vb) (tuple va' vb')
                    -> ⟦ Ext (Ext Γ2 (Grad A r)) (Grad B r) ⟧Γ adv (vb ∷ va ∷ γ1) (vb' ∷ va' ∷ γ2)
-      rightContext' va va' vb vb' (prodInterpBi .va .va' .vb .vb' part1 part2) with r ≤d adv
+      rightContext' va va' vb vb' valva valva' valvb valvb' (prodInterpBi .va .va' .vb .vb' part1 part2) with r ≤d adv
       ... | yes prf = arg2 , arg1 , rightContext
         where
           part1e : ⟦ A ⟧e adv va va'
-          part1e va0 va0' va0redux va0'redux rewrite sym va0redux | sym va0'redux = {!!}
+          part1e va0 va0' va0redux va0'redux
+            rewrite sym va0redux | sym va0'redux
+                  | valuesDontReduce valva
+                  | valuesDontReduce valva'
+                 = part1
 
           arg1 : ⟦ Box r A ⟧e adv (Promote va) (Promote va')
           arg1 va0 va0' va0redux va0'redux rewrite sym va0redux | sym va0'redux = boxInterpBiobs prf va va' part1e
 
+          part2e : ⟦ B ⟧e adv vb vb'
+          part2e vb0 vb0' vb0redux vb0'redux
+            rewrite sym vb0redux | sym vb0'redux
+                  | valuesDontReduce valvb
+                  | valuesDontReduce valvb'
+                 = part2
+
           arg2 : ⟦ Box r B ⟧e adv (Promote vb) (Promote vb')
-          arg2 = {!!}
-      ... | no prf  = {!!} , ({!!} , rightContext)
+          arg2 vb0 vb0' vb0redux vb0'redux rewrite sym vb0redux | sym vb0'redux = boxInterpBiobs prf vb vb' part2e
+      ... | no prf  = arg2 , arg1 , rightContext
+        where
+          part1e : ⟦ A ⟧e adv va va'
+          part1e va0 va0' va0redux va0'redux
+            rewrite sym va0redux | sym va0'redux
+                  | valuesDontReduce valva
+                  | valuesDontReduce valva'
+                 = part1
 
-      --argument : ⟦ Box r A ⟧e adv (Promote (multisubst γ1 t2)) (Promote (multisubst γ2 t2))
+          arg1 : ⟦ Box r A ⟧e adv (Promote va) (Promote va')
+          arg1 va0 va0' va0redux va0'redux rewrite sym va0redux | sym va0'redux = boxInterpBiunobs prf va va' (binaryImpliesUnary part1e)
 
-{-
-Not needed any more but possible useful elseshere
-lem : {{R : Semiring}} {adv : grade}
-      {A : Type} {v1 v2 : Term}
-   -> Value v1
-   -> Value v2
-   -> ⟦ A ⟧e adv v1 v2
-   -> ⟦ A ⟧v adv v1 v2
+          part2e : ⟦ B ⟧e adv vb vb'
+          part2e vb0 vb0' vb0redux vb0'redux
+            rewrite sym vb0redux | sym vb0'redux
+                  | valuesDontReduce valvb
+                  | valuesDontReduce valvb'
+                 = part2
 
-lem {adv} {A} {v1} {v2} isvalv1 isvalv2 mem =
-  mem v1 v2 (valuesDontReduce {v1} isvalv1) (valuesDontReduce {v2} isvalv2)
--}
+          arg2 : ⟦ Box r B ⟧e adv (Promote vb) (Promote vb')
+          arg2 vb0 vb0' vb0redux vb0'redux rewrite sym vb0redux | sym vb0'redux = boxInterpBiunobs prf vb vb' (binaryImpliesUnary part2e)
+
+... | no not-r-less-adv rewrite sym prf
+   | substPresLetProd {zero} {sz} {γ1} {t1} {t2}
+   | substPresLetProd {zero} {sz} {γ2} {t1} {t2} =
+ ?
