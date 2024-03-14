@@ -29,18 +29,6 @@ open NonInterferingSemiring {{...}}
 
 -------------------------
 
-propInvdecreasing+1 : {{R : Semiring}} {{R' : NonInterferingSemiring {{R}}}}
-                -> {r1 r2 r adv : grade}
-                -> ¬((r1 +R (r *R r2)) ≤ adv)
-                -> ¬(r1 ≤ adv)
-propInvdecreasing+1 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = decreasing+Inv {r1} {r *R r2} {adv} pre
-
-propInvdecreasing+2 : {{R : Semiring}} {{R' : NonInterferingSemiring {{R}}}}
-                -> {r1 r2 r adv : grade}
-                -> ¬((r1 +R (r *R r2)) ≤ adv)
-                -> ¬((r *R r2) ≤ adv)
-propInvdecreasing+2 {{R}} {{R'}} {r1} {r2} {r} {adv} pre = decreasing+Inv' {r1} {r *R r2} {adv} pre
-
 -- TODO: remove terminating
 {-# TERMINATING #-}
 biFundamentalTheorem : {{R : Semiring}} {{R' : NonInterferingSemiring {{R}}}} {s : ℕ}
@@ -398,7 +386,6 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
       leftContext : ⟦ r · Γ1 ⟧Γ adv γ1 γ2
       leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp
 
-
       convertVal :  {sz : ℕ} {s : grade} {v1 : Term sz} {v2 : Term sz} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
       convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
       ... | yes eq = boxInterpBiobs eq v1 v2 interp
@@ -426,6 +413,9 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
       rightContext' va va' vb vb' valva valva' valvb valvb' (prodInterpBi .va .va' .vb .vb' part1 part2) with r ≤d adv
       ... | yes prf = arg2 , arg1 , rightContext
         where
+--          conv : {t : Type} (v v' : Term 0) -> Value v -> Value v' -> ⟦ t ⟧e adv v v'
+--          conv {t} = va0 va0' va0redux va0'redux
+
           part1e : ⟦ A ⟧e adv va va'
           part1e va0 va0' va0redux va0'redux
             rewrite sym va0redux | sym va0'redux
