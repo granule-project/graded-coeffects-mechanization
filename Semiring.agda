@@ -235,17 +235,38 @@ record WellBehavedZero {{R : Semiring}} {{R' : Meety}} : Set₁ where
     meetPositive     : {p q : grade} -> p ∧R q ≡ 0R -> (p ≡ 0R) × (q ≡ 0R)
     zeroPositive     : {p q : grade} -> p *R q ≡ 0R -> (p ≡ 0R) ⊎ (q ≡ 0R)
     zeroNoTOne       : ¬ (0R ≡ 1R)
+    -- relationship between meet and ordering
+    meetOrderRel  : {r s : grade} -> r ≡ r ∧R s -> r ≤ s
+    meetOrderReli : {r s : grade} -> r ≤ s -> r ≡ r ∧R s
+    meet1 : {r s : grade} -> (r ∧R s) ≤ r
+    meet2 : {r s : grade} -> (r ∧R s) ≤ s
 
 open WellBehavedZero {{...}}
 
 
 posToNi : {{R : Semiring}} {{R' : Meety}}
        -> WellBehavedZero -> NonInterferingSemiring
-posToNi record { additionPositive = additionPositive ; meetPositive = meetPositive; zeroPositive = zeroPositive ; zeroNoTOne = zeroNoTOne } = record {
+posToNi record { additionPositive = additionPositive ; meetPositive = meetPositive; zeroPositive = zeroPositive ; zeroNoTOne = zeroNoTOne ; meetOrderRel = meetOrderRel } = record {
     oneIsBottom = {!!}
-  ; zeroIsTop = {!!}
+  ; zeroIsTop = zeroMaximal
   ; antisymmetry = {!!}
   ; idem* = {!!} }
+  where
+    zeroMinimal : {p : grade} -> 0R ≤ p
+    zeroMinimal = {!!}
+    --
+    --                (0 /\ p) /\  = 0
+    --                 0 = 0 /\ p
+    -- meetOrderRel    0 <= p
+    -- qed
+
+    zeroMaximal : {p : grade} -> p ≤ 0R
+    zeroMaximal = {!!}
+    -- p <= p   &  0 <= 0
+    -- p /\ 0  <= p /\ 0
+    -- from meetOrderRel if p = p /\R 0  then  p <= 0
+    --
+
 
 niToPos : {{R : Semiring}} {{R' : Meety}}
        -> NonInterferingSemiring -> WellBehavedZero
