@@ -110,16 +110,6 @@ propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
   ngoal
     (subst (\h -> ((r *R s) ≤ h)) (idem* R') (monotone* pre1 pre2))
 
-{-
--- can we prove the above without idem*
-propInvTimesMonoAsymNALT : {{ R : Semiring }} {{ R' : NonInterferingSemiring }}
-                       {r s adv : grade}
-                     -> ¬ ((r *R s) ≤ adv)
-                     ->   (r ≤ adv)
-                     -> ¬ (s ≤ adv)
-propInvTimesMonoAsymNALT {{R}} {{R'}} {r} {s} {adv} ngola pre1 pre2 = {!!}
-  where
--}
 
 decreasing+Inv : {{ R : Semiring }} {{ R' : NonInterferingSemiring  }}
               {r1 r2 s : grade} -> ¬ ((r1 +R r2) ≤ s) -> ¬ (r1 ≤ s)
@@ -132,9 +122,6 @@ decreasing+Inv' : {{ R : Semiring }} {{R' : NonInterferingSemiring }}
 decreasing+Inv' {{R}} {{R'}} {r1} {r2} {s} pre =
   decreasing+Inv {{R}} {{R'}} {r2} {r1} {s} (\x -> pre (subst (\h -> h ≤ s) (comm+ {r2} {r1}) x))
 
--- Derived alternate characterisation of antisymmetry
-antisymmetryAlt : {{R : Semiring}} {{R' : NonInterferingSemiring}} {r s : grade} -> r ≤ s -> r ≢ s -> ¬ (s ≤ r)
-antisymmetryAlt {{R}} {{R'}} {r} {s} pre1 pre2 pre3 = ⊥-elim (pre2 (antisymmetry R' {r} {s} pre1 pre3))
 
 -------------------------------------------------------
 -- NOTES BELOW HERE

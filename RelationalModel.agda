@@ -218,7 +218,7 @@ binaryPlusElimLeftΓ : {{R : Semiring}} {sz t : ℕ} {adv : grade} {γ1 γ2 : Ve
 
                    -> (convertVal : ({sz : ℕ} {r1 r2 adv : grade} {v1 v2 : Term sz} {A : Type}
                           -> ⟦ Box (r1 +R r2) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box r1 A ⟧v adv (Promote v1) (Promote v2)))
-                          
+
                    -> ⟦ Γ1 ++ Γ2 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
 binaryPlusElimLeftΓ {{R}} {0} {_} {adv} {[]} {empty} {Empty} {Empty} convertVal x = x
 binaryPlusElimLeftΓ {{R}} {(suc s)} {t} {adv} {v1 ∷ γ1} {v2 ∷ γ2} {Ext Γ1 (Grad A r1)} {Ext Γ2 (Grad A' r2)} convertVal (arg , rest) =
@@ -273,7 +273,11 @@ binaryPlusElimLeftBox :
 binaryPlusElimLeftBox {{R}} {_} {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiobs eq .v1 .v2 arg) with r1 ≤d adv
 ... | no  eqo = boxInterpBiunobs eqo v1 v2 ((binaryImpliesUnary {_} {A} {v1} {v2} {adv} arg))
 ... | yes eqo = boxInterpBiobs eqo v1 v2 arg
-binaryPlusElimLeftBox {{R}} {{R'}} {_} {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) = boxInterpBiunobs (decreasing+Inv {r1} {r2} {adv} eq) v1 v2 argInterp
+binaryPlusElimLeftBox {{R}} {{R'}} {_} {r1} {r2} {adv} {v1} {v2} {A} (boxInterpBiunobs eq .v1 .v2 argInterp) with r1 ≤d adv
+... | yes eqa = ⊥-elim (eq (decreasing+ eqa))
+... | no eqa = boxInterpBiunobs eqa v1 v2 argInterp
+
+-- boxInterpBiunobs (decreasing+Inv {r1} {r2} {adv} eq) v1 v2 argInterp
 
 
 convertValNISemiring :
