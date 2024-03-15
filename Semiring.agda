@@ -85,18 +85,15 @@ increasing* {{R}} {{R'}} {r1} {r2} {s} pre =
     subst (\h -> h ≤ (r1 *R r2)) (rightUnit*) (monotone* pre (oneIsBottom R'))
 
 
--- TODO: is zeroIsTop deriveable from decreaseing +?
--- TODOABLE Vilem?
-zeroIsTopFromDecreasing : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
+zeroIsTopFromDecreasing+ : {{ R : Semiring }}
   -> ({r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s))
   -> ({r : grade} -> r ≤ 0R)
-zeroIsTopFromDecreasing decreasing {r} = {!!}
-  -- similar to the `zero` proof in `rel1`
-  -- sym (rightUnit+ {r}) = plusMeet2 {r} {0R}
+zeroIsTopFromDecreasing+ decreasing {r} =
+  subst (\h -> h ≤ 0R) leftUnit+ (decreasing (reflexive≤ {0R}))
 
 -- aha
-bottomIsOneFromIncrease* : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
-  ->  ({r1 r2 s : grade} -> (s ≤ r1) -> (s ≤ (r1 *R r2)))
+bottomIsOneFromIncrease* : {{ R : Semiring }}
+  -> ({r1 r2 s : grade} -> (s ≤ r1) -> (s ≤ (r1 *R r2)))
   -> ({r : grade} -> 1R ≤ r)
 bottomIsOneFromIncrease* increasy {r} =
   subst (\h -> 1R ≤ h) leftUnit* (increasy (reflexive≤ {1R}))
