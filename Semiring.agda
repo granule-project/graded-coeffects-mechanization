@@ -72,31 +72,30 @@ record NonInterferingSemiring {{R : Semiring}} : Set₁ where
 open NonInterferingSemiring
 
 -- ## Some derived properties
-
 decreasing+ : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
              {r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s)
 decreasing+ {{R}} {{R'}} {r1} {r2} {s} pre =
   subst (\h -> ((r1 +R r2) ≤ h)) (rightUnit+) (monotone+ pre (zeroIsTop R'))
 
--- NOT USED
 increasing* : {{ R : Semiring }} {{ R' : NonInterferingSemiring {{R}} }}
                {r1 r2 s : grade} -> (s ≤ r1) -> (s ≤ (r1 *R r2))
 increasing* {{R}} {{R'}} {r1} {r2} {s} pre =
     subst (\h -> h ≤ (r1 *R r2)) (rightUnit*) (monotone* pre (oneIsBottom R'))
 
-
+-- Interderivability properties
 zeroIsTopFromDecreasing+ : {{ R : Semiring }}
   -> ({r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s))
   -> ({r : grade} -> r ≤ 0R)
 zeroIsTopFromDecreasing+ decreasing {r} =
   subst (\h -> h ≤ 0R) leftUnit+ (decreasing (reflexive≤ {0R}))
 
--- aha
 bottomIsOneFromIncrease* : {{ R : Semiring }}
   -> ({r1 r2 s : grade} -> (s ≤ r1) -> (s ≤ (r1 *R r2)))
   -> ({r : grade} -> 1R ≤ r)
 bottomIsOneFromIncrease* increasy {r} =
   subst (\h -> 1R ≤ h) leftUnit* (increasy (reflexive≤ {1R}))
+
+-- ## Some further derived properties
 
 propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring }}
                        {r s adv : grade}
@@ -135,69 +134,73 @@ decreasing+Inv' {{R}} {{R'}} {r1} {r2} {s} pre =
 -- modalities as specified above"
 record Informational {{R : Semiring}} : Set₁ where
   field
-    -- note that a lattice has these by default...
+    -- Since * is join
     idem* : {r : grade}     -> r *R r ≡ r
-    absorb1 : {r s : grade} -> r *R (r +R s) ≡ r
-    absorb2 : {r s : grade} -> r +R (r *R s) ≡ r
+    --
+    joinOrderRel : {r s : grade} -> r ≤ s -> s ≡ r *R s
+    joinOrderReli : {r s : grade} -> s ≡ r *R s -> r ≤ s
 
-    -- not made explicit in A&B but implicit in the lattice discusssion
-    -- + is meet
-    plusMeet1 : {r s : grade} -> (r +R s) ≤ r
-    plusMeet2 : {r s : grade} -> (r +R s) ≤ s
-    -- * is the join
-    multJoin1 : {r s : grade} -> r ≤ (r *R s)
-    multJoin2 : {r s : grade} -> s ≤ (r *R s)
-
+    -- Since + is meet
+    idem+ : {r : grade}     -> r +R r ≡ r
     -- relationship between meet and ordering
     -- which is usually part of meet-semilattice definition
     meetOrderRel : {r s : grade} -> r ≤ s -> r ≡ r +R s
+    meetOrderReli : {r s : grade} -> r ≡ r +R s -> r ≤ s
+
+    absorb1 : {r s : grade} -> r *R (r +R s) ≡ r
+    absorb2 : {r s : grade} -> r +R (r *R s) ≡ r
 
 open Informational
 
-rel1 : {{R : Semiring}} -> Informational -> NonInterferingSemiring
-rel1 record { idem* = idem* ; absorb1 = absorb1 ; absorb2 = absorb2 ; plusMeet1 = plusMeet1 ; plusMeet2 = plusMeet2 ; multJoin1 = multJoin1 ; multJoin2 = multJoin2 ; meetOrderRel = meetOrderRel } =
+-- Proof that an informational semiring is a non-interfering semiring
+informationalImpliesNonInterfering : {{R : Semiring}} -> Informational -> NonInterferingSemiring
+informationalImpliesNonInterfering record { idem* = idem* ; joinOrderRel = joinOrderRel
+             ; joinOrderReli = joinOrderReli
+             ; idem+ = idem+
+             ; meetOrderRel = meetOrderRel ; meetOrderReli = meetOrderReli
+             ; absorb1 = absorb1 ; absorb2 = absorb2 } =
   record
     { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = antisym ; idem* = idem* }
   where
     one : {r : grade} → 1R ≤ r
-    one {r} rewrite sym (leftUnit* {r}) = {!!} -- multJoin1 {1R} {r}
+    one {r} =
+      bottomIsOneFromIncrease* increasing*h {r}
+        where
+          eq : {r s : grade} -> r *R s ≡ r *R (r *R s)
+          eq {r} {s} = trans (cong (\h -> h *R s) (sym (idem* {r}))) (assoc* {r} {r} {s})
+
+          joinProp : { r s : grade } -> r ≤ (r *R s)
+          joinProp {r} {s} = joinOrderReli eq
+
+          increasing*h : {r1 r2 s : grade} -> (s ≤ r1) -> (s ≤ (r1 *R r2))
+          increasing*h {r1} {r2} {s} pre =
+            transitive≤ (joinProp {s} {r2}) (monotone* pre (reflexive≤ {r2}))
 
     zero : {r : grade} -> r ≤ 0R
-    zero {r} rewrite sym (rightUnit+ {r}) = {!!}  -- plusMeet2 {r} {0R}
+    zero {r} =
+          zeroIsTopFromDecreasing+ decreasing+h {r}
+        where
+          eq : {r s : grade} -> r +R s ≡ (r +R s) +R r
+          eq {r} {s} =
+           trans
+            (trans
+              (trans (cong (\h -> h +R s) (sym (idem+ {r})))
+                (assoc+ {r} {r} {s}))
+                  (cong (\h -> r +R h) (comm+ {r} {s}))) (sym (assoc+ {r} {s} {r}))
 
-    -- maybe a classical proof?
+
+          meetProp : { r s : grade } -> (r +R s) ≤ r
+          meetProp {r} {s} = meetOrderReli eq
+
+          decreasing+h : {r1 r2 s : grade} -> (r1 ≤ s) -> ((r1 +R r2) ≤ s)
+          decreasing+h {r1} {r2} {s} pre =
+            transitive≤ (monotone+ pre (reflexive≤ {r2})) (meetProp {s} {r2})
+
     antisym : {r s : grade} -> r ≤ s -> s ≤ r -> r ≡ s
     antisym {r} {s} x y =
       let prf1 = meetOrderRel x
           prf2 = meetOrderRel y
       in trans prf1 (trans (comm+ {r} {s}) (sym prf2))
-
--- Looks like Informational semiring is much more general
--- But we should try a bit harder
--- TODO (Vilem) - try to get the Informational semiring from NonInterferingSemiring
--- It looks like antisymmetry is the key to leverage in many cases?
-rel2 : {{R : Semiring}} -> NonInterferingSemiring -> Informational
-rel2 record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* } =
-  record
-    { idem* = idem*
-    ; absorb1 = {!!}
-    ; absorb2 = {!!}
-    ; plusMeet1 = {!!}
-    ; plusMeet2 = {!!}
-    ; multJoin1 = {!!}
-    ; multJoin2 = {!!}
-    }
-  where
-    absorba : {r s : grade} → r *R (r +R s) ≡ r
-    absorba = {!!}
-    -- r * (r + s)
-    -- = r * r + r * s
-    -- = r + r * s
-    -- = r * s + r
-
-
-    plusMeeta : {r s : grade} -> (r +R s) ≤ r
-    plusMeeta = {!!}
 
 -- Abel et al. (2023) take a semiring with a meet operation
 -- to induce a partial order
