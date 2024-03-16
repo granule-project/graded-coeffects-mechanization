@@ -49,8 +49,8 @@ boolBinaryExprInterpEquality t1 t2 prf =
 -- Non-interference
 nonInterference :
    {{R : Semiring}} {{R' : NonInterferingSemiring {{R}}}}
-   {A : Type} {e : Term 1} {r s : grade} {pre : r ≤ s} {nonEq : r ≢ s}
-        -> Ext Empty (Grad A s) ⊢ e ∶ Box r BoolTy
+   {A : Type} {e : Term 1} {adv s : grade} {pre : adv ≤ s} {nonEq : adv ≢ s}
+        -> Ext Empty (Grad A s) ⊢ e ∶ Box adv BoolTy
 
         -> (v1 v2 : Term 0)
         -> Empty ⊢ v1 ∶ A
@@ -73,7 +73,7 @@ nonInterference {{_}} {{_}} {A} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing 
                   (valuesDontReduce {_} {Promote v2} (promoteValue v2))
 ... | boxInterpBiobs pre1 .v1 .v1 inner1 | _                                    = ⊥-elim (nonEq (antisymmetry pre pre1))
 ... | boxInterpBiunobs pre1 .v1 .v1 inner1 | boxInterpBiobs pre2 .v2 .v2 inner2 = ⊥-elim (nonEq (antisymmetry pre pre2))
-... | boxInterpBiunobs pre1 .v1 .v1 (valv1 , valv1') | boxInterpBiunobs pre2 .v2 .v2 (valv2 , valv2') =
+... | boxInterpBiunobs pre1 .v1 .v1 (valv1 , valv1') | boxInterpBiunobs pre2 .v2 .v2 (valv2 , valv2') rewrite raiseTermℕzero {_} {v1} | raiseTermℕzero {_} {v2} =
  let
    -- Show that substituting v1 and evaluating yields a value
    -- and since it is a graded modal type then this value is necessarily
@@ -85,11 +85,13 @@ nonInterference {{_}} {{_}} {A} {e} {r} {s} {pre} {nonEq} typing v1 v2 v1typing 
    substTy2  = substitution {zero} {zero} {Ext Empty (Grad A s)} {Empty} {Empty} {Empty} {s} typing refl v2typing
    (v2'' , prf2) = promoteValueLemma {_} {r} {BoolTy} (preservation {zero} substTy2) (strongNormalisation substTy2)
 
+   prf1' = subst (\h ->  multiRedux (syntacticSubst h zero e) ≡ Promote v1'') (sym (raiseTermℕzero {_} {v1})) prf1
+   prf2' = subst (\h ->  multiRedux (syntacticSubst h zero e) ≡ Promote v2'') (sym (raiseTermℕzero {_} {v2})) prf2
+
    -- Apply fundamental binary theorem on the result with the values coming from syntacitcally substituting
    -- then evaluating
    res = biFundamentalTheorem {1} {Ext Empty (Grad A s)} {e} {Box r BoolTy} typing {v1 ∷ []} {v2 ∷ []} r
-          (inner valv1' valv2' , tt) (Promote v1'') (Promote v2'') {!prf1!} {!!} -- prf1 prf2
-
+          (inner valv1' valv2' , tt) (Promote v1'') (Promote v2'') prf1' prf2'
 
    -- Boolean typed (low) values are equal inside the binary interepration
    boolTyEq = boolBinaryExprInterpEquality v1'' v2'' (unpack res)
