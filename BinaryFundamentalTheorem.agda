@@ -364,7 +364,40 @@ biFundamentalTheorem {s = sz} {Γ} {.(tuple t1 t2)} {.(ProdTy _ _)}
       rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {Γ1} {Γ2} binaryPlusElimRightBox contextInterp
 
 biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1} {Γ2} {t1} {t2} {A} {B} {C} {r} deriv1 deriv2 {prf})
-  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux with r ≤d adv
+  {γ1} {γ2} adv contextInterp v1 v2 v1redux v2redux rewrite
+    sym prf
+  | substPresLetProd {zero} {sz} {γ1} {t1} {t2}
+  | substPresLetProd {zero} {sz} {γ2} {t1} {t2} =
+  let
+    (va , vb , tupleRedux , (vaIsVal , vbIsVal) , restSubst) = reduxTheoremLetProd {zero} {v1} {multisubst γ1 t1} {multisubst'' γ1 t2} v1redux
+    (va' , vb' , tupleRedux' , (va'IsVal , vb'IsVal) , restSubst') = reduxTheoremLetProd {zero} {v2} {multisubst γ2 t1} {multisubst'' γ2 t2} v2redux
+
+    -- Promote the lhs
+    promTy = pr {_} {Γ1} {r · Γ1} {r} {ProdTy A B} {t1} deriv1 {refl}
+    -- LHS
+    lhs = biFundamentalTheorem {sz} {r · Γ1} {Promote t1} {Box r (ProdTy A B)} promTy {γ1} {γ2} adv leftContext (Promote (multisubst γ1 t1)) (Promote (multisubst γ2 t1)) {!!} {!!}
+
+    arg1 , arg2 = push' {multisubst γ1 t1} {multisubst γ2 t1} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {vaIsVal} {vbIsVal} {va'IsVal} {vb'IsVal} lhs tupleRedux tupleRedux'
+    -- induct on RHS with substituted arguments
+    rhs = biFundamentalTheorem {suc (suc sz)} {Ext (Ext Γ2 (Grad A r)) (Grad B r)} {t2} {C} deriv2 {vb ∷ va ∷ γ1} {vb' ∷ va' ∷ γ2} adv (arg2 , (arg1 , rightContext))
+
+    -- Reason about shape of reductions on the body term
+    bodyRedux1' = subst (\h -> multiRedux h ≡ v1)
+                        (multiSubstComm2{sz} {zero} {γ1} {va} {vb}) restSubst
+    bodyRedux2' = subst (\h -> multiRedux h ≡ v2)
+                        (multiSubstComm2 {sz} {zero} {γ2} {va'} {vb'}) restSubst'
+                        
+  in rhs v1 v2 bodyRedux1' bodyRedux2'
+     where
+      -- Split context interpretations
+      leftContext : ⟦ r · Γ1 ⟧Γ adv γ1 γ2
+      leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp
+
+      rightContext : ⟦ Γ2 ⟧Γ adv γ1 γ2
+      rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimRightBox contextInterp
+
+
+{- with r ≤d adv
 ... | yes r-less-adv rewrite sym prf
    | substPresLetProd {zero} {sz} {γ1} {t1} {t2}
    | substPresLetProd {zero} {sz} {γ2} {t1} {t2} =
@@ -509,4 +542,5 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
 
       leftContext' : ⟦ Γ1 ⟧Γ adv γ1 γ2
       leftContext' = binaryTimesElimRightΓ convertVal (binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp)
+-}
 -}
