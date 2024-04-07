@@ -325,55 +325,9 @@ unaryTimesElimRightΓ ⦃ R ⦄ {.0} {_} {[]} {Empty} {r} inp = tt
 unaryTimesElimRightΓ ⦃ R ⦄ {suc n} {_} {x ∷ γ1} {Ext Γ (Grad A s)} {r} (ass , g) =
   convertUnaryBox ass , unaryTimesElimRightΓ {{R}} {n} {_} {γ1} {Γ} {r} g
 
--- semantic push
-
+-- semantic push: mapping from
+-- interpretation of  (Box r (A × B)) into the interpretation of Box r A and Box r B
 push : {{ R : Semiring }}
-       {t t' : Term 0}
-       {va vb va' vb' : Term 0}
-       {A B : Type}
-       {adv r : grade}
-    -> {Value va}
-    -> {Value vb}
-    -> {Value va'}
-    -> {Value vb'}
-    -> ⟦ Box r (ProdTy A B) ⟧v adv
-          (Promote t) (Promote t')
-    -> multiRedux t ≡ tuple va vb
-    -> multiRedux t' ≡ tuple va' vb'
-    -> ⟦ ProdTy (Box r A) (Box r B) ⟧v adv (tuple (Promote va) (Promote vb)) (tuple (Promote va') (Promote vb'))
-push {t} {t'} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {valueVa} {valueVb} {valueVa'} {valueVb'} (boxInterpBiobs pre .t .t' inner) redux1 redux2 with inner (tuple va vb) (tuple va' vb') redux1 redux2
-... | prodInterpBi .va .va' .vb .vb' inner1 inner2 =
-  prodInterpBi (Promote va) (Promote va') (Promote vb) (Promote vb') (boxInterpBiobs pre va va' inner1') (boxInterpBiobs pre vb vb' inner2')
-  where
-    inner1' : ⟦ A ⟧e adv va va'
-    inner1' vA vA' reduxA reduxA'
-      rewrite determinism {_} {va} {vA} reduxA (valuesDontReduce valueVa)
-            | determinism {_} {va'} {vA'} reduxA' (valuesDontReduce valueVa') = inner1
-
-    inner2' : ⟦ B ⟧e adv vb vb'
-    inner2' vB vB' reduxB reduxB'
-      rewrite determinism {_} {vb} {vB} reduxB (valuesDontReduce valueVb)
-            | determinism {_} {vb'} {vB'} reduxB' (valuesDontReduce valueVb') = inner2
-
-push {t = t} {t'} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {valueVa} {valueVb} {valueVa'} {valueVb'} (boxInterpBiunobs pre .t .t' (fst , snd)) redux1 redux2 rewrite redux1 | redux2 with fst (tuple va vb) refl | snd (tuple va' vb') refl
-... | prodInterpV .va .vb inner1 inner2 | prodInterpV .va' .vb' inner1' inner2' =
-  prodInterpBi (Promote va) (Promote va') (Promote vb) (Promote vb')
-   (boxInterpBiunobs pre va va' (inner1a , inner1a'))
-   (boxInterpBiunobs pre vb vb' (inner2a , inner2a'))
-  where
-    inner1a : [ A ]e va
-    inner1a vA reduxA rewrite determinism {_} {va} {vA} reduxA (valuesDontReduce valueVa) = inner1
-
-    inner1a' : [ A ]e va'
-    inner1a' vA reduxA rewrite determinism {_} {va'} {vA} reduxA (valuesDontReduce valueVa') = inner1'
-
-    inner2a : [ B ]e vb
-    inner2a vB reduxB rewrite determinism {_} {vb} {vB} reduxB (valuesDontReduce valueVb) = inner2
-
-    inner2a' : [ B ]e vb'
-    inner2a' vB reduxB rewrite determinism {_} {vb'} {vB} reduxB (valuesDontReduce valueVb') = inner2'
-
-push' : {{ R : Semiring }}
        {t t' : Term 0}
        {va vb va' vb' : Term 0}
        {A B : Type}
@@ -388,7 +342,7 @@ push' : {{ R : Semiring }}
     -> multiRedux t' ≡ tuple va' vb'
     -> ⟦ Box r A ⟧e adv (Promote va) (Promote va')
      × ⟦ Box r B ⟧e adv (Promote vb) (Promote vb')
-push' {t} {t'} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {valueVa} {valueVb} {valueVa'} {valueVb'} (boxInterpBiobs pre .t .t' inner) redux1 redux2 with inner (tuple va vb) (tuple va' vb') redux1 redux2
+push {t} {t'} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {valueVa} {valueVb} {valueVa'} {valueVb'} (boxInterpBiobs pre .t .t' inner) redux1 redux2 with inner (tuple va vb) (tuple va' vb') redux1 redux2
 ... | prodInterpBi .va .va' .vb .vb' inner1 inner2 =
   goal1 , goal2
   where
@@ -412,7 +366,7 @@ push' {t} {t'} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {valueVa} {valueVb} {valu
       rewrite determinism {_} {Promote vb} {v0} v0redux (valuesDontReduce (promoteValue vb))
             | determinism {_} {Promote vb'} {v0'} v0'redux (valuesDontReduce (promoteValue vb')) = boxInterpBiobs pre vb vb' inner2'
 
-push' {t = t} {t'} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {valueVa} {valueVb} {valueVa'} {valueVb'} (boxInterpBiunobs pre .t .t' (fst , snd)) redux1 redux2 rewrite redux1 | redux2 with fst (tuple va vb) refl | snd (tuple va' vb') refl
+push {t = t} {t'} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {valueVa} {valueVb} {valueVa'} {valueVb'} (boxInterpBiunobs pre .t .t' (fst , snd)) redux1 redux2 rewrite redux1 | redux2 with fst (tuple va vb) refl | snd (tuple va' vb') refl
 ... | prodInterpV .va .vb inner1 inner2 | prodInterpV .va' .vb' inner1' inner2' =
   goal1 , goal2
   where

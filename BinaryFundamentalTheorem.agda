@@ -375,9 +375,13 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
     -- Promote the lhs
     promTy = pr {_} {Γ1} {r · Γ1} {r} {ProdTy A B} {t1} deriv1 {refl}
     -- LHS
-    lhs = biFundamentalTheorem {sz} {r · Γ1} {Promote t1} {Box r (ProdTy A B)} promTy {γ1} {γ2} adv leftContext (Promote (multisubst γ1 t1)) (Promote (multisubst γ2 t1)) {!!} {!!}
+    prop1 = trans (cong multiRedux (substPresProm {_} {_} {γ1} {t1})) (valuesDontReduce (promoteValue (multisubst γ1 t1)))
+    prop2 = trans (cong multiRedux (substPresProm {_} {_} {γ2} {t1})) (valuesDontReduce (promoteValue (multisubst γ2 t1)))
 
-    arg1 , arg2 = push' {multisubst γ1 t1} {multisubst γ2 t1} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {vaIsVal} {vbIsVal} {va'IsVal} {vb'IsVal} lhs tupleRedux tupleRedux'
+    lhs = biFundamentalTheorem {sz} {r · Γ1} {Promote t1} {Box r (ProdTy A B)} promTy {γ1} {γ2} adv leftContext (Promote (multisubst γ1 t1)) (Promote (multisubst γ2 t1)) prop1 prop2
+
+    -- push the box inside the product (inside the interpetations)
+    arg1 , arg2 = push {multisubst γ1 t1} {multisubst γ2 t1} {va} {vb} {va'} {vb'} {A} {B} {adv} {r} {vaIsVal} {vbIsVal} {va'IsVal} {vb'IsVal} lhs tupleRedux tupleRedux'
     -- induct on RHS with substituted arguments
     rhs = biFundamentalTheorem {suc (suc sz)} {Ext (Ext Γ2 (Grad A r)) (Grad B r)} {t2} {C} deriv2 {vb ∷ va ∷ γ1} {vb' ∷ va' ∷ γ2} adv (arg2 , (arg1 , rightContext))
 
@@ -386,7 +390,7 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
                         (multiSubstComm2{sz} {zero} {γ1} {va} {vb}) restSubst
     bodyRedux2' = subst (\h -> multiRedux h ≡ v2)
                         (multiSubstComm2 {sz} {zero} {γ2} {va'} {vb'}) restSubst'
-                        
+
   in rhs v1 v2 bodyRedux1' bodyRedux2'
      where
       -- Split context interpretations
@@ -395,152 +399,3 @@ biFundamentalTheorem {s = sz} {Γ} {LetProd t1 t2} {.C} (prodElim {_} {Γ} {Γ1}
 
       rightContext : ⟦ Γ2 ⟧Γ adv γ1 γ2
       rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimRightBox contextInterp
-
-
-{- with r ≤d adv
-... | yes r-less-adv rewrite sym prf
-   | substPresLetProd {zero} {sz} {γ1} {t1} {t2}
-   | substPresLetProd {zero} {sz} {γ2} {t1} {t2} =
-    let
-      (va , vb , tupleRedux , (vaIsVal , vbIsVal) , restSubst) = reduxTheoremLetProd {zero} {v1} {multisubst γ1 t1} {multisubst'' γ1 t2} v1redux
-      (va' , vb' , tupleRedux' , (va'IsVal , vb'IsVal) , restSubst') = reduxTheoremLetProd {zero} {v2} {multisubst γ2 t1} {multisubst'' γ2 t2} v2redux
-      ih = biFundamentalTheorem deriv1 adv leftContext' (tuple va vb) (tuple va' vb') tupleRedux tupleRedux'
-
-      -- Reason about shape of reductions on the body term
-      bodyRedux1' = subst (\h -> multiRedux h ≡ v1)
-                        (multiSubstComm2{sz} {zero} {γ1} {va} {vb}) restSubst
-      bodyRedux2' = subst (\h -> multiRedux h ≡ v2)
-                        (multiSubstComm2 {sz} {zero} {γ2} {va'} {vb'}) restSubst'
-
-      body = biFundamentalTheorem deriv2 adv (rightContext' va va' vb vb' vaIsVal va'IsVal vbIsVal vb'IsVal ih) v1 v2 bodyRedux1' bodyRedux2'
-     in body
-   where
-      -- Split context interpretations
-      leftContext : ⟦ r · Γ1 ⟧Γ adv γ1 γ2
-      leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp
-
-      convertVal :  {sz : ℕ} {s : grade} {v1 : Term sz} {v2 : Term sz} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
-      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
-      ... | yes eq = boxInterpBiobs eq v1 v2 interp
-      ... | no eq  = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {_} {A} {v1} {v2} interp)
-
-      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) with r ≤d adv | s ≤d adv
-      ... | yes eq1 | yes eq2 = ⊥-elim (x (subst (\h -> ((r *R s) ≤ h)) (idem* {adv}) (monotone* eq1 eq2)))
-      ... | yes eq1 | no eq2 = boxInterpBiunobs eq2 v1 v2 interp
-      ... | no eq1  | yes eq2 = ⊥-elim (eq1 r-less-adv)
-      ... | no eq1  | no eq2 = boxInterpBiunobs eq2 v1 v2 interp
-
-      leftContext' : ⟦ Γ1 ⟧Γ adv γ1 γ2
-      leftContext' = binaryTimesElimRightΓ convertVal (binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp)
-
-      rightContext : ⟦ Γ2 ⟧Γ adv γ1 γ2
-      rightContext = binaryPlusElimRightΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimRightBox contextInterp
-
-      rightContext' : (va va' vb vb' : Term zero)
-                   -> Value va
-                   -> Value va'
-                   -> Value vb
-                   -> Value vb'
-                   -> ⟦ ProdTy A B ⟧v adv (tuple va vb) (tuple va' vb')
-                   -> ⟦ Ext (Ext Γ2 (Grad A r)) (Grad B r) ⟧Γ adv (vb ∷ va ∷ γ1) (vb' ∷ va' ∷ γ2)
-      rightContext' va va' vb vb' valva valva' valvb valvb' (prodInterpBi .va .va' .vb .vb' part1 part2) with r ≤d adv
-      ... | yes prf = arg2 , arg1 , rightContext
-        where
---          conv : {t : Type} (v v' : Term 0) -> Value v -> Value v' -> ⟦ t ⟧e adv v v'
---          conv {t} = va0 va0' va0redux va0'redux
-
-          part1e : ⟦ A ⟧e adv va va'
-          part1e va0 va0' va0redux va0'redux
-            rewrite sym va0redux | sym va0'redux
-                  | valuesDontReduce valva
-                  | valuesDontReduce valva'
-                 = part1
-
-          arg1 : ⟦ Box r A ⟧e adv (Promote va) (Promote va')
-          arg1 va0 va0' va0redux va0'redux rewrite sym va0redux | sym va0'redux = boxInterpBiobs prf va va' part1e
-
-          part2e : ⟦ B ⟧e adv vb vb'
-          part2e vb0 vb0' vb0redux vb0'redux
-            rewrite sym vb0redux | sym vb0'redux
-                  | valuesDontReduce valvb
-                  | valuesDontReduce valvb'
-                 = part2
-
-          arg2 : ⟦ Box r B ⟧e adv (Promote vb) (Promote vb')
-          arg2 vb0 vb0' vb0redux vb0'redux rewrite sym vb0redux | sym vb0'redux = boxInterpBiobs prf vb vb' part2e
-      ... | no prf  = arg2 , arg1 , rightContext
-        where
-          part1e : ⟦ A ⟧e adv va va'
-          part1e va0 va0' va0redux va0'redux
-            rewrite sym va0redux | sym va0'redux
-                  | valuesDontReduce valva
-                  | valuesDontReduce valva'
-                 = part1
-
-          arg1 : ⟦ Box r A ⟧e adv (Promote va) (Promote va')
-          arg1 va0 va0' va0redux va0'redux rewrite sym va0redux | sym va0'redux = boxInterpBiunobs prf va va' (binaryImpliesUnary part1e)
-
-          part2e : ⟦ B ⟧e adv vb vb'
-          part2e vb0 vb0' vb0redux vb0'redux
-            rewrite sym vb0redux | sym vb0'redux
-                  | valuesDontReduce valvb
-                  | valuesDontReduce valvb'
-                 = part2
-
-          arg2 : ⟦ Box r B ⟧e adv (Promote vb) (Promote vb')
-          arg2 vb0 vb0' vb0redux vb0'redux rewrite sym vb0redux | sym vb0'redux = boxInterpBiunobs prf vb vb' (binaryImpliesUnary part2e)
-
-... | no not-r-less-adv rewrite sym prf
-   | substPresLetProd {zero} {sz} {γ1} {t1} {t2}
-   | substPresLetProd {zero} {sz} {γ2} {t1} {t2} =
-    let
-      (va , vb , tupleRedux , (vaIsVal , vbIsVal) , restSubst) = reduxTheoremLetProd {zero} {v1} {multisubst γ1 t1} {multisubst'' γ1 t2} v1redux
-      (va' , vb' , tupleRedux' , (va'IsVal , vb'IsVal) , restSubst') = reduxTheoremLetProd {zero} {v2} {multisubst γ2 t1} {multisubst'' γ2 t2} v2redux
-      ih = biFundamentalTheorem deriv1 adv {!!} (tuple va vb) (tuple va' vb') tupleRedux tupleRedux'
-
-      -- Reason about shape of reductions on the body term
-      bodyRedux1' = subst (\h -> multiRedux h ≡ v1)
-                        (multiSubstComm2{sz} {zero} {γ1} {va} {vb}) restSubst
-      bodyRedux2' = subst (\h -> multiRedux h ≡ v2)
-                        (multiSubstComm2 {sz} {zero} {γ2} {va'} {vb'}) restSubst'
-
-      -- (rightContext' va va' vb vb' vaIsVal va'IsVal vbIsVal vb'IsVal ih)
-      body = biFundamentalTheorem deriv2 adv {!!} v1 v2 bodyRedux1' bodyRedux2'
-     in body
-  where
-          -- Split context interpretations
-      leftContext : ⟦ r · Γ1 ⟧Γ adv γ1 γ2
-      leftContext = binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp
-
-      quotientContext : {sz : ℕ} {Γ1 : Context sz} {γ1 γ2 : Vec (Term 0) sz}
-                     -> ⟦ r · Γ1 ⟧Γ adv γ1 γ2 -> ⟦ Γ1 ⟧Γ adv γ1 γ2
-      quotientContext {zero} {Empty} {[]} {[]} ctxt = ctxt
-      quotientContext {suc sz'} {Ext Γ1' (Grad B s)} {v1 ∷ γ1} {v2 ∷ γ2} (head , tail)
-        with head (Promote v1) (Promote v2) refl refl
-      ... | boxInterpBiobs eq .v1 .v2 inner = {!!}
-      -- (r * s) <= adv
-      -- ¬ r <= adv
-
-      ... | boxInterpBiunobs eq .v1 .v2 inner = {!!}
-      -- ¬ (r * s) <= adv
-      -- ¬ r <= adv
-
-
-
-{-
-
-      convertVal :  {sz : ℕ} {s : grade} {v1 : Term sz} {v2 : Term sz} {A : Type} -> ⟦ Box (r *R s) A ⟧v adv (Promote v1) (Promote v2) -> ⟦ Box s A ⟧v adv (Promote v1) (Promote v2)
-      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiobs prop .v1 .v2 interp) with s ≤d adv
-      ... | yes eq = boxInterpBiobs eq v1 v2 interp
-      ... | no eq  = boxInterpBiunobs eq v1 v2 (binaryImpliesUnary {_} {A} {v1} {v2} interp)
-
-      convertVal {sz} {s} {v1} {v2} {A} (boxInterpBiunobs x .v1 .v2 interp) with r ≤d adv | s ≤d adv
-      ... | yes eq1 | yes eq2 = ⊥-elim (x (subst (\h -> ((r *R s) ≤ h)) (idem* {adv}) (monotone* eq1 eq2)))
-      ... | yes eq1 | no eq2 = boxInterpBiunobs eq2 v1 v2 interp
-      ... | no eq1  | yes eq2 = ⊥-elim (eq1 r-less-adv)
-      ... | no eq1  | no eq2 = boxInterpBiunobs eq2 v1 v2 interp
-
-      leftContext' : ⟦ Γ1 ⟧Γ adv γ1 γ2
-      leftContext' = binaryTimesElimRightΓ convertVal (binaryPlusElimLeftΓ {sz} {zero} {adv} {γ1} {γ2} {r · Γ1} {Γ2} binaryPlusElimLeftBox contextInterp)
--}
--}
