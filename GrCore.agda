@@ -12,7 +12,7 @@ open import Relation.Nullary
 open import Data.Bool hiding (_≟_; _≤_)
 open import Data.Maybe
 open import Data.Empty
-open import Data.Unit hiding (_≟_; _≤_)
+open import Data.Unit
 open import Data.Fin using (Fin; _≟_; raise; fromℕ; inject; inject!; compare)
 
 open import Semiring

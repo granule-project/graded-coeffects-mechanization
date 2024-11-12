@@ -3,7 +3,7 @@
 module RelationalModel where
 
 open import GrCore
-open import Data.Unit hiding (_≤_; _≟_)
+open import Data.Unit
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
 open import Data.Product
