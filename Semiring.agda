@@ -1,19 +1,8 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module Semiring where
 
 open import Relation.Binary.PropositionalEquality
-open import Data.Bool hiding (_≟_; _≤_)
-open import Data.Empty
-open import Data.Unit hiding (_≟_; _≤_)
 open import Relation.Nullary
-open import Relation.Unary
 open import Relation.Nullary.Decidable
-open import Data.Maybe
-open import Data.Maybe.Properties
-open import Data.Product
-open import Data.Sum
-
 
 -- # Semiring definition
 record Semiring : Set₁ where
@@ -67,7 +56,7 @@ record NonInterferingSemiring {{R : Semiring}} : Set₁ where
 
     antisymmetry : {r s : grade} -> r ≤ s -> s ≤ r -> r ≡ s
 
-    idem* : {r : grade} -> r *R r ≡ r
+    idem*lax : {r : grade} -> (r *R r) ≤ r
 
 open NonInterferingSemiring
 
@@ -103,9 +92,8 @@ propInvTimesMonoAsymN : {{ R : Semiring }} {{ R' : NonInterferingSemiring }}
                      ->   (r ≤ adv)
                      -> ¬ (s ≤ adv)
 propInvTimesMonoAsymN {{R}} {{R'}} {r} {s} {adv} ngoal pre1 pre2 =
-  ngoal
-    (subst (\h -> ((r *R s) ≤ h)) (idem* R') (monotone* pre1 pre2))
-
+ let aux = (monotone* pre1 pre2)
+ in ngoal (transitive≤ aux (idem*lax R'))
 
 decreasing+Inv : {{ R : Semiring }} {{ R' : NonInterferingSemiring  }}
               {r1 r2 s : grade} -> ¬ ((r1 +R r2) ≤ s) -> ¬ (r1 ≤ s)
@@ -160,8 +148,11 @@ informationalImpliesNonInterfering record { idem* = idem* ; joinOrderRel = joinO
              ; meetOrderRel = meetOrderRel ; meetOrderReli = meetOrderReli
              ; absorb1 = absorb1 ; absorb2 = absorb2 } =
   record
-    { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = antisym ; idem* = idem* }
+    { oneIsBottom = one ; zeroIsTop = zero ; antisymmetry = antisym ; idem*lax = idem*laxFromExact idem* }
   where
+    idem*laxFromExact : {r : grade} -> r *R r ≡ r -> (r *R r) ≤ r
+    idem*laxFromExact {r} eq rewrite eq = reflexive≤
+
     one : {r : grade} → 1R ≤ r
     one {r} =
       bottomIsOneFromIncrease* increasing*h {r}
@@ -204,7 +195,7 @@ informationalImpliesNonInterfering record { idem* = idem* ; joinOrderRel = joinO
 
 -- Abel et al. (2023) take a semiring with a meet operation
 -- to induce a partial order
--- Antisymmetry come out of this? (see below)
+-- Does antisymmetry come out of this? (see below)
 
 record Meety {{R : Semiring}} : Set₁ where
   field
@@ -224,70 +215,3 @@ antisym : {{ R : Semiring }} {{ m : Meety }} {r s : grade} ->
 antisym {r} {s} prf1 prf2 = trans prf1 (trans (comm {r} {s}) (sym prf2))
  -- prf1 = r ≡ r /\ s
  -- prf2 = s ≡ s /\ r
-
--- Section 6 of Abel et al. (2023) but also
--- called 'quantitative' in Moon et al. (2021) (where we would collapse
--- + and meet here
-
-record WellBehavedZero {{R : Semiring}} {{R' : Meety}} : Set₁ where
-  field
-    additionPositive : {p q : grade} -> p +R q ≡ 0R -> (p ≡ 0R) × (q ≡ 0R)
-    meetPositive     : {p q : grade} -> p ∧R q ≡ 0R -> (p ≡ 0R) × (q ≡ 0R)
-    zeroPositive     : {p q : grade} -> p *R q ≡ 0R -> (p ≡ 0R) ⊎ (q ≡ 0R)
-    zeroNoTOne       : ¬ (0R ≡ 1R)
-    -- relationship between meet and ordering
-    meetOrderRel  : {r s : grade} -> r ≡ r ∧R s -> r ≤ s
-    meetOrderReli : {r s : grade} -> r ≤ s -> r ≡ r ∧R s
-    meet1 : {r s : grade} -> (r ∧R s) ≤ r
-    meet2 : {r s : grade} -> (r ∧R s) ≤ s
-
-open WellBehavedZero {{...}}
-
-
-posToNi : {{R : Semiring}} {{R' : Meety}}
-       -> WellBehavedZero -> NonInterferingSemiring
-posToNi record { additionPositive = additionPositive ; meetPositive = meetPositive; zeroPositive = zeroPositive ; zeroNoTOne = zeroNoTOne ; meetOrderRel = meetOrderRel } = record {
-    oneIsBottom = {!!}
-  ; zeroIsTop = zeroMaximal
-  ; antisymmetry = {!!}
-  ; idem* = {!!} }
-  where
-    zeroMinimal : {p : grade} -> 0R ≤ p
-    zeroMinimal = {!!}
-    --
-    --                (0 /\ p) /\  = 0
-    --                 0 = 0 /\ p
-    -- meetOrderRel    0 <= p
-    -- qed
-
-    zeroMaximal : {p : grade} -> p ≤ 0R
-    zeroMaximal = {!!}
-    -- p <= p   &  0 <= 0
-    -- p /\ 0  <= p /\ 0
-    -- from meetOrderRel if p = p /\R 0  then  p <= 0
-    --
-
-
-niToPos : {{R : Semiring}} {{R' : Meety}}
-       -> NonInterferingSemiring -> WellBehavedZero
-niToPos record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* } =
-  record
-    { additionPositive = {!!}
-    ; meetPositive = {!!}
-    ; zeroPositive = {!!}
-    ; zeroNoTOne = {!!}
-    }
-  where
-   addPos : {{R : Semiring}} {{R' : Meety}}
-          -> NonInterferingSemiring
-          -> {p q : Semiring.grade R} → (p +R q ≡ 0R) → p ≡ Semiring.0R R × q ≡ Semiring.0R R
-   addPos {{R}} {{R'}} (record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* }) {p} {Q} eq1 = left , {!!}
-     where
-       left : p ≡ 0R
-       left =
-         let x = increasing* {{R}} {{(record { oneIsBottom = oneIsBottom ; zeroIsTop = zeroIsTop ; antisymmetry = antisymmetry ; idem* = idem* })}} (oneIsBottom {0R})
-         in antisymmetry zeroIsTop {!!}
-       -- p + q = 0
-       -- 0 <= p + q
-       -- ->
-       -- -> 0 <= p

@@ -1,10 +1,7 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 module Sec where
 
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
-open import Relation.Unary
 open import Data.Empty
 open import Semiring
 
@@ -181,25 +178,28 @@ decreasing+sec {Lo} {Hi} {Lo} ReflLo = ReflLo
 decreasing+sec {Lo} {Lo} {Hi} LoHi   = LoHi
 decreasing+sec {Lo} {Lo} {Lo} ReflLo = ReflLo
 
-propTimesIdem : {r : Sec} -> (r *R r) ≡ r
-propTimesIdem {Hi} = refl
-propTimesIdem {Lo} = refl
+propTimesIdemLax : {r : Sec} -> (r *R r) ≤ r
+propTimesIdemLax {Hi} = ReflHi
+propTimesIdemLax {Lo} = ReflLo
 
-antisym : {r s : Sec} -> (r ≤ s) -> (s ≤ r) -> r ≡ s
-antisym {Hi} {Hi} pre1 pre2 = refl
-antisym {Hi} {Lo} () pre2
-antisym {Lo} {Hi} LoHi ()
-antisym {Lo} {Lo} pre1 pre2 = refl
+antisymSec : {r s : Sec} -> (r ≤ s) -> (s ≤ r) -> r ≡ s
+antisymSec {Hi} {Hi} pre1 pre2 = refl
+antisymSec {Hi} {Lo} () pre2
+antisymSec {Lo} {Hi} LoHi ()
+antisymSec {Lo} {Lo} pre1 pre2 = refl
 
 oneIsBot : {r : Sec} -> 1r ≤ r
 oneIsBot {Hi} = LoHi
 oneIsBot {Lo} = ReflLo
 
+zeroIsTop : {r : Sec} -> r ≤ 0r
+zeroIsTop {Hi} = ReflHi
+zeroIsTop {Lo} = LoHi
+
 secSemiringNI : NonInterferingSemiring {{secSemiring}}
 secSemiringNI = record
                   { oneIsBottom            = oneIsBot
-                  ; antisymmetry           = antisym
-                  ; zeroIsTop              = {!!}
-                  -- ; decreasing+               = decreasing+sec
-                  ; idem*   = propTimesIdem
+                  ; antisymmetry           = antisymSec
+                  ; zeroIsTop              = zeroIsTop
+                  ; idem*lax               = propTimesIdemLax
                   }
