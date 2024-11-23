@@ -15,28 +15,28 @@ data _<<_ : Declass -> Declass -> Set where
      OmegaBot : (d : Declass) -> Omega << d
      Lt       : (n m : ℕ) -> n ≤ m -> Fin m << Fin n
 
-max : Declass -> Declass -> Declass
-max Omega _ = Omega
-max _ Omega = Omega
-max (Fin n) (Fin m) = Fin (n ⊔ m)
+meet : Declass -> Declass -> Declass
+meet Omega _ = Omega
+meet _ Omega = Omega
+meet (Fin n) (Fin m) = Fin (n ⊔ m)
 
 -- Int % n -> Int
 -- Int % m -> Int
 
 -- Int % n -> Int
 
-plus : Declass -> Declass -> Declass
-plus Omega x = x
-plus x Omega = x
-plus (Fin n) (Fin m) = Fin (n ⊓ m)
+times : Declass -> Declass -> Declass
+times Omega x = x
+times x Omega = x
+times (Fin n) (Fin m) = Fin (n ⊓ m)
 
 declassS : Semiring
 declassS = record
              { grade = Declass
              ; 1R = Omega
              ; 0R = Fin 0
-             ; _+R_ = max
-             ; _*R_ = plus
+             ; _+R_ = meet
+             ; _*R_ = times
              ; _≤_ = _<<_
              ; _≤d_ = {!!}
              ; leftUnit+ = {!!}
@@ -66,7 +66,7 @@ asym (Lt .zero .zero z≤n) (Lt .zero .zero z≤n) = refl
 asym (Lt .(suc _) .(suc _) (s≤s x)) (Lt .(suc _) .(suc _) (s≤s x₁))
   rewrite asym (Lt _ _ x) (Lt _ _ x₁) = {!!}
 
-laxidem : {d : Declass} -> plus d d << d
+laxidem : {d : Declass} -> times d d << d
 laxidem {Fin x} rewrite m≤n⇒m⊓n≡m {x} {x} (≤-reflexive refl) = Lt x x (≤-reflexive refl)
 laxidem {Omega} = OmegaBot Omega
 
