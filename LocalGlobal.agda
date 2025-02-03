@@ -14,7 +14,7 @@ data Ordering : Locality -> Locality -> Set where
 
   GlobalToLocal : Ordering Global Local -- Global < Local
 
- (maybe Local < Unused ?)
+ -- Discussion: (maybe Local < Unused ?)
 
 {-
 
