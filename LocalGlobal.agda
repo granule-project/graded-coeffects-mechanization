@@ -12,7 +12,9 @@ data Locality : Set where
 
 data Ordering : Locality -> Locality -> Set where
 
-  GlobalToLocal : Ordering Global Local -- Global < Local
+  GlobalToLocal  : Ordering Global Local -- Global < Local
+  UnusedToLocal  : Ordering Unused Local  -- Unused < Local
+  UnusedToGlobal : Ordering Unused Global -- Unused < Global
 
  -- Discussion: (maybe Local < Unused ?)
 
@@ -34,12 +36,16 @@ x : Local A /|- t : B
   ReflG         : Ordering Global Global
   Refl0         : Ordering Unused Unused
 
+
+-- changed as otherwise no mon+:
+-- mon+ {.Local} {.Local} {.Unused} {.Global} ReflL UnusedToGlobal =  LocalToGlobal
+-- mon+ {.Unused} {.Global} {.Local} {.Local} UnusedToGlobal ReflL = LocalToGLobal
 _+l_ : Locality -> Locality -> Locality
 Unused +l y      = y
 y      +l Unused = y
 Local  +l Local  = Local
-x      +l Global = Global
-Global +l y      = Global
+x      +l Global = x
+Global +l y      = y
 
 _*l_ : Locality -> Locality -> Locality
 Unused *l y      = Unused
@@ -112,6 +118,11 @@ localGlobal =
     transt {.Global} {.Global} {.Local} ReflG GlobalToLocal = GlobalToLocal
     transt {.Global} {.Global} {.Global} ReflG ReflG = ReflG
     transt {.Unused} {.Unused} {.Unused} Refl0 Refl0 = Refl0
+    transt {.Unused} {.Local} {.Local} UnusedToLocal ReflL = UnusedToLocal
+    transt {.Unused} {.Global} {.Global} UnusedToGlobal ReflG = UnusedToGlobal
+    transt {.Unused} {.Global} {.Local} UnusedToGlobal GlobalToLocal = UnusedToLocal
+    transt {.Unused} {.Unused} {.Local} Refl0 UnusedToLocal = UnusedToLocal
+    transt {.Unused} {.Unused} {.Global} Refl0 UnusedToGlobal = UnusedToGlobal
 
     dec<= :  (r s : Locality) → Dec (Ordering r s)
     dec<= Local Local = yes ReflL
@@ -120,8 +131,8 @@ localGlobal =
     dec<= Global Local = yes GlobalToLocal
     dec<= Global Global = yes ReflG
     dec<= Global Unused = no (\())
-    dec<= Unused Local = no (\ ())
-    dec<= Unused Global = no (\())
+    dec<= Unused Local = yes UnusedToLocal
+    dec<= Unused Global = yes UnusedToGlobal
     dec<= Unused Unused = yes Refl0
 
 
@@ -159,18 +170,38 @@ localGlobal =
     mon* : {r1 r2 s1 s2 : Locality} →
       Ordering r1 r2 → Ordering s1 s2 → Ordering (r1 *l s1) (r2 *l s2)
     mon* {.Global} {.Local} {.Global} {.Local} GlobalToLocal GlobalToLocal = GlobalToLocal
+    mon* {.Global} {.Local} {.Unused} {.Local} GlobalToLocal UnusedToLocal = UnusedToLocal
+    mon* {.Global} {.Local} {.Unused} {.Global} GlobalToLocal UnusedToGlobal = UnusedToGlobal
     mon* {.Global} {.Local} {.Local} {.Local} GlobalToLocal ReflL = GlobalToLocal
     mon* {.Global} {.Local} {.Global} {.Global} GlobalToLocal ReflG = ReflG
     mon* {.Global} {.Local} {.Unused} {.Unused} GlobalToLocal Refl0 = Refl0
+    mon* {.Unused} {.Local} {.Global} {.Local} UnusedToLocal GlobalToLocal = UnusedToLocal
+    mon* {.Unused} {.Local} {.Unused} {.Local} UnusedToLocal UnusedToLocal = UnusedToLocal
+    mon* {.Unused} {.Local} {.Unused} {.Global} UnusedToLocal UnusedToGlobal = UnusedToGlobal
+    mon* {.Unused} {.Local} {.Local} {.Local} UnusedToLocal ReflL = UnusedToLocal
+    mon* {.Unused} {.Local} {.Global} {.Global} UnusedToLocal ReflG = UnusedToGlobal
+    mon* {.Unused} {.Local} {.Unused} {.Unused} UnusedToLocal Refl0 = Refl0
+    mon* {.Unused} {.Global} {.Global} {.Local} UnusedToGlobal GlobalToLocal = UnusedToGlobal
+    mon* {.Unused} {.Global} {.Unused} {.Local} UnusedToGlobal UnusedToLocal = UnusedToGlobal
+    mon* {.Unused} {.Global} {.Unused} {.Global} UnusedToGlobal UnusedToGlobal = UnusedToGlobal
+    mon* {.Unused} {.Global} {.Local} {.Local} UnusedToGlobal ReflL = UnusedToGlobal
+    mon* {.Unused} {.Global} {.Global} {.Global} UnusedToGlobal ReflG = UnusedToGlobal
+    mon* {.Unused} {.Global} {.Unused} {.Unused} UnusedToGlobal Refl0 = Refl0
     mon* {.Local} {.Local} {.Global} {.Local} ReflL GlobalToLocal = GlobalToLocal
+    mon* {.Local} {.Local} {.Unused} {.Local} ReflL UnusedToLocal = UnusedToLocal
+    mon* {.Local} {.Local} {.Unused} {.Global} ReflL UnusedToGlobal = UnusedToGlobal
     mon* {.Local} {.Local} {.Local} {.Local} ReflL ReflL = ReflL
     mon* {.Local} {.Local} {.Global} {.Global} ReflL ReflG = ReflG
     mon* {.Local} {.Local} {.Unused} {.Unused} ReflL Refl0 = Refl0
     mon* {.Global} {.Global} {.Global} {.Local} ReflG GlobalToLocal = ReflG
+    mon* {.Global} {.Global} {.Unused} {.Local} ReflG UnusedToLocal = UnusedToGlobal
+    mon* {.Global} {.Global} {.Unused} {.Global} ReflG UnusedToGlobal = UnusedToGlobal
     mon* {.Global} {.Global} {.Local} {.Local} ReflG ReflL = ReflG
     mon* {.Global} {.Global} {.Global} {.Global} ReflG ReflG = ReflG
     mon* {.Global} {.Global} {.Unused} {.Unused} ReflG Refl0 = Refl0
     mon* {.Unused} {.Unused} {.Global} {.Local} Refl0 GlobalToLocal = Refl0
+    mon* {.Unused} {.Unused} {.Unused} {.Local} Refl0 UnusedToLocal = Refl0
+    mon* {.Unused} {.Unused} {.Unused} {.Global} Refl0 UnusedToGlobal = Refl0
     mon* {.Unused} {.Unused} {.Local} {.Local} Refl0 ReflL = Refl0
     mon* {.Unused} {.Unused} {.Global} {.Global} Refl0 ReflG = Refl0
     mon* {.Unused} {.Unused} {.Unused} {.Unused} Refl0 Refl0 = Refl0
@@ -178,18 +209,38 @@ localGlobal =
     mon+ : {r1 r2 s1 s2 : Locality} →
       Ordering r1 r2 → Ordering s1 s2 → Ordering (r1 +l s1) (r2 +l s2)
     mon+ {.Global} {.Local} {.Global} {.Local} GlobalToLocal GlobalToLocal = GlobalToLocal
-    mon+ {.Global} {.Local} {.Local} {.Local} GlobalToLocal ReflL = GlobalToLocal
-    mon+ {.Global} {.Local} {.Global} {.Global} GlobalToLocal ReflG = ReflG
+    mon+ {.Global} {.Local} {.Unused} {.Local} GlobalToLocal UnusedToLocal = GlobalToLocal
+    mon+ {.Global} {.Local} {.Unused} {.Global} GlobalToLocal UnusedToGlobal = GlobalToLocal
+    mon+ {.Global} {.Local} {.Local} {.Local} GlobalToLocal ReflL = ReflL
+    mon+ {.Global} {.Local} {.Global} {.Global} GlobalToLocal ReflG = GlobalToLocal
     mon+ {.Global} {.Local} {.Unused} {.Unused} GlobalToLocal Refl0 = GlobalToLocal
-    mon+ {.Local} {.Local} {.Global} {.Local} ReflL GlobalToLocal = GlobalToLocal
+    mon+ {.Unused} {.Local} {.Global} {.Local} UnusedToLocal GlobalToLocal = GlobalToLocal
+    mon+ {.Unused} {.Local} {.Unused} {.Local} UnusedToLocal UnusedToLocal = UnusedToLocal
+    mon+ {.Unused} {.Local} {.Unused} {.Global} UnusedToLocal UnusedToGlobal = UnusedToLocal
+    mon+ {.Unused} {.Local} {.Local} {.Local} UnusedToLocal ReflL = ReflL
+    mon+ {.Unused} {.Local} {.Global} {.Global} UnusedToLocal ReflG = GlobalToLocal
+    mon+ {.Unused} {.Local} {.Unused} {.Unused} UnusedToLocal Refl0 = UnusedToLocal
+    mon+ {.Unused} {.Global} {.Global} {.Local} UnusedToGlobal GlobalToLocal = GlobalToLocal
+    mon+ {.Unused} {.Global} {.Unused} {.Local} UnusedToGlobal UnusedToLocal = UnusedToLocal
+    mon+ {.Unused} {.Global} {.Unused} {.Global} UnusedToGlobal UnusedToGlobal = UnusedToGlobal
+    mon+ {.Unused} {.Global} {.Local} {.Local} UnusedToGlobal ReflL = ReflL
+    mon+ {.Unused} {.Global} {.Global} {.Global} UnusedToGlobal ReflG = ReflG
+    mon+ {.Unused} {.Global} {.Unused} {.Unused} UnusedToGlobal Refl0 = UnusedToGlobal
+    mon+ {.Local} {.Local} {.Global} {.Local} ReflL GlobalToLocal = ReflL
+    mon+ {.Local} {.Local} {.Unused} {.Local} ReflL UnusedToLocal = ReflL
+    mon+ {.Local} {.Local} {.Unused} {.Global} ReflL UnusedToGlobal = ReflL
     mon+ {.Local} {.Local} {.Local} {.Local} ReflL ReflL = ReflL
-    mon+ {.Local} {.Local} {.Global} {.Global} ReflL ReflG = ReflG
+    mon+ {.Local} {.Local} {.Global} {.Global} ReflL ReflG = ReflL
     mon+ {.Local} {.Local} {.Unused} {.Unused} ReflL Refl0 = ReflL
-    mon+ {.Global} {.Global} {.Global} {.Local} ReflG GlobalToLocal = ReflG
-    mon+ {.Global} {.Global} {.Local} {.Local} ReflG ReflL = ReflG
+    mon+ {.Global} {.Global} {.Global} {.Local} ReflG GlobalToLocal = GlobalToLocal
+    mon+ {.Global} {.Global} {.Unused} {.Local} ReflG UnusedToLocal = GlobalToLocal
+    mon+ {.Global} {.Global} {.Unused} {.Global} ReflG UnusedToGlobal = ReflG
+    mon+ {.Global} {.Global} {.Local} {.Local} ReflG ReflL = ReflL
     mon+ {.Global} {.Global} {.Global} {.Global} ReflG ReflG = ReflG
     mon+ {.Global} {.Global} {.Unused} {.Unused} ReflG Refl0 = ReflG
     mon+ {.Unused} {.Unused} {.Global} {.Local} Refl0 GlobalToLocal = GlobalToLocal
+    mon+ {.Unused} {.Unused} {.Unused} {.Local} Refl0 UnusedToLocal = UnusedToLocal
+    mon+ {.Unused} {.Unused} {.Unused} {.Global} Refl0 UnusedToGlobal = UnusedToGlobal
     mon+ {.Unused} {.Unused} {.Local} {.Local} Refl0 ReflL = ReflL
     mon+ {.Unused} {.Unused} {.Global} {.Global} Refl0 ReflG = ReflG
     mon+ {.Unused} {.Unused} {.Unused} {.Unused} Refl0 Refl0 = Refl0
