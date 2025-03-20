@@ -14,7 +14,7 @@ data Locality : Set where
 data Ordering : Locality -> Locality -> Set where
   GlobalToLocal    : Ordering Global   Local    -- Global   < Local
   AnywhereToLocal  : Ordering Anywhere Local    -- Anywhere < Local
-  GlobalToAnywhere : Ordering Global   Anywhere -- Anywhere < Global
+  GlobalToAnywhere : Ordering Global   Anywhere -- Global   < Anywhere
 
 
 {-
@@ -112,7 +112,7 @@ localGlobal =
     reflexive {Local} = ReflL
     reflexive {Anywhere} = ReflA
 
-    transt : {r s t : Locality} -> 
+    transt : {r s t : Locality} ->
       Ordering r s -> Ordering s t -> Ordering r t
     transt {.Global} {.Local} {.Local} GlobalToLocal ReflL = GlobalToLocal
     transt {.Anywhere} {.Local} {.Local} AnywhereToLocal ReflL = AnywhereToLocal
